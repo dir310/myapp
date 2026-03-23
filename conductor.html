@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Conductor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .title { font-size: 24px; font-weight: 800; color: #FF6B00; }
+        .status { background: rgba(48,209,88,.15); color: #30D158; padding: 6px 12px; border-radius: 50px; font-size: 13px; font-weight: 600; display:flex; align-items:center; gap:6px; }
+        .status-dot { width: 8px; height: 8px; background: #30D158; border-radius: 50%; box-shadow: 0 0 8px #30D158; animation: pulse 2s infinite; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,.4); }
+        
+        .driver-name { width: 100%; padding: 14px; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: 12px; color: #fff; margin-bottom: 20px; font-size:16px; outline:none; transition: border .2s; }
+        .driver-name:focus { border-color: #FF6B00; }
+        
+        #viajesList { display: flex; flex-direction: column; gap: 15px; }
+
+        .card { background: #1C1C1E; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: slideIn .3s ease-out; }
+        @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); padding-bottom: 12px;}
+        .price { font-size: 28px; font-weight: 800; color: #30D158; }
+        .dist { color: rgba(255,255,255,.5); font-size: 14px; font-weight: 600; margin-top:8px;}
+        
+        .route-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; font-size: 14px;}
+        .dot-text { display: flex; align-items: flex-start; gap: 10px; line-height:1.4; color:rgba(255,255,255,.8);}
+        .icon-o { color: #FF6B00; margin-top:2px; font-size:12px;}
+        .icon-d { color: #30D158; margin-top:2px; font-size:12px;}
+        
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; transition: transform .2s; display:flex; justify-content:center; align-items:center; gap:8px;}
+        .btn-accept { background: linear-gradient(135deg, #FF6B00, #FF9500); box-shadow: 0 4px 15px rgba(255,107,0,.4); }
+        .btn-accept:active { transform: scale(0.98); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="title">Panel Conductor</div>
+    <div class="status"><div class="status-dot"></div> Activo</div>
+</div>
+
+<label style="font-size:12px; color:rgba(255,255,255,.4); margin-bottom:6px; display:block; text-transform:uppercase;">Tu Identificación</label>
+<input type="text" id="conductorName" class="driver-name" placeholder="Ingresa tu placa o nombre..." value="Yojan (Taxi 1)">
+
+<div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8);">Viajes Disponibles</div>
+<div id="viajesList">
+    <div class="empty-state">
+        <div style="font-size: 45px; margin-bottom: 15px; opacity:.5;">⏱️</div>
+        Buscando pasajeros<br>cerca de La Calera...
+    </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = 'https://rgdrgbfkoczjeddgbuxq.supabase.co';
+const supabaseKey = 'sb_publishable_k-68jStH-ZieKHp5TdPFhg_Kx2FleQm';
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Cargar viajes pendientes actuales al iniciar la pantalla
+async function loadViajes() {
+    const { data, error } = await supabaseClient
+        .from('viajes')
+        .select('*')
+        .eq('estado', 'buscando')
+        .order('created_at', { ascending: false });
+        
+    if (!error && data) renderViajes(data);
+}
+
+let activeViajes = [];
+
+function renderViajes(viajes) {
+    activeViajes = viajes;
+    const container = document.getElementById('viajesList');
+    if (viajes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 45px; margin-bottom: 15px; opacity:.5;">⏱️</div>
+                Buscando pasajeros<br>cerca de La Calera...
+            </div>`;
+        return;
+    }
+    
+    container.innerHTML = viajes.map(v => `
+        <div class="card" id="viaje-${v.id}">
+            <div class="card-header">
+                <div>
+                    <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Ganancia</div>
+                    <div class="price">$${v.tarifa.toLocaleString('es-CO')}</div>
+                </div>
+                <div class="dist" style="text-align:right">
+                    <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Distancia</div>
+                    ${v.distancia_km}
+                </div>
+            </div>
+            <div class="route-info">
+                <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
+                <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
+            </div>
+            <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">
+                ✅ Aceptar y Navegar (Waze)
+            </button>
+        </div>
+    `).join('');
+}
+
+async function acceptViaje(id, lat, lng) {
+    const conductor = document.getElementById('conductorName').value || 'Un Conductor';
+    
+    // Marcar viaje como 'aceptado' en Supabase para sacarlo del tablero de otros
+    const { error } = await supabaseClient
+        .from('viajes')
+        .update({ estado: 'aceptado', conductor_id: conductor })
+        .eq('id', id);
+        
+    if (!error) {
+        // Sacarlo de mi propia lista porque ya lo tomé
+        activeViajes = activeViajes.filter(v => v.id !== id);
+        renderViajes(activeViajes);
+        
+        // Abrir Waze apuntando a la CASA DEL CLIENTE para ir a recogerlo
+        window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+    } else {
+        alert("Ese viaje ya fue tomado por otro conductor rapidísimo. 🏎️💨");
+    }
+}
+
+// 📡 ESTAR ATENTOS EN TIEMPO REAL A LOS NUEVOS VIAJES
+supabaseClient.channel('viajes-nuevos')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'viajes' }, payload => {
+        if(payload.new.estado === 'buscando') {
+            activeViajes.unshift(payload.new);
+            renderViajes(activeViajes);
+            try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){} // Sonidito
+        }
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes' }, payload => {
+        // Si otro conductor lo tomó o el cliente canceló, se borra de la lista
+        if(payload.new.estado !== 'buscando') {
+            activeViajes = activeViajes.filter(v => v.id !== payload.new.id);
+            renderViajes(activeViajes);
+        }
+    })
+    .subscribe();
+
+// Iniciar aplicación cargando lo actual
+loadViajes();
+</script>
+
+</body>
+</html>
