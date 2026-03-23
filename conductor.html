@@ -10,9 +10,15 @@
         body { font-family: 'Inter', sans-serif; background: #000; color: #fff; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .title { font-size: 24px; font-weight: 800; color: #FF6B00; }
-        .status { background: rgba(48,209,88,.15); color: #30D158; padding: 6px 12px; border-radius: 50px; font-size: 13px; font-weight: 600; display:flex; align-items:center; gap:6px; }
-        .status-dot { width: 8px; height: 8px; background: #30D158; border-radius: 50%; box-shadow: 0 0 8px #30D158; animation: pulse 2s infinite; }
         
+        /* Radar status */
+        .status-container { margin-bottom: 15px; }
+        .radar-toggle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; font-family: 'Inter'; cursor: pointer; transition: 0.3s; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .radar-off { background: rgba(255,255,255,.1); color: #fff; }
+        .radar-on { background: rgba(48,209,88,.2); color: #30D158; border: 1px solid #30D158; }
+        .status-dot { width: 10px; height: 10px; background: #30D158; border-radius: 50%; box-shadow: 0 0 8px #30D158; animation: pulse 2s infinite; display: none; }
+        .radar-on .status-dot { display: block; }
+
         .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,.4); }
         
         .driver-name { width: 100%; padding: 14px; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: 12px; color: #fff; margin-bottom: 20px; font-size:16px; outline:none; transition: border .2s; }
@@ -20,7 +26,9 @@
         
         #viajesList { display: flex; flex-direction: column; gap: 15px; }
 
-        .card { background: #1C1C1E; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: slideIn .3s ease-out; }
+        .card { background: #1C1C1E; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: slideIn .3s ease-out; position: relative; overflow: hidden; }
+        .card::before { content: ""; position: absolute; top:0; left:0; width:4px; height:100%; background:#FF6B00; }
+        
         @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         
         .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); padding-bottom: 12px;}
@@ -40,23 +48,37 @@
         .btn:active { transform: scale(0.96); }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* Fancy Notification */
+        .new-ride-banner { position: fixed; top: -100px; left: 0; right: 0; background: #FF6B00; color: #fff; padding: 15px; text-align: center; font-weight: 800; z-index: 10000; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .new-ride-banner.show { top: 0; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div class="title">Panel Conductor</div>
-    <div class="status"><div class="status-dot"></div> Activo</div>
 </div>
 
-<label style="font-size:12px; color:rgba(255,255,255,.4); margin-bottom:6px; display:block; text-transform:uppercase;">Tu Identificación</label>
-<input type="text" id="conductorName" class="driver-name" placeholder="Ingresa tu placa o nombre..." value="Yojan (Taxi 1)">
+<div class="status-container">
+    <button id="radarBtn" class="radar-toggle radar-off" onclick="toggleRadar()">
+        <div class="status-dot"></div>
+        <span id="radarText">ACTIVAR RADAR (SONIDO)</span>
+    </button>
+</div>
 
-<div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8);">Viajes Disponibles</div>
+<div id="newRideBanner" class="new-ride-banner">¡NUEVO VIAJE DISPONIBLE! 🚕</div>
+
+<label style="font-size:11px; color:rgba(255,255,255,.4); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing: 1px;">Tu Identificación (Placa / Nombre)</label>
+<input type="text" id="conductorName" class="driver-name" placeholder="Ej: ABC-123 / Juan" value="Yojan (Taxi 1)">
+
+<div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8); display: flex; align-items:center; gap:8px;">
+    <span>📡</span> Viajes en curso
+</div>
 <div id="viajesList">
     <div class="empty-state">
-        <div style="font-size: 45px; margin-bottom: 15px; opacity:.5;">⏱️</div>
-        Buscando pasajeros<br>cerca de La Calera...
+        <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
+        Cargando radar...
     </div>
 </div>
 
@@ -66,7 +88,29 @@ const supabaseUrl = 'https://rgdrgbfkoczjeddgbuxq.supabase.co';
 const supabaseKey = 'sb_publishable_k-68jStH-ZieKHp5TdPFhg_Kx2FleQm';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Cargar viajes pendientes actuales al iniciar la pantalla
+let radarEnabled = false;
+let activeViajes = [];
+const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+function toggleRadar() {
+    radarEnabled = !radarEnabled;
+    const btn = document.getElementById('radarBtn');
+    const txt = document.getElementById('radarText');
+    
+    if(radarEnabled) {
+        btn.className = "radar-toggle radar-on";
+        txt.innerText = "RADAR ENCENDIDO";
+        // Touch sound to unlock browser audio policy
+        alertSound.play().then(() => {
+            alertSound.pause();
+            alertSound.currentTime = 0;
+        }).catch(e => console.log("Audio unlock failed:", e));
+    } else {
+        btn.className = "radar-toggle radar-off";
+        txt.innerText = "ACTIVAR RADAR (SONIDO)";
+    }
+}
+
 async function loadViajes() {
     const { data, error } = await supabaseClient
         .from('viajes')
@@ -77,15 +121,13 @@ async function loadViajes() {
     if (!error && data) renderViajes(data);
 }
 
-let activeViajes = [];
-
 function renderViajes(viajes) {
     activeViajes = viajes;
     const container = document.getElementById('viajesList');
     if (viajes.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div style="font-size: 45px; margin-bottom: 15px; opacity:.5;">⏱️</div>
+                <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
                 Buscando pasajeros<br>cerca de La Calera...
             </div>`;
         return;
@@ -108,56 +150,53 @@ function renderViajes(viajes) {
                 <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
             </div>
             <div class="actions-row">
-                <button class="btn btn-reject" onclick="rejectViaje('${v.id}')">
-                    ❌ Ocultar
-                </button>
-                <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">
-                    ✅ Aceptar y Navegar
-                </button>
+                <button class="btn btn-reject" onclick="rejectViaje('${v.id}')">❌ Ocultar</button>
+                <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">✅ ACEPTAR</button>
             </div>
         </div>
     `).join('');
 }
 
 function rejectViaje(id) {
-    // Solo lo oculta de la pantalla de ESTE conductor para no verlo más
     activeViajes = activeViajes.filter(v => v.id !== id);
     renderViajes(activeViajes);
 }
 
 async function acceptViaje(id, lat, lng) {
     const conductor = document.getElementById('conductorName').value || 'Un Conductor';
-    
-    // Marcar viaje como 'aceptado' en Supabase para sacarlo del tablero de otros
     const { error } = await supabaseClient
         .from('viajes')
         .update({ estado: 'aceptado', conductor_id: conductor })
         .eq('id', id);
         
     if (!error) {
-        // Sacarlo de mi propia lista porque ya lo tomé
         activeViajes = activeViajes.filter(v => v.id !== id);
         renderViajes(activeViajes);
-        
-        // Abrir Waze apuntando a la CASA DEL CLIENTE para ir a recogerlo
         window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
     } else {
-        alert("Ops, hubo un error de base de datos o el viaje ya fue tomado. Revisa que agregaste el conductor_id.");
-        console.error(error);
+        alert("¡Viaje ya tomado o error de conexión!");
     }
 }
 
-// 📡 ESTAR ATENTOS EN TIEMPO REAL A LOS NUEVOS VIAJES
+// 📡 CANALES EN TIEMPO REAL
 supabaseClient.channel('viajes-nuevos')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'viajes' }, payload => {
         if(payload.new.estado === 'buscando') {
             activeViajes.unshift(payload.new);
             renderViajes(activeViajes);
-            try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){} // Sonidito
+            
+            // Visual alert
+            const banner = document.getElementById('newRideBanner');
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 5000);
+
+            // Audio alert if radar enabled
+            if(radarEnabled) {
+                alertSound.play().catch(e => console.log("Sound error:", e));
+            }
         }
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes' }, payload => {
-        // Si otro conductor lo tomó o el cliente canceló, se borra de la lista
         if(payload.new.estado !== 'buscando') {
             activeViajes = activeViajes.filter(v => v.id !== payload.new.id);
             renderViajes(activeViajes);
@@ -165,9 +204,7 @@ supabaseClient.channel('viajes-nuevos')
     })
     .subscribe();
 
-// Iniciar aplicación cargando lo actual
 loadViajes();
 </script>
-
 </body>
 </html>
