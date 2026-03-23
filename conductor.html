@@ -32,9 +32,12 @@
         .icon-o { color: #FF6B00; margin-top:2px; font-size:12px;}
         .icon-d { color: #30D158; margin-top:2px; font-size:12px;}
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; transition: transform .2s; display:flex; justify-content:center; align-items:center; gap:8px;}
-        .btn-accept { background: linear-gradient(135deg, #FF6B00, #FF9500); box-shadow: 0 4px 15px rgba(255,107,0,.4); }
-        .btn-accept:active { transform: scale(0.98); }
+        .actions-row { display: flex; gap: 10px; }
+        .btn { padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; transition: transform .2s; display:flex; justify-content:center; align-items:center; gap:8px;}
+        .btn-accept { background: linear-gradient(135deg, #FF6B00, #FF9500); box-shadow: 0 4px 15px rgba(255,107,0,.4); flex: 1; }
+        .btn-reject { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.1); width: 100px; }
+        
+        .btn:active { transform: scale(0.96); }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
@@ -104,11 +107,22 @@ function renderViajes(viajes) {
                 <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
                 <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
             </div>
-            <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">
-                ✅ Aceptar y Navegar (Waze)
-            </button>
+            <div class="actions-row">
+                <button class="btn btn-reject" onclick="rejectViaje('${v.id}')">
+                    ❌ Ocultar
+                </button>
+                <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">
+                    ✅ Aceptar y Navegar
+                </button>
+            </div>
         </div>
     `).join('');
+}
+
+function rejectViaje(id) {
+    // Solo lo oculta de la pantalla de ESTE conductor para no verlo más
+    activeViajes = activeViajes.filter(v => v.id !== id);
+    renderViajes(activeViajes);
 }
 
 async function acceptViaje(id, lat, lng) {
@@ -128,7 +142,8 @@ async function acceptViaje(id, lat, lng) {
         // Abrir Waze apuntando a la CASA DEL CLIENTE para ir a recogerlo
         window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
     } else {
-        alert("Ese viaje ya fue tomado por otro conductor rapidísimo. 🏎️💨");
+        alert("Ops, hubo un error de base de datos o el viaje ya fue tomado. Revisa que agregaste el conductor_id.");
+        console.error(error);
     }
 }
 
