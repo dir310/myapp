@@ -329,7 +329,7 @@ async function acceptRide() {
             <div style="text-align:center; padding: 25px 0;">
                 <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
                 <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
-                <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos enviando tu solicitud a todos los conductores disponibles en La Calera.</p>
+                <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. Por favor no cierres esta ventana.</p>
                 <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${price.toLocaleString('es-CO')}</div>
             </div>
             <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" onclick="cancelRide()">Cancelar Solicitud</button>
@@ -339,7 +339,7 @@ async function acceptRide() {
         listenForDriver(currentRideId);
 
     } catch (err) {
-        showStatus('❌ Hubo un error de conexión con la Nube.', true);
+        showStatus('❌ Error de conexión.', true);
         btn.innerHTML = originalText;
         btn.disabled = false;
         console.error(err);
@@ -347,9 +347,10 @@ async function acceptRide() {
 }
 
 function listenForDriver(rideId) {
-    // Si la tabla cambia, supabase nos avisa en tiempo real
-    supabaseClient.channel('custom-all-channel')
+    console.log("Escuchando estado de viaje:", rideId);
+    supabaseClient.channel('rider-check-' + rideId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes', filter: `id=eq.${rideId}` }, payload => {
+          console.log("Cambio detectado:", payload.new.estado);
           if(payload.new.estado === 'aceptado') {
               const driverName = payload.new.conductor_id || 'Un Conductor';
               // Pantalla de triunfo!
