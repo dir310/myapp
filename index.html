@@ -146,7 +146,7 @@
 // ---------- SUPABASE INTEGRACIÓN ----------
 const supabaseUrl = 'https://rgdrgbfkoczjeddgbuxq.supabase.co';
 const supabaseKey = 'sb_publishable_k-68jStH-ZieKHp5TdPFhg_Kx2FleQm';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // VARIABLES
 let sheetMinimized = false;
@@ -306,7 +306,7 @@ async function acceptRide() {
     btn.disabled = true;
 
     try {
-        const { data, error } = await supabase.from('viajes').insert([
+        const { data, error } = await supabaseClient.from('viajes').insert([
             { 
                 origen_nombre: originName,
                 origen_lat: startLatLng.lat,
@@ -348,7 +348,7 @@ async function acceptRide() {
 
 function listenForDriver(rideId) {
     // Si la tabla cambia, supabase nos avisa en tiempo real
-    supabase.channel('custom-all-channel')
+    supabaseClient.channel('custom-all-channel')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes', filter: `id=eq.${rideId}` }, payload => {
           if(payload.new.estado === 'aceptado') {
               // Pantalla de triunfo!
