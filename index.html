@@ -153,6 +153,7 @@ let sheetMinimized = false;
 let startLatLng = null, endLatLng = null, startMarker = null, endMarker = null, routingControl = null;
 let mode = 'search', nextClick = 'start';
 let currentRideId = null;
+let pollerInterval = null;
 
 // UI
 function toggleSheet() {
@@ -259,6 +260,7 @@ function clearPoint(t) {
     document.getElementById('mainActions').style.display = 'flex'; document.getElementById('priceSection').style.display = 'none';
     document.getElementById('mainActions').innerHTML = '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
     showStatus('', false);
+    if(pollerInterval) { clearInterval(pollerInterval); pollerInterval = null; }
 }
 
 function checkRoute() {
@@ -288,7 +290,13 @@ function checkRoute() {
     }
 }
 
-function cancelRide() { clearPoint('start'); clearPoint('end'); currentRideId = null; }
+function cancelRide() { 
+    if(currentRideId) {
+        // Opcional: marcar como cancelado en DB
+        supabaseClient.from('viajes').update({ estado: 'cancelado' }).eq('id', currentRideId);
+    }
+    clearPoint('start'); clearPoint('end'); currentRideId = null; 
+}
 
 // --- FUNCIONALIDAD SUPABASE: PIDIENDO EL VIAJE ---
 async function acceptRide() { 
@@ -301,7 +309,6 @@ async function acceptRide() {
     const distText = document.getElementById('routeDistance').textContent + ' km';
 
     const btn = document.getElementById('acceptRideBtn');
-    const originalText = btn.innerHTML;
     btn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo viaje...';
     btn.disabled = true;
 
@@ -321,52 +328,76 @@ async function acceptRide() {
         ]).select();
 
         if (error) throw error;
-        
         currentRideId = data[0].id;
         
         // Ventana de Cargando
         document.getElementById('priceSection').innerHTML = `
-            <div style="text-align:center; padding: 25px 0;">
+            <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
                 <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
                 <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
-                <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. Por favor no cierres esta ventana.</p>
+                <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
                 <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${price.toLocaleString('es-CO')}</div>
             </div>
             <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" onclick="cancelRide()">Cancelar Solicitud</button>
         `;
 
-        // 📡 ACTIVAR RADAR: escuchar cuando el estado cambie a "aceptado"
+        // 📡 ACTIVAR RADAR DUAL (Websocket + Poller de respaldo)
         listenForDriver(currentRideId);
 
     } catch (err) {
-        showStatus('❌ Error de conexión.', true);
-        btn.innerHTML = originalText;
+        showStatus('❌ Error al pedir viaje. Intenta de nuevo.', true);
+        btn.innerHTML = '🚗 Pedir Viaje';
         btn.disabled = false;
         console.error(err);
     }
 }
 
 function listenForDriver(rideId) {
-    console.log("Escuchando estado de viaje:", rideId);
-    supabaseClient.channel('rider-check-' + rideId)
+    console.log("📡 Iniciando radar para viaje:", rideId);
+
+    // 1. ESTRATEGIA TIEMPO REAL (Websocket)
+    supabaseClient.channel('ride-watch-' + rideId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes', filter: `id=eq.${rideId}` }, payload => {
-          console.log("Cambio detectado:", payload.new.estado);
+          console.log("⚡ Cambio detectado por Websocket:", payload.new.estado);
           if(payload.new.estado === 'aceptado') {
-              const driverName = payload.new.conductor_id || 'Un Conductor';
-              // Pantalla de triunfo!
-              document.getElementById('priceSection').innerHTML = `
-                  <div style="text-align:center; padding: 15px 0;">
-                      <div style="font-size:45px; margin-bottom: 12px; animation:bounce 2s infinite;">🚕</div>
-                      <h3 style="color:#30D158; margin-bottom:10px; font-weight:800;">¡Conductor en camino!</h3>
-                      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px; margin-bottom:15px;">
-                        <span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
-                        <span style="color:#fff; font-size:18px; font-weight:800;">${driverName}</span>
-                      </div>
-                      <p style="color:rgba(255,255,255,.6); font-size:13px;">Ya te avisamos por donde va. Ten listo el pago del servicio.</p>
-                  </div>
-              `;
+              showDriverAssigned(payload.new.conductor_id);
           }
       }).subscribe();
+
+    // 2. ESTRATEGIA DE RESPALDO (Polling cada 5 segundos)
+    if(pollerInterval) clearInterval(pollerInterval);
+    pollerInterval = setInterval(async () => {
+        console.log("🔍 Verificando estado en base de datos (Backup Poller)...");
+        const { data, error } = await supabaseClient
+            .from('viajes')
+            .select('estado, conductor_id')
+            .eq('id', rideId)
+            .single();
+            
+        if (!error && data && data.estado === 'aceptado') {
+            console.log("✅ Conductor encontrado vía Poller!");
+            showDriverAssigned(data.conductor_id);
+        }
+    }, 5000);
+}
+
+function showDriverAssigned(name) {
+    if(pollerInterval) clearInterval(pollerInterval);
+    pollerInterval = null;
+
+    const driverName = name || 'Un Conductor';
+    document.getElementById('priceSection').innerHTML = `
+        <div style="text-align:center; padding: 15px 0;">
+            <div style="font-size:45px; margin-bottom: 12px; animation:bounce 2s infinite;">🚕</div>
+            <h3 style="color:#30D158; margin-bottom:10px; font-weight:800;">¡Conductor en camino!</h3>
+            <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px; margin-bottom:15px;">
+                <span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
+                <span style="color:#fff; font-size:19px; font-weight:800;">${driverName}</span>
+            </div>
+            <p style="color:rgba(255,255,255,.6); font-size:13px;">Ya vas a ser recogido en tu ubicación actual. Ten listo el pago.</p>
+            <button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="location.reload()">Nuevo Viaje</button>
+        </div>
+    `;
 }
 
 function showStatus(msg, err) { const el = document.getElementById('statusBar'); if(!msg){el.style.display='none';return;} el.textContent = msg; el.className = 'status-bar' + (err ? ' error' : ''); el.style.display = 'block'; }
