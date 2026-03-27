@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Conductor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0F0F11; color: #fff; padding: 20px; min-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); }
+        .title { font-size: 24px; font-weight: 800; color: #FF6B00; }
+        
+        /* Radar status */
+        .status-container { margin-bottom: 15px; }
+        .radar-toggle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; font-family: 'Inter'; cursor: pointer; transition: 0.3s; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .radar-off { background: rgba(255,255,255,.1); color: #fff; }
+        .radar-on { background: rgba(48,209,88,.2); color: #30D158; border: 1px solid #30D158; }
+        .status-dot { width: 10px; height: 10px; background: #30D158; border-radius: 50%; box-shadow: 0 0 8px #30D158; animation: pulse 2s infinite; display: none; }
+        .radar-on .status-dot { display: block; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,.4); }
+        
+        .driver-name { width: 100%; padding: 14px; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: 12px; color: #fff; margin-bottom: 20px; font-size:16px; outline:none; transition: border .2s; }
+        .driver-name:focus { border-color: #FF6B00; }
+        
+        #viajesList { display: flex; flex-direction: column; gap: 15px; }
+
+        .card { background: rgba(28,28,30,.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.05); border-radius: 20px; padding: 22px; box-shadow: 0 15px 45px rgba(0,0,0,.4); animation: slideIn .4s cubic-bezier(.175, .885, .32, 1.275); position: relative; overflow: hidden; }
+        .card::before { content: ""; position: absolute; top:0; left:0; width:5px; height:100%; background: linear-gradient(to bottom, #FF6B00, #FF9500); }
+        
+        @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); padding-bottom: 12px;}
+        .price { font-size: 28px; font-weight: 800; color: #30D158; }
+        .dist { color: rgba(255,255,255,.5); font-size: 14px; font-weight: 600; margin-top:8px;}
+        
+        .route-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; font-size: 14px;}
+        .dot-text { display: flex; align-items: flex-start; gap: 10px; line-height:1.4; color:rgba(255,255,255,.8);}
+        .icon-o { color: #FF6B00; margin-top:2px; font-size:12px;}
+        .icon-d { color: #30D158; margin-top:2px; font-size:12px;}
+        
+        .actions-row { display: flex; gap: 10px; }
+        .btn { padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; transition: transform .2s; display:flex; justify-content:center; align-items:center; gap:8px;}
+        .btn-accept { background: linear-gradient(135deg, #FF6B00, #FF9500); box-shadow: 0 4px 15px rgba(255,107,0,.4); flex: 1; }
+        .btn-reject { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.1); width: 100px; }
+        
+        .btn:active { transform: scale(0.96); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* Fancy Notification */
+        .new-ride-banner { position: fixed; top: -100px; left: 0; right: 0; background: #FF6B00; color: #fff; padding: 15px; text-align: center; font-weight: 800; z-index: 10000; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .new-ride-banner.show { top: 0; }
+
+        .otp-input { width: 100%; padding: 12px; background: rgba(255,255,255,.05); border: 1px solid #FF6B00; border-radius: 10px; color: #fff; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; margin-bottom: 10px; outline: none; }
+        .otp-input:focus { background: rgba(255,107,0,.1); }
+        .btn-finish { background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="title">Panel Conductor</div>
+</div>
+
+<div class="status-container">
+    <button id="radarBtn" class="radar-toggle radar-off" onclick="toggleRadar()">
+        <div class="status-dot"></div>
+        <span id="radarText">ACTIVAR RADAR (SONIDO)</span>
+    </button>
+</div>
+
+<div id="newRideBanner" class="new-ride-banner">¡NUEVO VIAJE DISPONIBLE! 🚕</div>
+
+<label style="font-size:11px; color:rgba(255,255,255,.4); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing: 1px;">Tu Identificación (Placa / Nombre)</label>
+<input type="text" id="conductorName" class="driver-name" placeholder="Ej: ABC-123 / Juan" value="Yojan (Taxi 1)">
+
+<div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8); display: flex; align-items:center; gap:8px;">
+    <span>📡</span> Viajes en curso
+</div>
+<div id="viajesList">
+    <div class="empty-state">
+        <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
+        Cargando radar...
+    </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = 'https://rgdrgbfkoczjeddgbuxq.supabase.co';
+const supabaseKey = 'sb_publishable_k-68jStH-ZieKHp5TdPFhg_Kx2FleQm';
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+let radarEnabled = false;
+let activeViajes = [];
+const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+function toggleRadar() {
+    radarEnabled = !radarEnabled;
+    const btn = document.getElementById('radarBtn');
+    const txt = document.getElementById('radarText');
+    
+    if(radarEnabled) {
+        btn.className = "radar-toggle radar-on";
+        txt.innerText = "RADAR ENCENDIDO";
+        // Touch sound to unlock browser audio policy
+        alertSound.play().then(() => {
+            alertSound.pause();
+            alertSound.currentTime = 0;
+        }).catch(e => console.log("Audio unlock failed:", e));
+    } else {
+        btn.className = "radar-toggle radar-off";
+        txt.innerText = "ACTIVAR RADAR (SONIDO)";
+    }
+}
+
+let currentAcceptedViaje = null;
+
+async function loadViajes() {
+    const { data, error } = await supabaseClient
+        .from('viajes')
+        .select('*')
+        .or('estado.eq.buscando,estado.eq.aceptado,estado.eq.en_progreso')
+        .order('created_at', { ascending: false });
+        
+    if (!error && data) renderViajes(data);
+}
+
+function renderViajes(viajes) {
+    const conductor = document.getElementById('conductorName').value;
+    activeViajes = viajes;
+    const container = document.getElementById('viajesList');
+    
+    if (viajes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
+                Buscando pasajeros<br>cerca de La Calera...
+            </div>`;
+        return;
+    }
+    
+    container.innerHTML = viajes.map(v => {
+        // Si el viaje está aceptado o en progreso por OTRO conductor, no mostrarlo
+        if ((v.estado === 'aceptado' || v.estado === 'en_progreso') && v.conductor_id !== conductor) return '';
+
+        let actions = '';
+        if (v.estado === 'buscando') {
+            actions = `
+                <div class="actions-row">
+                    <button class="btn btn-reject" onclick="rejectViaje('${v.id}')">❌ Ocultar</button>
+                    <button class="btn btn-accept" onclick="acceptViaje('${v.id}', ${v.origen_lat}, ${v.origen_lng})">✅ ACEPTAR</button>
+                </div>`;
+        } else if (v.estado === 'aceptado') {
+            actions = `
+                <div style="background: rgba(255,107,0,.1); border: 1px dashed #FF6B00; padding: 15px; border-radius: 12px; margin-top: 10px;">
+                    <p style="font-size: 11px; margin-bottom: 8px; color: #FF6B00; font-weight: 800; text-transform: uppercase;">Introduce código del cliente:</p>
+                    <input type="number" id="otp-${v.id}" class="otp-input" placeholder="000" maxlength="3">
+                    <button class="btn btn-accept" style="width:100%" onclick="verifyOtp('${v.id}')">INICIAR VIAJE</button>
+                </div>
+                <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" onclick="window.open('https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes', '_blank')">🧭 Abrir Waze</button>`;
+        } else if (v.estado === 'en_progreso') {
+            actions = `
+                <div style="text-align:center; padding: 10px 0;">
+                    <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
+                    <button class="btn btn-finish" onclick="finishViaje('${v.id}')">🏁 FINALIZAR VIAJE</button>
+                    <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" onclick="window.open('https://waze.com/ul?ll=${v.destino_lat},${v.destino_lng}&navigate=yes', '_blank')">🧭 Navegar a Destino</button>
+                </div>`;
+        }
+
+        return `
+            <div class="card" id="viaje-${v.id}">
+                <div class="card-header">
+                    <div>
+                        <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Ganancia</div>
+                        <div class="price">$${v.tarifa.toLocaleString('es-CO')}</div>
+                    </div>
+                    <div class="dist" style="text-align:right">
+                        <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Distancia</div>
+                        ${v.distancia_km}
+                    </div>
+                </div>
+                <div class="route-info">
+                    <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
+                    <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
+                </div>
+                ${actions}
+            </div>
+        `;
+    }).join('');
+}
+
+function rejectViaje(id) {
+    activeViajes = activeViajes.filter(v => v.id !== id);
+    renderViajes(activeViajes);
+}
+
+async function acceptViaje(id, lat, lng) {
+    const conductor = document.getElementById('conductorName').value || 'Un Conductor';
+    const otp = Math.floor(100 + Math.random() * 900); // 3 dígitos aleatorios
+
+    const { error } = await supabaseClient
+        .from('viajes')
+        .update({ estado: 'aceptado', conductor_id: conductor, codigo_otp: otp })
+        .eq('id', id);
+        
+    if (!error) {
+        loadViajes();
+        window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+    } else {
+        alert("¡Viaje ya tomado o error de conexión!");
+    }
+}
+
+async function verifyOtp(id) {
+    const input = document.getElementById(`otp-${id}`);
+    const code = input.value;
+    
+    // Obtener el viaje para verificar el código
+    const { data, error } = await supabaseClient
+        .from('viajes')
+        .select('codigo_otp')
+        .eq('id', id)
+        .single();
+        
+    if (data && data.codigo_otp == code) {
+        await supabaseClient.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
+        loadViajes();
+    } else {
+        alert("Código incorrecto. Pídele al cliente el código de 3 números.");
+    }
+}
+
+async function finishViaje(id) {
+    if(confirm("¿Estás seguro de finalizar el viaje?")) {
+        await supabaseClient.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
+        loadViajes();
+    }
+}
+
+// 📡 CANALES EN TIEMPO REAL
+supabaseClient.channel('viajes-nuevos')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'viajes' }, payload => {
+        if(payload.new.estado === 'buscando') {
+            activeViajes.unshift(payload.new);
+            renderViajes(activeViajes);
+            
+            // Visual alert
+            const banner = document.getElementById('newRideBanner');
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 5000);
+
+            // Audio alert if radar enabled
+            if(radarEnabled) {
+                alertSound.play().catch(e => console.log("Sound error:", e));
+            }
+        }
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes' }, payload => {
+        // Recargar todo para asegurar estados correctos
+        loadViajes();
+    })
+    .subscribe();
+
+loadViajes();
+</script>
+</body>
+</html>
