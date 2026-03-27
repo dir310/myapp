@@ -32,8 +32,8 @@ const boundClearPoint = (type) => clearPoint(type, state, map);
 
 // ── Event Listeners ──
 
-// Sheet header toggle
-document.getElementById('bottomSheet').querySelector('.sheet-header').addEventListener('click', toggleSheet);
+// Sidebar tab toggle
+document.getElementById('sidebarHeader').addEventListener('click', toggleSheet);
 
 // Mode buttons
 document.getElementById('modeSearchBtn').addEventListener('click', () => setMode('search', state, map));
@@ -78,10 +78,39 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
 
   if (target.id === 'acceptRideBtn') {
     acceptRide(state, map);
-  } else if (target.textContent.includes('Cancelar')) {
+  } else if (target.id === 'cancelRideBtn' || target.id === 'cancelSearchBtn') {
     cancelRide(state, map);
   }
 });
 
+// Rating Stars interaction
+let selectedRating = 0;
+document.querySelectorAll('.star').forEach(star => {
+    star.addEventListener('click', () => {
+        selectedRating = parseInt(star.getAttribute('data-value'));
+        document.querySelectorAll('.star').forEach(s => {
+            s.classList.toggle('selected', parseInt(s.getAttribute('data-value')) <= selectedRating);
+        });
+    });
+});
+
+// Submit Rating
+document.getElementById('submitRatingBtn').addEventListener('click', async () => {
+    if(selectedRating === 0) { alert("Por favor selecciona una calificación"); return; }
+    
+    document.getElementById('ratingOverlay').innerHTML = `
+        <div class="rating-card">
+            <div style="font-size: 50px; margin-bottom: 15px;">🌟</div>
+            <h2 style="color: #30D158; font-weight: 800; margin-bottom: 10px;">¡Gracias!</h2>
+            <p style="color: rgba(255,255,255,.6); font-size: 14px;">Tu calificación nos ayuda a mejorar.</p>
+        </div>
+    `;
+    
+    if(state.currentRideId) {
+        await supabase.from('viajes').update({ calificacion: selectedRating }).eq('id', state.currentRideId);
+    }
+    
+    setTimeout(() => location.reload(), 2500);
+});
 // Suggestion dismiss on outside click
 setupSuggestionDismiss();

@@ -89,7 +89,11 @@ function listenForDriver(rideId, state) {
       (payload) => {
         console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
         if (payload.new.estado === 'aceptado') {
-          showDriverAssigned(payload.new.conductor_id, state);
+          showDriverAssigned(payload.new.conductor_id, payload.new.codigo_otp, state);
+        } else if (payload.new.estado === 'en_progreso') {
+          showTripStarted(state);
+        } else if (payload.new.estado === 'finalizado') {
+          showRatingScreen(state);
         }
       }
     )
@@ -101,13 +105,19 @@ function listenForDriver(rideId, state) {
     console.log('🔍 Verificando estado en base de datos (Backup Poller)...');
     const { data, error } = await supabase
       .from('viajes')
-      .select('estado, conductor_id')
+      .select('estado, conductor_id, codigo_otp')
       .eq('id', rideId)
       .single();
 
-    if (!error && data && data.estado === 'aceptado') {
-      console.log('✅ Conductor encontrado vía Poller!');
-      showDriverAssigned(data.conductor_id, state);
+    if (!error && data) {
+      if (data.estado === 'aceptado') {
+        console.log('✅ Conductor encontrado vía Poller!');
+        showDriverAssigned(data.conductor_id, data.codigo_otp, state);
+      } else if (data.estado === 'en_progreso') {
+        showTripStarted(state);
+      } else if (data.estado === 'finalizado') {
+        showRatingScreen(state);
+      }
     }
   }, 5000);
 }
@@ -115,27 +125,71 @@ function listenForDriver(rideId, state) {
 /**
  * Show the driver assigned UI.
  * @param {string} name - Driver name/identifier.
- * @param {object} state - Shared app state.
- */
-function showDriverAssigned(name, state) {
-  if (state.pollerInterval) clearInterval(state.pollerInterval);
-  state.pollerInterval = null;
+function showDriverAssigned(name, otp, state) {
+  if (state.pollerInterval && !otp) return; // Esperar a tener el OTP si es poller
+  if (state.pollerInterval) {
+    clearInterval(state.pollerInterval);
+    state.pollerInterval = null;
+  }
 
   const driverName = name || 'Un Conductor';
+  const otpHtml = otp
+    ? `
+    <div style="margin:15px 0;">
+      <span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Código de seguridad:</span>
+      <div class="otp-badge">${otp}</div>
+      <p style="font-size:11px; color:#FF6B00;">Dicta este código al conductor para empezar.</p>
+    </div>`
+    : '';
+
   document.getElementById('priceSection').innerHTML = `
-    <div style="text-align:center; padding: 15px 0;">
-      <div style="font-size:45px; margin-bottom: 12px; animation:bounce 2s infinite;">🚕</div>
-      <h3 style="color:#30D158; margin-bottom:10px; font-weight:800;">¡Conductor en camino!</h3>
-      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px; margin-bottom:15px;">
-        <span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
-        <span style="color:#fff; font-size:19px; font-weight:800;">${driverName}</span>
+    <div style="text-align:center; padding: 10px 0;">
+      <div style="font-size:35px; margin-bottom: 8px; animation:bounce 2s infinite;">Taxi</div>
+      <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
+      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
+        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
+        <span style="color:#fff; font-size:17px; font-weight:800;">${driverName}</span>
       </div>
-      <p style="color:rgba(255,255,255,.6); font-size:13px;">Ya vas a ser recogido en tu ubicación actual. Ten listo el pago.</p>
-      <button class="btn btn-primary" style="margin-top:20px; width:100%" id="newRideBtn">Nuevo Viaje</button>
+      ${otpHtml}
+      <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor llegue, verás el mapa en tiempo real.</p>
+      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar</button>
     </div>
   `;
 
-  document.getElementById('newRideBtn').addEventListener('click', () => location.reload());
+  document.getElementById('cancelRideBtnAction').addEventListener('click', () => cancelRide(state, map));
+}
+
+/**
+ * Show the trip in progress UI.
+ * @param {object} state - Shared app state.
+ */
+function showTripStarted(state) {
+  if (state.pollerInterval) {
+    clearInterval(state.pollerInterval);
+    state.pollerInterval = null;
+  }
+  document.getElementById('priceSection').innerHTML = `
+    <div style="text-align:center; padding: 15px 0;">
+      <div style="font-size:40px; margin-bottom: 12px;">✨</div>
+      <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
+      <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
+      <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2);">
+        <span style="color:#FF6B00; font-weight:bold;">Estado:</span> En camino...
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Show the rating screen.
+ * @param {object} state - Shared app state.
+ */
+function showRatingScreen(state) {
+  if (state.pollerInterval) {
+    clearInterval(state.pollerInterval);
+    state.pollerInterval = null;
+  }
+  document.getElementById('ratingOverlay').style.display = 'flex';
 }
 
 /**

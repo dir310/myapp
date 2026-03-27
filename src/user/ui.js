@@ -5,18 +5,18 @@
 let sheetMinimized = false;
 
 /**
- * Toggle bottom sheet minimize/expand state.
+ * Toggle sidebar minimize/expand state.
  */
 export function toggleSheet() {
-  const sheet = document.getElementById('bottomSheet');
+  const sheet = document.getElementById('sidebar');
   sheetMinimized = !sheetMinimized;
 
   if (sheetMinimized) {
     sheet.classList.add('minimized');
-    document.querySelector('.leaflet-control-zoom').style.marginBottom = '60px';
+    document.querySelector('.leaflet-control-zoom').style.marginLeft = '70px';
   } else {
     sheet.classList.remove('minimized');
-    document.querySelector('.leaflet-control-zoom').style.marginBottom = '270px';
+    document.querySelector('.leaflet-control-zoom').style.marginLeft = '360px';
   }
 }
 

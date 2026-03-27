@@ -4,59 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Conductor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0F0F11; color: #fff; padding: 20px; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); }
-        .title { font-size: 24px; font-weight: 800; color: #FF6B00; }
-        
-        /* Radar status */
-        .status-container { margin-bottom: 15px; }
-        .radar-toggle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 800; font-family: 'Inter'; cursor: pointer; transition: 0.3s; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .radar-off { background: rgba(255,255,255,.1); color: #fff; }
-        .radar-on { background: rgba(48,209,88,.2); color: #30D158; border: 1px solid #30D158; }
-        .status-dot { width: 10px; height: 10px; background: #30D158; border-radius: 50%; box-shadow: 0 0 8px #30D158; animation: pulse 2s infinite; display: none; }
-        .radar-on .status-dot { display: block; }
-
-        .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,.4); }
-        
-        .driver-name { width: 100%; padding: 14px; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: 12px; color: #fff; margin-bottom: 20px; font-size:16px; outline:none; transition: border .2s; }
-        .driver-name:focus { border-color: #FF6B00; }
-        
-        #viajesList { display: flex; flex-direction: column; gap: 15px; }
-
-        .card { background: rgba(28,28,30,.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.05); border-radius: 20px; padding: 22px; box-shadow: 0 15px 45px rgba(0,0,0,.4); animation: slideIn .4s cubic-bezier(.175, .885, .32, 1.275); position: relative; overflow: hidden; }
-        .card::before { content: ""; position: absolute; top:0; left:0; width:5px; height:100%; background: linear-gradient(to bottom, #FF6B00, #FF9500); }
-        
-        @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,.05); padding-bottom: 12px;}
-        .price { font-size: 28px; font-weight: 800; color: #30D158; }
-        .dist { color: rgba(255,255,255,.5); font-size: 14px; font-weight: 600; margin-top:8px;}
-        
-        .route-info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; font-size: 14px;}
-        .dot-text { display: flex; align-items: flex-start; gap: 10px; line-height:1.4; color:rgba(255,255,255,.8);}
-        .icon-o { color: #FF6B00; margin-top:2px; font-size:12px;}
-        .icon-d { color: #30D158; margin-top:2px; font-size:12px;}
-        
-        .actions-row { display: flex; gap: 10px; }
-        .btn { padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; transition: transform .2s; display:flex; justify-content:center; align-items:center; gap:8px;}
-        .btn-accept { background: linear-gradient(135deg, #FF6B00, #FF9500); box-shadow: 0 4px 15px rgba(255,107,0,.4); flex: 1; }
-        .btn-reject { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.1); width: 100px; }
-        
-        .btn:active { transform: scale(0.96); }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        /* Fancy Notification */
-        .new-ride-banner { position: fixed; top: -100px; left: 0; right: 0; background: #FF6B00; color: #fff; padding: 15px; text-align: center; font-weight: 800; z-index: 10000; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .new-ride-banner.show { top: 0; }
-
-        .otp-input { width: 100%; padding: 12px; background: rgba(255,255,255,.05); border: 1px solid #FF6B00; border-radius: 10px; color: #fff; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; margin-bottom: 10px; outline: none; }
-        .otp-input:focus { background: rgba(255,107,0,.1); }
-        .btn-finish { background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%; }
-    </style>
 </head>
 <body>
 

@@ -70,8 +70,32 @@ export function renderViajes(viajes, handlers) {
   }
 
   container.innerHTML = viajes
-    .map(
-      (v) => `
+    .map((v) => {
+      let actions = '';
+      if (v.estado === 'buscando') {
+        actions = `
+          <div class="actions-row">
+            <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ Ocultar</button>
+            <button class="btn btn-accept" data-action="accept" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">✅ ACEPTAR</button>
+          </div>`;
+      } else if (v.estado === 'aceptado') {
+        actions = `
+          <div style="background: rgba(255,107,0,.1); border: 1px dashed #FF6B00; padding: 15px; border-radius: 12px; margin-top: 10px;">
+            <p style="font-size: 11px; margin-bottom: 8px; color: #FF6B00; font-weight: 800; text-transform: uppercase;">Introduce código del cliente:</p>
+            <input type="number" id="otp-${v.id}" class="otp-input" placeholder="000" maxlength="3" style="width: 100%; padding: 12px; background: rgba(255,255,255,.05); border: 1px solid #FF6B00; border-radius: 10px; color: #fff; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; margin-bottom: 10px; outline: none;">
+            <button class="btn btn-accept" style="width:100%" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
+          </div>
+          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Waze</button>`;
+      } else if (v.estado === 'en_progreso') {
+        actions = `
+          <div style="text-align:center; padding: 10px 0;">
+            <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
+            <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino</button>
+          </div>`;
+      }
+
+      return `
     <div class="card" id="viaje-${v.id}">
       <div class="card-header">
         <div>
@@ -87,13 +111,10 @@ export function renderViajes(viajes, handlers) {
         <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
         <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
       </div>
-      <div class="actions-row">
-        <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ Ocultar</button>
-        <button class="btn btn-accept" data-action="accept" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">✅ ACEPTAR</button>
-      </div>
+      ${actions}
     </div>
-  `
-    )
+  `;
+    })
     .join('');
 
   // Attach event listeners via delegation
@@ -104,6 +125,20 @@ export function renderViajes(viajes, handlers) {
   container.querySelectorAll('[data-action="accept"]').forEach((btn) => {
     btn.addEventListener('click', () =>
       handlers.onAccept(btn.dataset.id, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng))
+    );
+  });
+
+  container.querySelectorAll('[data-action="verify"]').forEach((btn) => {
+    btn.addEventListener('click', () => handlers.onVerify(btn.dataset.id));
+  });
+
+  container.querySelectorAll('[data-action="finish"]').forEach((btn) => {
+    btn.addEventListener('click', () => handlers.onFinish(btn.dataset.id));
+  });
+
+  container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
     );
   });
 }

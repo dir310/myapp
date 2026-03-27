@@ -5,112 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa La Calera | Cundinamarca</title>
     <meta name="description" content="Planifica tu ruta en La Calera, Cundinamarca. Mapa satelital interactivo con navegación por Waze.">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Inter', sans-serif; background: #111; color: #fff; height: 100vh; overflow: hidden; }
-        #map { position: fixed; inset: 0; z-index: 1; }
-        .leaflet-routing-container { display: none !important; }
-        .leaflet-control-zoom { border: none !important; margin-left: 360px !important; margin-bottom: 30px !important; transition: margin-left .4s; }
-        .leaflet-control-zoom a { background: rgba(0,0,0,.72) !important; color: #fff !important; border: none !important; border-radius: 10px !important; margin-bottom: 2px !important; width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 18px !important; backdrop-filter: blur(8px); }
-        .leaflet-control-zoom a:hover { background: rgba(255,107,0,.8) !important; }
-
-        .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(180deg, rgba(0,0,0,.85) 0%, transparent 100%); pointer-events: none; }
-        .topbar-brand { display: flex; align-items: center; gap: 10px; pointer-events: all; }
-        .brand-dot { width: 38px; height: 38px; background: linear-gradient(135deg, #FF6B00, #FF9500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 15px rgba(255,107,0,.45); }
-        .brand-name { font-size: 16px; font-weight: 800; letter-spacing: -.3px; }
-        .brand-name span { color: #FF6B00; }
-        .brand-sub { font-size: 10px; color: rgba(255,255,255,.5); font-weight: 400; }
-
-        .sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: 340px; z-index: 999; background: rgba(28,28,30,0.85); backdrop-filter: blur(25px); border-radius: 0 32px 32px 0; border-right: 1px solid rgba(255,107,0,0.15); box-shadow: 12px 0 50px rgba(0,0,0,.7); transition: transform .6s cubic-bezier(.16,1,.3,1); display: flex; flex-direction: column; overflow: visible; }
-        .sidebar.minimized { transform: translateX(calc(-100% + 50px)); }
-        
-        .sheet-header { width: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; bottom: 0; right: -1px; background: linear-gradient(90deg, transparent, rgba(255,107,0,.08)); border-radius: 0 32px 32px 0; border-left: 1px solid rgba(255,255,255,.03); }
-        .sheet-handle { width: 5px; height: 50px; background: rgba(255,255,255,.2); border-radius: 10px; transition: all .3s cubic-bezier(.175, .885, .32, 1.275); }
-        .sheet-header:hover .sheet-handle { background: #FF6B00; height: 65px; box-shadow: 0 0 15px rgba(255,107,0,.5); }
-        .sheet-title-mini { position: absolute; transform: rotate(-90deg); white-space: nowrap; font-size: 13px; font-weight: 700; color: #FF6B00; opacity: 0; transition: opacity .3s; pointer-events: none; text-transform: uppercase; letter-spacing: 2px; }
-        .sidebar.minimized .sheet-title-mini { opacity: 1; }
-
-        .sheet-content { flex: 1; padding: 30px 22px; margin-right: 50px; opacity: 1; transition: opacity .4s .2s; overflow-y: auto; scrollbar-width: none; }
-        .sheet-content::-webkit-scrollbar { display: none; }
-        .sidebar.minimized .sheet-content { opacity: 0; pointer-events: none; transition: opacity .15s; }
-
-        .mode-toggle { display: flex; background: rgba(255,255,255,.07); border-radius: 12px; padding: 3px; gap: 3px; margin-bottom: 12px; }
-        .mode-btn { flex: 1; padding: 7px; border: none; border-radius: 10px; font-size: 12px; font-family: 'Inter', sans-serif; cursor: pointer; background: transparent; color: rgba(255,255,255,.35); font-weight: 600; transition: all .2s; }
-        .mode-btn.active { background: rgba(255,107,0,.18); color: #FF6B00; }
-
-        .route-row { display: flex; align-items: stretch; gap: 10px; margin-bottom: 12px; }
-        .route-dots { display: flex; flex-direction: column; align-items: center; padding-top: 14px; gap: 3px; }
-        .dot-a { width: 10px; height: 10px; background: #FF6B00; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); flex-shrink: 0; }
-        .dot-line { width: 2px; flex: 1; min-height: 14px; background: repeating-linear-gradient(to bottom, rgba(255,255,255,.25) 0, rgba(255,255,255,.25) 4px, transparent 4px, transparent 8px); }
-        .dot-b { width: 10px; height: 10px; background: #30D158; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); flex-shrink: 0; }
-        .inputs-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-
-        .input-wrapper { position: relative; }
-        .route-input { width: 100%; padding: 10px 32px 10px 13px; background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.08); border-radius: 12px; color: #fff; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; transition: all .22s; }
-        .route-input::placeholder { color: rgba(255,255,255,.3); }
-        .route-input:focus { border-color: rgba(255,107,0,.5); background: rgba(255,107,0,.06); box-shadow: 0 0 0 3px rgba(255,107,0,.12); }
-        .clear-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,.25); cursor: pointer; font-size: 13px; transition: color .2s; }
-        .clear-btn:hover { color: rgba(255,255,255,.65); }
-
-        .suggestions { position: absolute; bottom: calc(100% + 4px); left: 0; right: 0; background: #2C2C2E; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; overflow: hidden; z-index: 10000; box-shadow: 0 -10px 30px rgba(0,0,0,.5); display: none; }
-        .suggestion-item { padding: 10px 13px; font-size: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.04); color: rgba(255,255,255,.72); display: flex; align-items: center; gap: 8px; transition: background .18s; }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover { background: rgba(255,107,0,.1); color: #fff; }
-        .sugg-icon { color: #FF6B00; font-size: 13px; flex-shrink: 0; }
-        
-        .curr-loc { color: #30D158; font-weight: 500; }
-        .curr-loc:hover { background: rgba(48,209,88,.15); }
-
-        .click-hint { font-size: 11px; color: rgba(255,255,255,.32); text-align: center; padding: 6px 0; display: none; }
-
-        .actions { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 13px 10px; border: none; border-radius: 13px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .22s; display: flex; align-items: center; justify-content: center; gap: 7px; }
-        .btn-primary { background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; box-shadow: 0 4px 16px rgba(255,107,0,.35); }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,107,0,.45); }
-        .btn:disabled { opacity: .3; cursor: not-allowed; transform: none !important; }
-
-        .price-box { background: rgba(48,209,88,.08); border: 1px solid rgba(48,209,88,.2); border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 12px; }
-        .price-title { font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .price-value { font-size: 28px; font-weight: 800; color: #30D158; }
-
-        .status-bar { margin-top: 10px; padding: 8px 12px; background: rgba(255,107,0,.1); border: 1px solid rgba(255,107,0,.2); border-radius: 10px; font-size: 11px; color: rgba(255,160,60,.95); display: none; line-height: 1.4; text-align:center; }
-        .status-bar.error { background: rgba(255,69,58,.08); border-color: rgba(255,69,58,.2); color: rgba(255,100,90,.95); }
-
-        .route-pill { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 998; background: rgba(0,0,0,.85); backdrop-filter: blur(14px); border: 1px solid rgba(255,107,0,.3); border-radius: 50px; padding: 9px 20px; display: none; gap: 16px; align-items: center; box-shadow: 0 8px 25px rgba(0,0,0,.5); }
-        .pill-stat { display: flex; align-items: center; gap: 6px; }
-        .pill-val { font-weight: 800; color: #FF6B00; font-size: 14px; }
-        .pill-lbl { color: rgba(255,255,255,.4); font-size: 11px; }
-        .pill-sep { width: 1px; height: 18px; background: rgba(255,255,255,.15); }
-        .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Estilos de Calificación */
-        .rating-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center; }
-        .rating-card { background: #1C1C1E; border: 1px solid rgba(255,107,0,.3); border-radius: 24px; padding: 30px; max-width: 340px; width: 100%; box-shadow: 0 15px 50px rgba(0,0,0,.6); }
-        .stars { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
-        .star { font-size: 32px; cursor: pointer; color: rgba(255,255,255,.1); transition: color .2s, transform .2s; }
-        .star.selected { color: #FF6B00; transform: scale(1.2); }
-        .star:hover { transform: scale(1.3); }
-
-        .otp-badge { background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; padding: 8px 18px; border-radius: 12px; font-weight: 900; font-size: 28px; letter-spacing: 4px; margin: 15px 0; display: inline-block; box-shadow: 0 8px 25px rgba(255,107,0,.4); text-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulseOtp 2s infinite; }
-        @keyframes pulseOtp { 0% { transform: scale(1); box-shadow: 0 8px 25px rgba(255,107,0,.4); } 50% { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255,107,0,.6); } 100% { transform: scale(1); box-shadow: 0 8px 25px rgba(255,107,0,.4); } }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<!-- ── Map ── -->
 <div id="map"></div>
-<div class="topbar"><div class="topbar-brand"><div class="brand-dot">🗺️</div><div><div class="brand-name">La <span>Calera</span></div><div class="brand-sub">Cundinamarca, Colombia</div></div></div></div>
-<div class="route-pill" id="routePill"><div class="pill-stat"><span>📏</span><span class="pill-val" id="routeDistance">-</span><span class="pill-lbl">km</span></div><div class="pill-sep"></div><div class="pill-stat"><span>⏱️</span><span class="pill-val" id="routeTime">-</span><span class="pill-lbl">min</span></div></div>
 
+<!-- ── Top Bar ── -->
+<div class="topbar">
+    <div class="topbar-brand" id="openSidebarLink">
+        <div class="brand-dot">🗺️</div>
+        <div>
+            <div class="brand-name">La <span>Calera</span></div>
+            <div class="brand-sub">Cundinamarca, Colombia</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Route Info Pill ── -->
+<div class="route-pill" id="routePill">
+    <div class="pill-stat">
+        <span>📏</span><span class="pill-val" id="routeDistance">-</span><span class="pill-lbl">km</span>
+    </div>
+    <div class="pill-sep"></div>
+    <div class="pill-stat">
+        <span>⏱️</span><span class="pill-val" id="routeTime">-</span><span class="pill-lbl">min</span>
+    </div>
+</div>
+
+<!-- ── Sidebar ── -->
 <div class="sidebar" id="sidebar">
-    <div class="sheet-header" id="sidebarHeader" title="Cerrar / Abrir"><div class="sheet-handle"></div><div class="sheet-title-mini">Menú Principal ➡️</div></div>
+    <div class="sheet-header" id="sidebarHeader" title="Cerrar / Abrir">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title-mini">Menú Principal ➡️</div>
+    </div>
+    
     <div class="sheet-content">
-        <div class="mode-toggle"><button class="mode-btn active" id="modeSearchBtn">🔍 Buscar lugar</button><button class="mode-btn" id="modeClickBtn">📍 Tocar mapa</button></div>
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="modeSearchBtn">🔍 Buscar lugar</button>
+            <button class="mode-btn" id="modeClickBtn">📍 Tocar mapa</button>
+        </div>
+
+        <!-- Route Inputs -->
         <div class="route-row">
-            <div class="route-dots"><div class="dot-a"></div><div class="dot-line"></div><div class="dot-b"></div></div>
+            <div class="route-dots">
+                <div class="dot-a"></div>
+                <div class="dot-line"></div>
+                <div class="dot-b"></div>
+            </div>
             <div class="inputs-col">
                 <div class="input-wrapper">
                     <input type="text" id="startInput" class="route-input" placeholder="¿Dónde estás?" autocomplete="off">
@@ -124,14 +68,15 @@
                 </div>
             </div>
         </div>
+
         <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
 
-        <!-- Bloque Inicial (Pidiendo puntos) -->
+        <!-- Initial Actions -->
         <div id="mainActions" class="actions">
             <button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>
         </div>
 
-        <!-- Bloque Tarifa (Aparece cuando hay ruta) -->
+        <!-- Price Section (hidden initially) -->
         <div id="priceSection" style="display:none;">
             <div class="price-box">
                 <div class="price-title">Tarifa Estimada ($2.000 COP x km)</div>
@@ -139,9 +84,7 @@
             </div>
             <div class="actions">
                 <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); flex:0.4;" id="cancelRideBtn">Cancelar</button>
-                <button class="btn btn-primary" id="acceptRideBtn">
-                    🚗 Pedir Viaje
-                </button>
+                <button class="btn btn-primary" id="acceptRideBtn">🚗 Pedir Viaje</button>
             </div>
         </div>
 
@@ -162,168 +105,10 @@
             <span class="star" data-value="4">★</span>
             <span class="star" data-value="5">★</span>
         </div>
-    const originName = document.getElementById('startInput').value || 'Punto de Inicio';
-    const destName = document.getElementById('endInput').value || 'Destino';
-    const priceStr = document.getElementById('priceValue').textContent.replace(/[^0-9]/g, '');
-    const price = parseInt(priceStr, 10);
-    const distText = document.getElementById('routeDistance').textContent + ' km';
+        <button class="btn btn-primary" style="width: 100%" id="submitRatingBtn">Enviar Calificación</button>
+    </div>
+</div>
 
-    const btn = document.getElementById('acceptRideBtn');
-    btn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo viaje...';
-    btn.disabled = true;
-
-    try {
-        const { data, error } = await supabaseClient.from('viajes').insert([
-            { 
-                origen_nombre: originName,
-                origen_lat: startLatLng.lat,
-                origen_lng: startLatLng.lng,
-                destino_nombre: destName,
-                destino_lat: endLatLng.lat,
-                destino_lng: endLatLng.lng,
-                tarifa: price,
-                distancia_km: distText,
-                estado: 'buscando'
-            }
-        ]).select();
-
-        if (error) throw error;
-        currentRideId = data[0].id;
-        
-        // Ventana de Cargando
-        document.getElementById('priceSection').innerHTML = `
-            <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
-                <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
-                <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
-                <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
-                <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${price.toLocaleString('es-CO')}</div>
-            </div>
-            <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" onclick="cancelRide()">Cancelar Solicitud</button>
-        `;
-
-        // 📡 ACTIVAR RADAR DUAL (Websocket + Poller de respaldo)
-        listenForDriver(currentRideId);
-
-    } catch (err) {
-        showStatus('❌ Error al pedir viaje. Intenta de nuevo.', true);
-        btn.innerHTML = '🚗 Pedir Viaje';
-        btn.disabled = false;
-        console.error(err);
-    }
-}
-
-function listenForDriver(rideId) {
-    console.log("📡 Iniciando radar para viaje:", rideId);
-
-    // 1. ESTRATEGIA TIEMPO REAL (Websocket)
-    supabaseClient.channel('ride-watch-' + rideId)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'viajes', filter: `id=eq.${rideId}` }, payload => {
-          console.log("⚡ Cambio detectado por Websocket:", payload.new.estado);
-          if(payload.new.estado === 'aceptado') {
-              showDriverAssigned(payload.new.conductor_id, payload.new.codigo_otp);
-          } else if(payload.new.estado === 'en_progreso') {
-              showTripStarted();
-          } else if(payload.new.estado === 'finalizado') {
-              showRatingScreen();
-          }
-      }).subscribe();
-
-    // 2. ESTRATEGIA DE RESPALDO (Polling cada 5 segundos)
-    if(pollerInterval) clearInterval(pollerInterval);
-    pollerInterval = setInterval(async () => {
-        console.log("🔍 Verificando estado en base de datos (Backup Poller)...");
-        const { data, error } = await supabaseClient
-            .from('viajes')
-            .select('estado, conductor_id')
-            .eq('id', rideId)
-            .single();
-            
-        if (!error && data) {
-            if (data.estado === 'aceptado') {
-                console.log("✅ Conductor encontrado vía Poller!");
-                showDriverAssigned(data.conductor_id, data.codigo_otp);
-            } else if (data.estado === 'en_progreso') {
-                showTripStarted();
-            } else if (data.estado === 'finalizado') {
-                showRatingScreen();
-            }
-        }
-    }, 5000);
-}
-
-function showDriverAssigned(name, otp) {
-    if(pollerInterval && !otp) return; // Esperar a tener el OTP si es poller
-    if(pollerInterval) { clearInterval(pollerInterval); pollerInterval = null; }
-
-    const driverName = name || 'Un Conductor';
-    const otpHtml = otp ? `<div style="margin:15px 0;"><span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Código de seguridad:</span><div class="otp-badge">${otp}</div><p style="font-size:11px; color:#FF6B00;">Dicta este código al conductor para empezar.</p></div>` : '';
-
-    document.getElementById('priceSection').innerHTML = `
-        <div style="text-align:center; padding: 10px 0;">
-            <div style="font-size:35px; margin-bottom: 8px; animation:bounce 2s infinite;">🚕</div>
-            <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
-            <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
-                <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
-                <span style="color:#fff; font-size:17px; font-weight:800;">${driverName}</span>
-            </div>
-            ${otpHtml}
-            <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor llegue, verás el mapa en tiempo real.</p>
-            <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" onclick="cancelRide()">Cancelar</button>
-        </div>
-    `;
-}
-
-function showTripStarted() {
-    if(pollerInterval) { clearInterval(pollerInterval); pollerInterval = null; }
-    document.getElementById('priceSection').innerHTML = `
-        <div style="text-align:center; padding: 15px 0;">
-            <div style="font-size:40px; margin-bottom: 12px;">✨</div>
-            <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
-            <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
-            <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2);">
-                <span style="color:#FF6B00; font-weight:bold;">Estado:</span> En camino...
-            </div>
-        </div>
-    `;
-}
-
-function showRatingScreen() {
-    if(pollerInterval) { clearInterval(pollerInterval); pollerInterval = null; }
-    document.getElementById('ratingOverlay').style.display = 'flex';
-}
-
-let selectedRating = 0;
-document.querySelectorAll('.star').forEach(star => {
-    star.addEventListener('click', () => {
-        selectedRating = parseInt(star.getAttribute('data-value'));
-        document.querySelectorAll('.star').forEach(s => {
-            s.classList.toggle('selected', parseInt(s.getAttribute('data-value')) <= selectedRating);
-        });
-    });
-});
-
-async function submitRating() {
-    if(selectedRating === 0) { alert("Por favor selecciona una calificación"); return; }
-    
-    document.getElementById('ratingOverlay').innerHTML = `
-        <div class="rating-card">
-            <div style="font-size: 50px; margin-bottom: 15px;">🌟</div>
-            <h2 style="color: #30D158; font-weight: 800; margin-bottom: 10px;">¡Gracias!</h2>
-            <p style="color: rgba(255,255,255,.6); font-size: 14px;">Tu calificación nos ayuda a mejorar.</p>
-        </div>
-    `;
-    
-    if(currentRideId) {
-        await supabaseClient.from('viajes').update({ calificacion: selectedRating }).eq('id', currentRideId);
-    }
-    
-    setTimeout(() => location.reload(), 2500);
-}
-
-function showStatus(msg, err) { const el = document.getElementById('statusBar'); if(!msg){el.style.display='none';return;} el.textContent = msg; el.className = 'status-bar' + (err ? ' error' : ''); el.style.display = 'block'; }
-</script>
-=======
 <script type="module" src="/src/user/main.js"></script>
->>>>>>> 230f1165cdd8860f2d787713f2f7cf17d6ee7157
 </body>
 </html>

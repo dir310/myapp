@@ -13,6 +13,8 @@ function getHandlers() {
   return {
     onAccept: acceptViaje,
     onReject: rejectViaje,
+    onVerify: verifyOtp,
+    onFinish: finishViaje,
   };
 }
 
@@ -23,7 +25,7 @@ export async function loadViajes() {
   const { data, error } = await supabase
     .from('viajes')
     .select('*')
-    .eq('estado', 'buscando')
+    .or('estado.eq.buscando,estado.eq.aceptado,estado.eq.en_progreso')
     .order('created_at', { ascending: false });
 
   if (!error && data) {
@@ -81,18 +83,52 @@ function rejectViaje(id) {
  * @param {number} lng - Origin longitude.
  */
 async function acceptViaje(id, lat, lng) {
-  const conductor = document.getElementById('conductorName').value || 'Un Conductor';
+  const conductorName = document.getElementById('conductorName').value || 'Un Conductor';
+  const otp = Math.floor(100 + Math.random() * 900); // 3 dígitos aleatorios
 
   const { error } = await supabase
     .from('viajes')
-    .update({ estado: 'aceptado', conductor_id: conductor })
+    .update({ estado: 'aceptado', conductor_id: conductorName, codigo_otp: otp })
     .eq('id', id);
 
   if (!error) {
-    activeViajes = activeViajes.filter((v) => v.id !== id);
-    renderViajes(activeViajes, getHandlers());
+    loadViajes();
     window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
   } else {
     alert('¡Viaje ya tomado o error de conexión!');
+  }
+}
+
+/**
+ * Verify OTP entered by conductor.
+ * @param {string} id - Ride UUID.
+ */
+async function verifyOtp(id) {
+  const input = document.getElementById(`otp-${id}`);
+  const code = input.value;
+
+  const { data, error } = await supabase
+    .from('viajes')
+    .select('codigo_otp')
+    .eq('id', id)
+    .single();
+
+  if (data && data.codigo_otp == code) {
+    await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
+    loadViajes();
+  } else {
+    alert('Código incorrecto. Pídele al cliente el código de 3 números.');
+    console.error(error);
+  }
+}
+
+/**
+ * Finish a trip in progress.
+ * @param {string} id - Ride UUID.
+ */
+async function finishViaje(id) {
+  if (confirm('¿Estás seguro de finalizar el viaje?')) {
+    await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
+    loadViajes();
   }
 }
