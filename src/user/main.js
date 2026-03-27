@@ -1,0 +1,87 @@
+/**
+ * User page entry point — wires all modules together.
+ */
+import '../styles/common.css';
+import '../styles/user.css';
+
+import { createMap, LA_CALERA } from '../utils/map.js';
+import { toggleSheet, setMode, showStatus, isSheetMinimized } from './ui.js';
+import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.js';
+import { placeMarker, clearPoint, checkRoute } from './routing.js';
+import { acceptRide, cancelRide } from './ride.js';
+
+// ── Shared State ──
+const state = {
+  startLatLng: null,
+  endLatLng: null,
+  startMarker: null,
+  endMarker: null,
+  routingControl: null,
+  mode: 'search',
+  nextClick: 'start',
+  currentRideId: null,
+  pollerInterval: null,
+};
+
+// ── Initialize Map ──
+const map = createMap('map', LA_CALERA, 13);
+
+// ── Bound Helpers (curried with state & map) ──
+const boundPlaceMarker = (type, lat, lng, name) => placeMarker(type, lat, lng, name, state, map);
+const boundClearPoint = (type) => clearPoint(type, state, map);
+
+// ── Event Listeners ──
+
+// Sheet header toggle
+document.getElementById('bottomSheet').querySelector('.sheet-header').addEventListener('click', toggleSheet);
+
+// Mode buttons
+document.getElementById('modeSearchBtn').addEventListener('click', () => setMode('search', state, map));
+document.getElementById('modeClickBtn').addEventListener('click', () => setMode('click', state, map));
+
+// Search inputs
+document.getElementById('startInput').addEventListener('input', (e) => onInput(e.target, 'start', boundPlaceMarker));
+document.getElementById('startInput').addEventListener('focus', () => showLocationSugg(boundPlaceMarker));
+document.getElementById('endInput').addEventListener('input', (e) => onInput(e.target, 'end', boundPlaceMarker));
+
+// Clear buttons
+document.querySelectorAll('.clear-btn').forEach((btn, i) => {
+  const type = i === 0 ? 'start' : 'end';
+  btn.addEventListener('click', () => boundClearPoint(type));
+});
+
+// Map click (for 'click' mode)
+map.on('click', (e) => {
+  if (state.mode !== 'click') {
+    if (!isSheetMinimized()) toggleSheet();
+    return;
+  }
+
+  const { lat, lng } = e.latlng;
+  const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+  if (state.nextClick === 'start') {
+    boundPlaceMarker('start', lat, lng, name);
+    state.nextClick = 'end';
+    showStatus('📍 Inicio colocado.', false);
+  } else {
+    boundPlaceMarker('end', lat, lng, name);
+    state.nextClick = 'start';
+    showStatus('📍 Destino colocado. Calculando...', false);
+  }
+});
+
+// Price section buttons — delegated since they're rebuilt dynamically
+document.getElementById('priceSection').addEventListener('click', (e) => {
+  const target = e.target.closest('button');
+  if (!target) return;
+
+  if (target.id === 'acceptRideBtn') {
+    acceptRide(state, map);
+  } else if (target.textContent.includes('Cancelar')) {
+    cancelRide(state, map);
+  }
+});
+
+// Suggestion dismiss on outside click
+setupSuggestionDismiss();

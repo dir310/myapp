@@ -1,0 +1,227 @@
+/* ── Conductor Page ── */
+body {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ff6b00;
+}
+
+/* ── Radar Toggle ── */
+.status-container {
+  margin-bottom: 15px;
+}
+
+.radar-toggle {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.radar-off {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.radar-on {
+  background: rgba(48, 209, 88, 0.2);
+  color: #30d158;
+  border: 1px solid #30d158;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #30d158;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #30d158;
+  animation: pulse 2s infinite;
+  display: none;
+}
+
+.radar-on .status-dot {
+  display: block;
+}
+
+/* ── Driver Name Input ── */
+.driver-name {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.driver-name:focus {
+  border-color: #ff6b00;
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Ride Cards ── */
+#viajesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.card {
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #ff6b00;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 800;
+  color: #30d158;
+}
+
+.dist {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.route-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.dot-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.icon-o {
+  color: #ff6b00;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.icon-d {
+  color: #30d158;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+/* ── Action Buttons ── */
+.actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #ff6b00, #ff9500);
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+  flex: 1;
+}
+
+.btn-reject {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100px;
+}
+
+/* ── Notification Banner ── */
+.new-ride-banner {
+  position: fixed;
+  top: -100px;
+  left: 0;
+  right: 0;
+  background: #ff6b00;
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+  font-weight: 800;
+  z-index: 10000;
+  transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.new-ride-banner.show {
+  top: 0;
+}
+
+/* ── Animations ── */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}

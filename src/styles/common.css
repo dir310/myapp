@@ -1,0 +1,86 @@
+/* ── Design Tokens & Reset ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #111;
+  color: #fff;
+}
+
+/* ── Reusable Components ── */
+.btn {
+  padding: 13px 10px;
+  border: none;
+  border-radius: 13px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff6b00, #ff9500);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255, 107, 0, 0.35);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 107, 0, 0.45);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-bar {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 107, 0, 0.1);
+  border: 1px solid rgba(255, 107, 0, 0.2);
+  border-radius: 10px;
+  font-size: 11px;
+  color: rgba(255, 160, 60, 0.95);
+  display: none;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.status-bar.error {
+  background: rgba(255, 69, 58, 0.08);
+  border-color: rgba(255, 69, 58, 0.2);
+  color: rgba(255, 100, 90, 0.95);
+}
