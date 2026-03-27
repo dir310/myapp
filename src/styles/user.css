@@ -1,0 +1,412 @@
+/* ── Map ── */
+body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+#map {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ── Leaflet Overrides ── */
+.leaflet-routing-container {
+  display: none !important;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  margin-right: 12px !important;
+  margin-bottom: 270px !important;
+  transition: margin-bottom 0.4s;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(0, 0, 0, 0.72) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  margin-bottom: 2px !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(255, 107, 0, 0.8) !important;
+}
+
+/* ── Top Bar ── */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: all;
+}
+
+.brand-dot {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #ff6b00, #ff9500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.45);
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.brand-name span {
+  color: #ff6b00;
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+/* ── Bottom Sheet ── */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: #1c1c1e;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6);
+  transition: transform 0.4s cubic-bezier(0.32, 0, 0.67, 0);
+}
+
+.bottom-sheet.minimized {
+  transform: translateY(calc(100% - 46px));
+}
+
+.sheet-header {
+  padding: 16px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.sheet-handle {
+  width: 44px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.sheet-header:hover .sheet-handle {
+  background: rgba(255, 107, 0, 0.8);
+}
+
+.sheet-title-mini {
+  position: absolute;
+  right: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ff6b00;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.bottom-sheet.minimized .sheet-title-mini {
+  opacity: 1;
+}
+
+.sheet-content {
+  padding: 0 18px 24px;
+  opacity: 1;
+  transition: opacity 0.3s 0.1s;
+}
+
+.bottom-sheet.minimized .sheet-content {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+
+/* ── Mode Toggle ── */
+.mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 7px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  background: rgba(255, 107, 0, 0.18);
+  color: #ff6b00;
+}
+
+/* ── Route Inputs ── */
+.route-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.route-dots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  gap: 3px;
+}
+
+.dot-a {
+  width: 10px;
+  height: 10px;
+  background: #ff6b00;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.dot-line {
+  width: 2px;
+  flex: 1;
+  min-height: 14px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.25) 0,
+    rgba(255, 255, 255, 0.25) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.dot-b {
+  width: 10px;
+  height: 10px;
+  background: #30d158;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.inputs-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.route-input {
+  width: 100%;
+  padding: 10px 32px 10px 13px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: all 0.22s;
+}
+
+.route-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.route-input:focus {
+  border-color: rgba(255, 107, 0, 0.5);
+  background: rgba(255, 107, 0, 0.06);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Suggestions Dropdown ── */
+.suggestions {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #2c2c2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  overflow: hidden;
+  z-index: 10000;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  display: none;
+}
+
+.suggestion-item {
+  padding: 10px 13px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.18s;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 107, 0, 0.1);
+  color: #fff;
+}
+
+.sugg-icon {
+  color: #ff6b00;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.curr-loc {
+  color: #30d158;
+  font-weight: 500;
+}
+
+.curr-loc:hover {
+  background: rgba(48, 209, 88, 0.15);
+}
+
+.click-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.32);
+  text-align: center;
+  padding: 6px 0;
+  display: none;
+}
+
+/* ── Action Buttons ── */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Price Box ── */
+.price-box {
+  background: rgba(48, 209, 88, 0.08);
+  border: 1px solid rgba(48, 209, 88, 0.2);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.price-title {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.price-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #30d158;
+}
+
+/* ── Route Info Pill ── */
+.route-pill {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  border-radius: 50px;
+  padding: 9px 20px;
+  display: none;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.pill-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill-val {
+  font-weight: 800;
+  color: #ff6b00;
+  font-size: 14px;
+}
+
+.pill-lbl {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+}
+
+.pill-sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+}
