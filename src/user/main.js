@@ -114,3 +114,8 @@ document.getElementById('submitRatingBtn').addEventListener('click', async () =>
 });
 // Suggestion dismiss on outside click
 setupSuggestionDismiss();
+
+// ── Register Service Worker (PWA) ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
+}

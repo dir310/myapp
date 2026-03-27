@@ -13,3 +13,8 @@ document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 // ── Initialize ──
 loadViajes();
 setupRealtimeChannel();
+
+// ── Register Service Worker (PWA) ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
+}
