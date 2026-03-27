@@ -58,10 +58,20 @@ export function setupRealtimeChannel() {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'viajes' },
       (payload) => {
-        if (payload.new.estado !== 'buscando') {
-          activeViajes = activeViajes.filter((v) => v.id !== payload.new.id);
-          renderViajes(activeViajes, getHandlers());
+        const index = activeViajes.findIndex((v) => v.id === payload.new.id);
+        const validStates = ['buscando', 'aceptado', 'en_progreso'];
+
+        if (validStates.includes(payload.new.estado)) {
+          if (index !== -1) {
+            activeViajes[index] = payload.new;
+          } else {
+            activeViajes.unshift(payload.new);
+          }
+        } else {
+          // Remove if finished or cancelled
+          if (index !== -1) activeViajes.splice(index, 1);
         }
+        renderViajes(activeViajes, getHandlers());
       }
     )
     .subscribe();

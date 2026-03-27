@@ -161,7 +161,7 @@ body {
 
 .sheet-content {
   flex: 1;
-  padding: 30px 22px;
+  padding: 85px 22px 30px;
   margin-right: 50px;
   opacity: 1;
   transition: opacity 0.4s 0.2s;
@@ -329,7 +329,7 @@ body {
 /* ── Suggestions Dropdown ── */
 .suggestions {
   position: absolute;
-  bottom: calc(100% + 4px);
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   background: #2c2c2e;
@@ -337,7 +337,7 @@ body {
   border-radius: 13px;
   overflow: hidden;
   z-index: 10000;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   display: none;
 }
 

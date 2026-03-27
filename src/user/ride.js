@@ -125,8 +125,10 @@ function listenForDriver(rideId, state) {
 /**
  * Show the driver assigned UI.
  * @param {string} name - Driver name/identifier.
+ * @param {number} otp - Security code.
+ * @param {object} state - Shared app state.
+ */
 function showDriverAssigned(name, otp, state) {
-  if (state.pollerInterval && !otp) return; // Esperar a tener el OTP si es poller
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
