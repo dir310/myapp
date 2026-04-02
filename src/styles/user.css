@@ -1,14 +1,18 @@
-body {
-  height: 100dvh;
-  min-height: -webkit-fill-available;
+html, body {
+  height: 100%;
   overflow: hidden;
+}
+
+body {
+  /* Fallback para iPhones con Safari */
+  min-height: -webkit-fill-available;
 }
 
 #map {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #000;
+  background: #111;
 }
 
 /* ── Leaflet Overrides ── */
@@ -117,8 +121,10 @@ body {
   width: 50px;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -126,37 +132,39 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255, 107, 0, 0.08));
   border-radius: 0 32px 32px 0;
   border-left: none;
+  padding: 20px 0;
 }
 
 .sheet-handle {
   width: 6px;
-  height: 50px;
+  height: 40px;
   background: rgba(255, 107, 0, 0.4);
   border-radius: 10px;
+  flex-shrink: 0;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .sheet-header:hover .sheet-handle,
 .sidebar.minimized .sheet-handle {
   background: #ff6b00;
-  height: 65px;
+  height: 55px;
   box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
 }
 
 .sheet-title-mini {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-90deg);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 700;
   color: #ff6b00;
-  opacity: 0.85; /* Visible by default as a cue */
+  opacity: 0.85;
   transition: opacity 0.3s;
   pointer-events: none;
   text-transform: uppercase;
   letter-spacing: 2px;
+  flex-shrink: 0;
 }
 
 .sidebar.minimized .sheet-title-mini {

@@ -11,6 +11,28 @@ const PER_KM_FARE = 600;
 const PER_MIN_FARE = 100;
 const MIN_FARE = 3000;
 
+/** Calcula distancia en km entre dos L.LatLng (fórmula Haversine) */
+function haversineKm(a, b) {
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat/2) ** 2 +
+    Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) *
+    Math.sin(dLng/2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+/** Calcula y muestra el precio dado distancia (km) y tiempo (min) */
+function showPrice(distKm, mins) {
+  const km = parseFloat(distKm) || 0;
+  let price = BASE_FARE + (km * PER_KM_FARE) + (mins * PER_MIN_FARE);
+  price = Math.round(price / 100) * 100;
+  price = Math.max(MIN_FARE, price);
+  const el = document.getElementById('priceValue');
+  if (el) el.textContent = '$' + price.toLocaleString('es-CO');
+  return price;
+}
+
 const iconStart = pinIcon('#FF6B00', 'A');
 const iconEnd = pinIcon('#30D158', 'B');
 
@@ -125,8 +147,13 @@ export function checkRoute(state, map) {
     if (sBar) sBar.style.display = 'none';
 
     const r = e.routes[0];
-    const dist = (r.summary.totalDistance / 1000).toFixed(1);
-    const mins = Math.round(r.summary.totalTime / 60);
+    // Usar OSRM si da distancia real, si no, usar Haversine como respaldo
+    const osrmKm = r.summary.totalDistance / 1000;
+    const distKm = osrmKm > 0.05 ? osrmKm : haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+    const dist = distKm.toFixed(1);
+    const mins = r.summary.totalTime > 0
+      ? Math.round(r.summary.totalTime / 60)
+      : Math.round((distKm / 25) * 60); // 25 km/h promedio en moto en zona urbana
 
     // 2. Mostrar datos de ruta
     const distEl = document.getElementById('routeDistance');
@@ -138,13 +165,8 @@ export function checkRoute(state, map) {
 
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
 
-    // 3. Calcular Tarifa Moto (Validadas)
-    let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
-    calculatedPrice = Math.round(calculatedPrice / 100) * 100;
-    const precio = Math.max(MIN_FARE, calculatedPrice);
-    
-    const priceValEl = document.getElementById('priceValue');
-    if (priceValEl) priceValEl.textContent = '$' + precio.toLocaleString('es-CO');
+    // 3. Calcular Tarifa Moto con distancia real garantizada
+    showPrice(dist, mins);
 
     // 4. Cambiar vistas
     const actionsEl = document.getElementById('mainActions');
@@ -157,12 +179,23 @@ export function checkRoute(state, map) {
 
   control.on('routingerror', (err) => {
     console.error('Routing error:', err);
-    showStatus('❌ Error de conexión. Intenta de nuevo.', true);
+    // Aunque falle la ruta, calcular precio por Haversine como respaldo
+    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+    const mins = Math.round((distKm / 25) * 60);
+    const dist = distKm.toFixed(1);
+    const distEl = document.getElementById('routeDistance');
+    const timeEl = document.getElementById('routeTime');
+    const pillEl = document.getElementById('routePill');
+    if (distEl) distEl.textContent = dist;
+    if (timeEl) timeEl.textContent = mins;
+    if (pillEl) pillEl.style.display = 'flex';
+    showPrice(dist, mins);
+    showStatus('⚠️ Ruta aproximada (sin conexión a servidores de mapa).', false);
     const actionsEl = document.getElementById('mainActions');
-    if (actionsEl) {
-      actionsEl.innerHTML = '<button class="btn btn-primary" id="retryRouteBtn" style="width:100%">Recalcular Ruta</button>';
-      document.getElementById('retryRouteBtn')?.addEventListener('click', () => checkRoute(state, map));
-    }
+    const priceSecEl = document.getElementById('priceSection');
+    if (actionsEl) actionsEl.style.display = 'none';
+    if (priceSecEl) priceSecEl.style.display = 'block';
+    if (isSheetMinimized()) toggleSheet();
   });
 
   state.routingControl = control;

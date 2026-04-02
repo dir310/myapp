@@ -30,6 +30,9 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+  // Fix para iPhone Safari: fuerza al mapa a recalcular su tamaño
+  setTimeout(() => map.invalidateSize(), 300);
+
   return map;
 }
 
