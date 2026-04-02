@@ -4,6 +4,7 @@
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { pinIcon } from '../utils/map.js';
+import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 // Tarifas Moto
 const BASE_FARE = 1200;
 const PER_KM_FARE = 600;
@@ -108,42 +109,56 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 7, opacity: 0.6 }],
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.7 }],
       addWaypoints: false
     },
     createMarker: () => null
   }).addTo(map);
 
   state.routingControl.on('routesfound', (e) => {
-    // Limpiar UI al instante
+    // 1. Limpiar estado visual
     showStatus('', false);
-    document.getElementById('statusBar').style.display = 'none';
-    document.getElementById('mainActions').style.display = 'none';
-    document.getElementById('priceSection').style.display = 'block';
+    const sBar = document.getElementById('statusBar');
+    if (sBar) sBar.style.display = 'none';
 
     const r = e.routes[0];
     const dist = (r.summary.totalDistance / 1000).toFixed(1);
     const mins = Math.round(r.summary.totalTime / 60);
 
-    document.getElementById('routeDistance').textContent = dist;
-    document.getElementById('routeTime').textContent = mins;
-    document.getElementById('routePill').style.display = 'flex';
+    // 2. Mostrar datos de ruta
+    const distEl = document.getElementById('routeDistance');
+    const timeEl = document.getElementById('routeTime');
+    const pillEl = document.getElementById('routePill');
+    if (distEl) distEl.textContent = dist;
+    if (timeEl) timeEl.textContent = mins;
+    if (pillEl) pillEl.style.display = 'flex';
 
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
 
-    // Tarifa Moto
+    // 3. Calcular Tarifa Moto (Validadas)
     let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
     calculatedPrice = Math.round(calculatedPrice / 100) * 100;
     const precio = Math.max(MIN_FARE, calculatedPrice);
     
-    document.getElementById('priceValue').textContent = '$' + precio.toLocaleString('es-CO');
+    const priceValEl = document.getElementById('priceValue');
+    if (priceValEl) priceValEl.textContent = '$' + precio.toLocaleString('es-CO');
+
+    // 4. Cambiar vistas
+    const actionsEl = document.getElementById('mainActions');
+    const priceSecEl = document.getElementById('priceSection');
+    if (actionsEl) actionsEl.style.display = 'none';
+    if (priceSecEl) priceSecEl.style.display = 'block';
 
     if (isSheetMinimized()) toggleSheet();
   });
 
-  state.routingControl.on('routingerror', () => {
+  state.routingControl.on('routingerror', (err) => {
+    console.error('Routing error:', err);
     showStatus('❌ Error de conexión. Intenta de nuevo.', true);
-    document.getElementById('mainActions').innerHTML =
-      '<button class="btn" style="background:rgba(255,107,0,.1)">Reintentar</button>';
+    const actionsEl = document.getElementById('mainActions');
+    if (actionsEl) {
+      actionsEl.innerHTML = '<button class="btn btn-primary" id="retryRouteBtn" style="width:100%">Recalcular Ruta</button>';
+      document.getElementById('retryRouteBtn')?.addEventListener('click', () => checkRoute(state, map));
+    }
   });
 }
