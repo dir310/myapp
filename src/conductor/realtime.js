@@ -81,9 +81,14 @@ export function setupRealtimeChannel() {
  * Reject (hide) a ride locally.
  * @param {string} id - Ride UUID.
  */
-function rejectViaje(id) {
-  activeViajes = activeViajes.filter((v) => v.id !== id);
-  renderViajes(activeViajes, getHandlers());
+async function rejectViaje(id) {
+  const { error } = await supabase.from('viajes').delete().eq('id', id);
+  if (!error) {
+    activeViajes = activeViajes.filter((v) => v.id !== id);
+    renderViajes(activeViajes, getHandlers());
+  } else {
+    console.error('Error al ocultar/eliminar viaje:', error);
+  }
 }
 
 /**
