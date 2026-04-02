@@ -89,7 +89,7 @@ function listenForDriver(rideId, state) {
       (payload) => {
         console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
         if (payload.new.estado === 'aceptado') {
-          showDriverAssigned(payload.new.conductor_id, payload.new.codigo_otp, state);
+          showDriverAssigned(payload.new.conductor_id, state);
         } else if (payload.new.estado === 'en_progreso') {
           showTripStarted(state);
         } else if (payload.new.estado === 'finalizado') {
@@ -105,14 +105,14 @@ function listenForDriver(rideId, state) {
     console.log('🔍 Verificando estado en base de datos (Backup Poller)...');
     const { data, error } = await supabase
       .from('viajes')
-      .select('estado, conductor_id, codigo_otp')
+      .select('estado, conductor_id')
       .eq('id', rideId)
       .single();
 
     if (!error && data) {
       if (data.estado === 'aceptado') {
         console.log('✅ Conductor encontrado vía Poller!');
-        showDriverAssigned(data.conductor_id, data.codigo_otp, state);
+        showDriverAssigned(data.conductor_id, state);
       } else if (data.estado === 'en_progreso') {
         showTripStarted(state);
       } else if (data.estado === 'finalizado') {
@@ -125,24 +125,15 @@ function listenForDriver(rideId, state) {
 /**
  * Show the driver assigned UI.
  * @param {string} name - Driver name/identifier.
- * @param {string} otp - One-time password for trip start.
  * @param {object} state - Shared app state.
  */
-function showDriverAssigned(name, otp, state) {
+function showDriverAssigned(name, state) {
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
 
   const driverName = name || 'Un Conductor';
-  const otpHtml = otp
-    ? `
-    <div style="margin:15px 0;">
-      <span style="color:rgba(255,255,255,.4); font-size:11px; display:block; text-transform:uppercase;">Código de seguridad:</span>
-      <div class="otp-badge">${otp}</div>
-      <p style="font-size:11px; color:#FF6B00;">Dicta este código al conductor para empezar.</p>
-    </div>`
-    : '';
 
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
@@ -152,7 +143,6 @@ function showDriverAssigned(name, otp, state) {
         <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Datos del Conductor:</span>
         <span style="color:#fff; font-size:17px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
       </div>
-      ${otpHtml}
       <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor llegue, verás el mapa en tiempo real.</p>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar</button>
     </div>

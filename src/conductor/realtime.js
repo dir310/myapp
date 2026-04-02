@@ -13,7 +13,7 @@ function getHandlers() {
   return {
     onAccept: acceptViaje,
     onReject: rejectViaje,
-    onVerify: verifyOtp,
+    onVerify: startViaje,
     onFinish: finishViaje,
   };
 }
@@ -107,8 +107,7 @@ async function acceptViaje(id, lat, lng) {
     .from('viajes')
     .update({ 
       estado: 'aceptado', 
-      conductor_id: conductorName, 
-      codigo_otp: otp 
+      conductor_id: conductorName
     })
     .eq('id', id)
     .eq('estado', 'buscando')
@@ -121,33 +120,19 @@ async function acceptViaje(id, lat, lng) {
     console.log('Viaje aceptado con éxito');
     loadViajes();
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
-  } else {
-    // No error, pero 0 filas actualizadas (probablemente ya no está en 'buscando')
-    alert('¡Este viaje ya fue tomado por otro conductor o fue cancelado!');
-    loadViajes();
   }
 }
 
 /**
- * Verify OTP entered by conductor.
+ * Start a trip directly (skipping OTP).
  * @param {string} id - Ride UUID.
  */
-async function verifyOtp(id) {
-  const input = document.getElementById(`otp-${id}`);
-  const code = input.value;
-
-  const { data, error } = await supabase
-    .from('viajes')
-    .select('codigo_otp')
-    .eq('id', id)
-    .single();
-
-  if (data && data.codigo_otp == code) {
-    await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
+async function startViaje(id) {
+  const { error } = await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
+  if (!error) {
     loadViajes();
   } else {
-    alert('Código incorrecto. Pídele al cliente el código de 3 números.');
-    console.error(error);
+    alert('Error al iniciar viaje: ' + error.message);
   }
 }
 

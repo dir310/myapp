@@ -80,12 +80,11 @@ export function renderViajes(viajes, handlers) {
           </div>`;
       } else if (v.estado === 'aceptado') {
         actions = `
-          <div style="background: rgba(255,107,0,.1); border: 1px dashed #FF6B00; padding: 15px; border-radius: 12px; margin-top: 10px;">
-            <p style="font-size: 11px; margin-bottom: 8px; color: #FF6B00; font-weight: 800; text-transform: uppercase;">Introduce código del cliente:</p>
-            <input type="number" id="otp-${v.id}" class="otp-input" placeholder="000" maxlength="3" style="width: 100%; padding: 12px; background: rgba(255,255,255,.05); border: 1px solid #FF6B00; border-radius: 10px; color: #fff; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; margin-bottom: 10px; outline: none;">
-            <button class="btn btn-accept" style="width:100%" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
+          <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
+            <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
+            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
           </div>
-          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Waze</button>`;
+          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Google Maps</button>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
           <div style="text-align:center; padding: 10px 0;">
