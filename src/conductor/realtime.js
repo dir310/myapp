@@ -34,6 +34,11 @@ export async function loadViajes() {
   }
 }
 
+// Escuchar cambios en el nombre para filtrar la lista instantáneamente
+document.getElementById('conductorName')?.addEventListener('input', () => {
+  renderViajes(activeViajes, getHandlers());
+});
+
 /**
  * Set up real-time channel for new and updated rides.
  */

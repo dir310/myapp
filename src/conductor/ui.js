@@ -59,8 +59,15 @@ export function showNewRideBanner() {
  */
 export function renderViajes(viajes, handlers) {
   const container = document.getElementById('viajesList');
+  const currentConductor = document.getElementById('conductorName').value || 'Un Conductor';
 
-  if (viajes.length === 0) {
+  // Privacidad: Solo ves solicitudes ("buscando") y TUS propios viajes ya aceptados.
+  const filteredViajes = viajes.filter((v) => {
+    if (v.estado === 'buscando') return true;
+    return v.conductor_id === currentConductor;
+  });
+
+  if (filteredViajes.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
@@ -69,22 +76,22 @@ export function renderViajes(viajes, handlers) {
     return;
   }
 
-  container.innerHTML = viajes
+  container.innerHTML = filteredViajes
     .map((v) => {
       let actions = '';
       if (v.estado === 'buscando') {
         actions = `
           <div class="actions-row">
-            <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ Ocultar</button>
+            <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ RECHAZAR Y BORRAR</button>
             <button class="btn btn-accept" data-action="accept" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">✅ ACEPTAR</button>
           </div>`;
       } else if (v.estado === 'aceptado') {
         actions = `
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
-            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">INICIAR VIAJE</button>
-          </div>
-          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Waze</button>`;
+            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger</button>
+            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">INICIAR VIAJE (Hacia Destino)</button>
+          </div>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
           <div style="text-align:center; padding: 10px 0;">
