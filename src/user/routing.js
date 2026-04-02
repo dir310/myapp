@@ -101,7 +101,7 @@ export function checkRoute(state, map) {
   document.getElementById('mainActions').innerHTML =
     '<button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled><span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...</button>';
 
-  state.routingControl = L.Routing.control({
+  const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
     showAlternatives: false,
@@ -110,29 +110,16 @@ export function checkRoute(state, map) {
     fitSelectedRoutes: true,
     lineOptions: {
       styles: [
-        { color: '#FF6B00', weight: 7, opacity: 0.5 },
+        { color: '#FF6B00', weight: 8, opacity: 0.5 },
         { color: '#FF7A1A', weight: 4, opacity: 1 },
       ],
     },
     createMarker: () => null,
-    router: L.Routing.osrmv1({
-      serviceUrl: 'https://router.project-osrm.org/route/v1',
-    }),
-  }).addTo(map);
+  });
 
-  // Agregar un tiempo muerto de 10 segundos para no quedar "Calculando..." por siempre
-  const routingTimeout = setTimeout(() => {
-    if (state.routingControl && !document.getElementById('priceSection').offsetParent) {
-      console.warn('Routing Timeout - El servidor demoró demasiado');
-      showStatus('⚠️ El servidor de mapas está lento. Intenta de nuevo.', true);
-      document.getElementById('mainActions').innerHTML =
-        '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
-    }
-  }, 10000);
-
-  state.routingControl.on('routesfound', (e) => {
+  // Importante: poner los listeners ANTES del addTo(map)
+  control.on('routesfound', (e) => {
     clearTimeout(routingTimeout);
-    // 1. Limpiar estado inmediatamente
     showStatus('', false);
     document.getElementById('statusBar').style.display = 'none';
 
@@ -140,33 +127,32 @@ export function checkRoute(state, map) {
     const dist = (r.summary.totalDistance / 1000).toFixed(1);
     const mins = Math.round(r.summary.totalTime / 60);
 
-    // 2. Actualizar visuales
     document.getElementById('routeDistance').textContent = dist;
     document.getElementById('routeTime').textContent = mins;
     document.getElementById('routePill').style.display = 'flex';
 
-    // Fit map to route
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.15));
 
-    // 3. Calcular Tarifa Moto
     let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
-    calculatedPrice = Math.round(calculatedPrice / 100) * 100; // Redondear a la centena
+    calculatedPrice = Math.round(calculatedPrice / 100) * 100;
     const precio = Math.max(MIN_FARE, calculatedPrice);
     
     document.getElementById('priceValue').textContent = '$' + precio.toLocaleString('es-CO');
 
-    // 4. Mostrar sección de precio
     document.getElementById('mainActions').style.display = 'none';
     document.getElementById('priceSection').style.display = 'block';
 
     if (isSheetMinimized()) toggleSheet();
   });
 
-  state.routingControl.on('routingerror', (err) => {
+  control.on('routingerror', (err) => {
     clearTimeout(routingTimeout);
     console.error('Routing Error:', err);
-    showStatus('❌ Error al calcular ruta.', true);
+    showStatus('❌ No se encontró ruta. Intenta otro punto.', true);
     document.getElementById('mainActions').innerHTML =
       '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
   });
+
+  state.routingControl = control;
+  control.addTo(map);
 }
