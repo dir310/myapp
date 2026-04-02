@@ -106,24 +106,21 @@ export function checkRoute(state, map) {
     routeWhileDragging: false,
     showAlternatives: false,
     addWaypoints: false,
-    draggableWaypoints: false,
+    fitSelectedRoutes: true,
+    show: false,
     lineOptions: {
       styles: [
-        { color: '#FF6B00', weight: 8, opacity: 0.35 },
+        { color: '#FF6B00', weight: 8, opacity: 0.4 },
         { color: '#FF7A1A', weight: 4, opacity: 1 },
       ],
+      extendToWaypoints: true,
+      missingRouteTolerance: 0
     },
     createMarker: () => null,
     router: L.Routing.osrmv1({
       serviceUrl: 'https://router.project-osrm.org/route/v1',
     }),
   }).addTo(map);
-
-  // Ocultar solo el panel de instrucciones, NO la línea naranja
-  setTimeout(() => {
-    const panel = state.routingControl.getContainer();
-    if (panel) panel.style.display = 'none';
-  }, 100);
 
   state.routingControl.on('routesfound', (e) => {
     const r = e.routes[0];
