@@ -101,27 +101,25 @@ export function checkRoute(state, map) {
   document.getElementById('mainActions').innerHTML =
     '<button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled><span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...</button>';
 
-  const control = L.Routing.control({
+  state.routingControl = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
-    showAlternatives: false,
     addWaypoints: false,
     draggableWaypoints: false,
-    fitSelectedRoutes: true,
+    show: false,
     lineOptions: {
-      styles: [
-        { color: '#FF6B00', weight: 8, opacity: 0.5 },
-        { color: '#FF7A1A', weight: 4, opacity: 1 },
-      ],
+      styles: [{ color: '#FF6B00', weight: 7, opacity: 0.6 }],
+      addWaypoints: false
     },
-    createMarker: () => null,
-  });
+    createMarker: () => null
+  }).addTo(map);
 
-  // Importante: poner los listeners ANTES del addTo(map)
-  control.on('routesfound', (e) => {
-    clearTimeout(routingTimeout);
+  state.routingControl.on('routesfound', (e) => {
+    // Limpiar UI al instante
     showStatus('', false);
     document.getElementById('statusBar').style.display = 'none';
+    document.getElementById('mainActions').style.display = 'none';
+    document.getElementById('priceSection').style.display = 'block';
 
     const r = e.routes[0];
     const dist = (r.summary.totalDistance / 1000).toFixed(1);
@@ -131,28 +129,21 @@ export function checkRoute(state, map) {
     document.getElementById('routeTime').textContent = mins;
     document.getElementById('routePill').style.display = 'flex';
 
-    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.15));
+    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
 
+    // Tarifa Moto
     let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
     calculatedPrice = Math.round(calculatedPrice / 100) * 100;
     const precio = Math.max(MIN_FARE, calculatedPrice);
     
     document.getElementById('priceValue').textContent = '$' + precio.toLocaleString('es-CO');
 
-    document.getElementById('mainActions').style.display = 'none';
-    document.getElementById('priceSection').style.display = 'block';
-
     if (isSheetMinimized()) toggleSheet();
   });
 
-  control.on('routingerror', (err) => {
-    clearTimeout(routingTimeout);
-    console.error('Routing Error:', err);
-    showStatus('❌ No se encontró ruta. Intenta otro punto.', true);
+  state.routingControl.on('routingerror', () => {
+    showStatus('❌ Error de conexión. Intenta de nuevo.', true);
     document.getElementById('mainActions').innerHTML =
-      '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
+      '<button class="btn" style="background:rgba(255,107,0,.1)">Reintentar</button>';
   });
-
-  state.routingControl = control;
-  control.addTo(map);
 }
