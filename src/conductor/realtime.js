@@ -5,6 +5,7 @@ import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
 
 let activeViajes = [];
+let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
 
 /**
  * Get handlers for ride card actions (curried with state).
@@ -20,12 +21,12 @@ function getHandlers() {
 }
 
 /**
- * Cancel an active ride by the driver.
+ * Cancel an active ride by the driver (sends it back to the searching pool).
  * @param {string} id - Ride UUID.
  */
 async function cancelActiveViaje(id) {
-  if (confirm('¿Estás seguro de cancelar este servicio activo?')) {
-    const { error } = await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', id);
+  if (confirm('¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.')) {
+    const { error } = await supabase.from('viajes').update({ estado: 'buscando', conductor_id: null }).eq('id', id);
     if (!error) {
         activeViajes = activeViajes.filter((v) => v.id !== id);
         renderViajes(activeViajes, getHandlers());
@@ -91,8 +92,10 @@ export function setupRealtimeChannel() {
         // Notificar si recibimos una calificación
         if (payload.new.calificacion && payload.new.calificacion > 0) {
             const currentDriver = document.getElementById('conductorName').value || 'Un Conductor';
-            if (payload.new.conductor_id === currentDriver) {
+            if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
                 showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
+                // Remover de la lista temporal para evitar notificaciones duplicadas en el futuro
+                misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
             }
         }
 
@@ -181,6 +184,7 @@ async function startViaje(id, lat, lng) {
  */
 async function finishViaje(id) {
   if (confirm('¿Estás seguro de finalizar el viaje?')) {
+    misViajesFinalizados.push(id); // Registrar para recibir calificación luego
     await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
     loadViajes();
   }

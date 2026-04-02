@@ -94,6 +94,8 @@ function listenForDriver(rideId, state) {
           showTripStarted(state);
         } else if (payload.new.estado === 'finalizado') {
           showRatingScreen(state);
+        } else if (payload.new.estado === 'buscando') {
+          showSearchingRecovery(state);
         }
       }
     )
@@ -176,6 +178,41 @@ function showTripStarted(state) {
     if (confirm('¿Estás seguro de cancelar el viaje en curso?')) {
         cancelRide(state, null);
     }
+  });
+}
+
+/**
+ * Revert to searching UI if the driver cancelled the service.
+ * @param {object} state - Shared app state.
+ */
+function showSearchingRecovery(state) {
+  // Restart the polling interval just in case
+  if (!state.pollerInterval) {
+    state.pollerInterval = setInterval(async () => {
+      const { data, error } = await supabase.from('viajes').select('estado, conductor_id').eq('id', state.currentRideId).single();
+      if (!error && data) {
+        if (data.estado === 'aceptado') showDriverAssigned(data.conductor_id, state);
+        else if (data.estado === 'en_progreso') showTripStarted(state);
+        else if (data.estado === 'finalizado') showRatingScreen(state);
+      }
+    }, 5000);
+  }
+  
+  // Show notification
+  alert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.');
+  
+  // Revert UI to searching mode
+  document.getElementById('priceSection').innerHTML = `
+      <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
+        <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
+        <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Re-buscando conductor...</h3>
+        <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos nuevamente. No cierres esta ventana.</p>
+      </div>
+      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
+  `;
+  
+  document.getElementById('cancelSearchBtn').addEventListener('click', () => {
+      cancelRide(state, null);
   });
 }
 
