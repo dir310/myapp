@@ -196,11 +196,9 @@ function showRatingScreen(state) {
  * @param {object} state - Shared app state.
  * @param {L.Map} map - Leaflet map instance.
  */
-export function cancelRide(state, map) {
+export async function cancelRide(state, map) {
   if (state.currentRideId) {
-    supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
+    await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
   }
-  clearPoint('start', state, map);
-  clearPoint('end', state, map);
-  state.currentRideId = null;
+  location.reload();
 }
