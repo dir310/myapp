@@ -138,7 +138,7 @@ export function renderViajes(viajes, handlers) {
 
   container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
     btn.addEventListener('click', () =>
-      window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${btn.dataset.lat},${btn.dataset.lng}`, '_blank')
     );
   });
 }

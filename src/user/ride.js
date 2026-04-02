@@ -149,7 +149,7 @@ function showDriverAssigned(name, otp, state) {
       <div style="font-size:35px; margin-bottom: 8px;">🚕</div>
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
-        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
+        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Nombre y Placa:</span>
         <span style="color:#fff; font-size:17px; font-weight:800;">${driverName}</span>
       </div>
       ${otpHtml}

@@ -98,13 +98,20 @@ async function acceptViaje(id, lat, lng) {
 
   const { error } = await supabase
     .from('viajes')
-    .update({ estado: 'aceptado', conductor_id: conductorName, codigo_otp: otp })
-    .eq('id', id);
+    .update({ 
+      estado: 'aceptado', 
+      conductor_id: conductorName, 
+      codigo_otp: otp,
+      // Al guardar, nos aseguramos que todavía esté buscando para evitar el error de "ya tomado"
+    })
+    .eq('id', id)
+    .eq('estado', 'buscando');
 
   if (!error) {
     loadViajes();
-    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
   } else {
+    console.error('Error al aceptar viaje:', error);
     alert('¡Viaje ya tomado o error de conexión!');
   }
 }
