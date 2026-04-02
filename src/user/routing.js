@@ -106,15 +106,13 @@ export function checkRoute(state, map) {
     routeWhileDragging: false,
     showAlternatives: false,
     addWaypoints: false,
+    draggableWaypoints: false,
     fitSelectedRoutes: true,
-    show: false,
     lineOptions: {
       styles: [
-        { color: '#FF6B00', weight: 8, opacity: 0.4 },
+        { color: '#FF6B00', weight: 7, opacity: 0.5 },
         { color: '#FF7A1A', weight: 4, opacity: 1 },
       ],
-      extendToWaypoints: true,
-      missingRouteTolerance: 0
     },
     createMarker: () => null,
     router: L.Routing.osrmv1({
@@ -123,11 +121,15 @@ export function checkRoute(state, map) {
   }).addTo(map);
 
   state.routingControl.on('routesfound', (e) => {
+    // 1. Limpiar estado inmediatamente
+    showStatus('', false);
+    document.getElementById('statusBar').style.display = 'none';
+
     const r = e.routes[0];
     const dist = (r.summary.totalDistance / 1000).toFixed(1);
     const mins = Math.round(r.summary.totalTime / 60);
 
-    // Update route pill
+    // 2. Actualizar visuales
     document.getElementById('routeDistance').textContent = dist;
     document.getElementById('routeTime').textContent = mins;
     document.getElementById('routePill').style.display = 'flex';
@@ -135,18 +137,16 @@ export function checkRoute(state, map) {
     // Fit map to route
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.15));
 
-    // Calculate Moto Price
+    // 3. Calcular Tarifa Moto
     let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
-    calculatedPrice = Math.round(calculatedPrice / 100) * 100; // Redondear a la centena más cercana
+    calculatedPrice = Math.round(calculatedPrice / 100) * 100; // Redondear a la centena
     const precio = Math.max(MIN_FARE, calculatedPrice);
     
     document.getElementById('priceValue').textContent = '$' + precio.toLocaleString('es-CO');
 
-    // Show price section
+    // 4. Mostrar sección de precio
     document.getElementById('mainActions').style.display = 'none';
     document.getElementById('priceSection').style.display = 'block';
-    showStatus('', false);
-    document.getElementById('statusBar').style.display = 'none';
 
     if (isSheetMinimized()) toggleSheet();
   });
