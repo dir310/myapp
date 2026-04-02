@@ -101,23 +101,30 @@ async function acceptViaje(id, lat, lng) {
   const conductorName = document.getElementById('conductorName').value || 'Un Conductor';
   const otp = Math.floor(100 + Math.random() * 900); // 3 dígitos aleatorios
 
-  const { error } = await supabase
+  console.log('Intentando aceptar viaje:', id, 'por:', conductorName);
+
+  const { data, error } = await supabase
     .from('viajes')
     .update({ 
       estado: 'aceptado', 
       conductor_id: conductorName, 
-      codigo_otp: otp,
-      // Al guardar, nos aseguramos que todavía esté buscando para evitar el error de "ya tomado"
+      codigo_otp: otp 
     })
     .eq('id', id)
-    .eq('estado', 'buscando');
+    .eq('estado', 'buscando')
+    .select();
 
-  if (!error) {
+  if (error) {
+    console.error('Error de Supabase:', error);
+    alert('Error técnico: ' + error.message);
+  } else if (data && data.length > 0) {
+    console.log('Viaje aceptado con éxito');
     loadViajes();
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
   } else {
-    console.error('Error al aceptar viaje:', error);
-    alert('¡Viaje ya tomado o error de conexión!');
+    // No error, pero 0 filas actualizadas (probablemente ya no está en 'buscando')
+    alert('¡Este viaje ya fue tomado por otro conductor o fue cancelado!');
+    loadViajes();
   }
 }
 
