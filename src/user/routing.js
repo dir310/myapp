@@ -120,7 +120,18 @@ export function checkRoute(state, map) {
     }),
   }).addTo(map);
 
+  // Agregar un tiempo muerto de 10 segundos para no quedar "Calculando..." por siempre
+  const routingTimeout = setTimeout(() => {
+    if (state.routingControl && !document.getElementById('priceSection').offsetParent) {
+      console.warn('Routing Timeout - El servidor demoró demasiado');
+      showStatus('⚠️ El servidor de mapas está lento. Intenta de nuevo.', true);
+      document.getElementById('mainActions').innerHTML =
+        '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
+    }
+  }, 10000);
+
   state.routingControl.on('routesfound', (e) => {
+    clearTimeout(routingTimeout);
     // 1. Limpiar estado inmediatamente
     showStatus('', false);
     document.getElementById('statusBar').style.display = 'none';
@@ -152,6 +163,7 @@ export function checkRoute(state, map) {
   });
 
   state.routingControl.on('routingerror', (err) => {
+    clearTimeout(routingTimeout);
     console.error('Routing Error:', err);
     showStatus('❌ Error al calcular ruta.', true);
     document.getElementById('mainActions').innerHTML =

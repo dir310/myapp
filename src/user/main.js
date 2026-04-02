@@ -62,13 +62,13 @@ map.on('click', (e) => {
   const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
   if (state.nextClick === 'start') {
-    boundPlaceMarker('start', lat, lng, name);
     state.nextClick = 'end';
-    showStatus('📍 Inicio colocado.', false);
+    showStatus('📍 Inicio colocado. Selecciona destino.', false);
+    boundPlaceMarker('start', lat, lng, name);
   } else {
-    boundPlaceMarker('end', lat, lng, name);
     state.nextClick = 'start';
     showStatus('📍 Destino colocado. Calculando...', false);
+    boundPlaceMarker('end', lat, lng, name);
   }
 });
 
