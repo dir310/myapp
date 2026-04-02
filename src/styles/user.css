@@ -302,14 +302,17 @@ body {
 }
 
 /* Hide native Edge/Webkit clear buttons to prevent double 'x' */
-.route-input::-ms-clear {
-  display: none;
-  width: 0;
-  height: 0;
+.route-input::-ms-clear,
+.route-input::-ms-reveal {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-.route-input::-webkit-search-cancel-button {
-  display: none;
+.route-input::-webkit-search-cancel-button,
+.route-input::-webkit-search-decoration {
+  display: none !important;
+  -webkit-appearance: none !important;
 }
 
 .route-input::placeholder {
