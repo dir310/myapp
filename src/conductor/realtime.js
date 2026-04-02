@@ -15,7 +15,24 @@ function getHandlers() {
     onReject: rejectViaje,
     onVerify: startViaje,
     onFinish: finishViaje,
+    onCancelActive: cancelActiveViaje,
   };
+}
+
+/**
+ * Cancel an active ride by the driver.
+ * @param {string} id - Ride UUID.
+ */
+async function cancelActiveViaje(id) {
+  if (confirm('¿Estás seguro de cancelar este servicio activo?')) {
+    const { error } = await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', id);
+    if (!error) {
+        activeViajes = activeViajes.filter((v) => v.id !== id);
+        renderViajes(activeViajes, getHandlers());
+    } else {
+        alert('Error al cancelar: ' + error.message);
+    }
+  }
 }
 
 /**

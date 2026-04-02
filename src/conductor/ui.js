@@ -82,7 +82,7 @@ export function renderViajes(viajes, handlers) {
       if (v.estado === 'buscando') {
         actions = `
           <div class="actions-row">
-            <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ RECHAZAR Y BORRAR</button>
+            <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ RECHAZAR</button>
             <button class="btn btn-accept" data-action="accept" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">✅ ACEPTAR</button>
           </div>`;
       } else if (v.estado === 'aceptado') {
@@ -91,12 +91,14 @@ export function renderViajes(viajes, handlers) {
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger</button>
             <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">INICIAR VIAJE (Hacia Destino)</button>
+            <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
           <div style="text-align:center; padding: 10px 0;">
             <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
             <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
+            <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       }
 
@@ -139,6 +141,10 @@ export function renderViajes(viajes, handlers) {
 
   container.querySelectorAll('[data-action="finish"]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onFinish(btn.dataset.id));
+  });
+
+  container.querySelectorAll('[data-action="cancel_active"]').forEach((btn) => {
+    btn.addEventListener('click', () => handlers.onCancelActive(btn.dataset.id));
   });
 
     container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {

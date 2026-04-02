@@ -9,6 +9,7 @@ import { toggleSheet, setMode, showStatus, isSheetMinimized } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide } from './ride.js';
+import { supabase } from '../config/supabase.js';
 
 // ── Shared State ──
 const state = {
