@@ -11,18 +11,21 @@ export const LA_CALERA = [4.7203, -73.9687];
  * @returns {L.Map} Configured Leaflet map instance.
  */
 export function createMap(elementId, center = LA_CALERA, zoom = 13) {
-  const map = L.map(elementId, { zoomControl: false }).setView(center, zoom);
+  const map = L.map(elementId, { 
+    zoomControl: false,
+    maxZoom: 18 // Evita el error de "Map data not yet available"
+  }).setView(center, zoom);
 
   // Satellite imagery
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri', maxZoom: 19 }
+    { attribution: 'Tiles © Esri', maxZoom: 18 }
   ).addTo(map);
 
   // Labels overlay
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom: 19, opacity: 0.85 }
+    { maxZoom: 18, opacity: 0.85 }
   ).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
