@@ -82,7 +82,7 @@ export function renderViajes(viajes, handlers) {
         actions = `
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
-            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
+            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">INICIAR VIAJE</button>
           </div>
           <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Waze</button>`;
       } else if (v.estado === 'en_progreso') {
@@ -128,7 +128,7 @@ export function renderViajes(viajes, handlers) {
   });
 
   container.querySelectorAll('[data-action="verify"]').forEach((btn) => {
-    btn.addEventListener('click', () => handlers.onVerify(btn.dataset.id));
+    btn.addEventListener('click', () => handlers.onVerify(btn.dataset.id, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng)));
   });
 
   container.querySelectorAll('[data-action="finish"]').forEach((btn) => {

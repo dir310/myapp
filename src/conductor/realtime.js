@@ -119,18 +119,22 @@ async function acceptViaje(id, lat, lng) {
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
     loadViajes();
-    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
   }
 }
 
 /**
- * Start a trip directly (skipping OTP).
+ * Start a trip directly (skipping OTP) and open Waze to destination.
  * @param {string} id - Ride UUID.
+ * @param {number} lat - Destination latitude.
+ * @param {number} lng - Destination longitude.
  */
-async function startViaje(id) {
+async function startViaje(id, lat, lng) {
   const { error } = await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
   if (!error) {
     loadViajes();
+    if (lat && lng) {
+      window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+    }
   } else {
     alert('Error al iniciar viaje: ' + error.message);
   }
