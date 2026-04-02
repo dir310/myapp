@@ -119,7 +119,7 @@ async function acceptViaje(id, lat, lng) {
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
     loadViajes();
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
   }
 }
 

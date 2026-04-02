@@ -84,7 +84,7 @@ export function renderViajes(viajes, handlers) {
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
           </div>
-          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Google Maps</button>`;
+          <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Abrir Waze</button>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
           <div style="text-align:center; padding: 10px 0;">
@@ -135,9 +135,9 @@ export function renderViajes(viajes, handlers) {
     btn.addEventListener('click', () => handlers.onFinish(btn.dataset.id));
   });
 
-  container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
+    container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
     btn.addEventListener('click', () =>
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${btn.dataset.lat},${btn.dataset.lng}`, '_blank')
+      window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
     );
   });
 }
