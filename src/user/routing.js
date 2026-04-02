@@ -111,8 +111,7 @@ export function checkRoute(state, map) {
     },
     createMarker: () => null,
     router: L.Routing.osrmv1({
-      serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-      profile: 'driving'
+      serviceUrl: 'https://router.project-osrm.org/route/v1',
     }),
   }).addTo(map);
 
