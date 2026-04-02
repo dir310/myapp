@@ -125,7 +125,7 @@ function listenForDriver(rideId, state) {
 /**
  * Show the driver assigned UI.
  * @param {string} name - Driver name/identifier.
- * @param {number} otp - Security code.
+ * @param {string} otp - One-time password for trip start.
  * @param {object} state - Shared app state.
  */
 function showDriverAssigned(name, otp, state) {
@@ -146,7 +146,7 @@ function showDriverAssigned(name, otp, state) {
 
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
-      <div style="font-size:35px; margin-bottom: 8px; animation:bounce 2s infinite;">Taxi</div>
+      <div style="font-size:35px; margin-bottom: 8px;">🚕</div>
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
         <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Tu Conductor es:</span>
@@ -158,7 +158,7 @@ function showDriverAssigned(name, otp, state) {
     </div>
   `;
 
-  document.getElementById('cancelRideBtnAction').addEventListener('click', () => cancelRide(state, map));
+  document.getElementById('cancelRideBtnAction').addEventListener('click', () => cancelRide(state, null));
 }
 
 /**
