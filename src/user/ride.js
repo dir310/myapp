@@ -61,7 +61,7 @@ export async function acceptRide(state, map) {
     listenForDriver(state.currentRideId, state);
   } catch (err) {
     showStatus('❌ Error al pedir viaje. Intenta de nuevo.', true);
-    btn.innerHTML = '🚗 Pedir Viaje';
+    btn.innerHTML = '🏍️ Pedir Viaje';
     btn.disabled = false;
     console.error(err);
   }

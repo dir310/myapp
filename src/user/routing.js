@@ -4,9 +4,11 @@
 import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { pinIcon } from '../utils/map.js';
-import { showStatus, toggleSheet, isSheetMinimized } from './ui.js';
-
-const PRICE_PER_KM = 2000; // COP
+// Tarifas Moto
+const BASE_FARE = 1200;
+const PER_KM_FARE = 600;
+const PER_MIN_FARE = 100;
+const MIN_FARE = 3000;
 
 const iconStart = pinIcon('#FF6B00', 'A');
 const iconEnd = pinIcon('#30D158', 'B');
@@ -128,8 +130,11 @@ export function checkRoute(state, map) {
     // Fit map to route
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.15));
 
-    // Calculate price
-    const precio = Math.max(1, Math.round(parseFloat(dist) * PRICE_PER_KM));
+    // Calculate Moto Price
+    let calculatedPrice = BASE_FARE + (parseFloat(dist) * PER_KM_FARE) + (mins * PER_MIN_FARE);
+    calculatedPrice = Math.round(calculatedPrice / 100) * 100; // Redondear a la centena más cercana
+    const precio = Math.max(MIN_FARE, calculatedPrice);
+    
     document.getElementById('priceValue').textContent = '$' + precio.toLocaleString('es-CO');
 
     // Show price section
