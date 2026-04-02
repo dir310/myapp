@@ -111,7 +111,8 @@ export function checkRoute(state, map) {
     },
     createMarker: () => null,
     router: L.Routing.osrmv1({
-      serviceUrl: 'https://router.project-osrm.org/route/v1',
+      serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
+      profile: 'driving'
     }),
   }).addTo(map);
 
@@ -141,7 +142,8 @@ export function checkRoute(state, map) {
     if (isSheetMinimized()) toggleSheet();
   });
 
-  state.routingControl.on('routingerror', () => {
+  state.routingControl.on('routingerror', (err) => {
+    console.error('Routing Error:', err);
     showStatus('❌ Error al calcular ruta.', true);
     document.getElementById('mainActions').innerHTML =
       '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
