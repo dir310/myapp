@@ -97,7 +97,6 @@ export function renderViajes(viajes, handlers) {
           <div style="text-align:center; padding: 10px 0;">
             <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
             <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
-            <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,.05); font-size:12px;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino</button>
           </div>`;
       }
 
@@ -147,4 +146,42 @@ export function renderViajes(viajes, handlers) {
       window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
     );
   });
+}
+
+/**
+ * Show a large notification banner for cancellations or ratings.
+ * @param {string} msg - Message to display.
+ * @param {string} type - 'error' or 'success'.
+ */
+export function showNotification(msg, type = 'success') {
+  const banner = document.createElement('div');
+  const color = type === 'error' ? '#FF3B30' : '#30D158';
+  const icon = type === 'error' ? '🚫' : '🌟';
+  
+  banner.style.cssText = `
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    width: 90%; max-width: 400px; padding: 16px; border-radius: 16px;
+    background: rgba(20,20,20,0.95); border: 2px solid ${color};
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 10000;
+    display: flex; align-items: center; gap: 15px; color: #fff;
+    animation: slideInDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  `;
+  
+  banner.innerHTML = `
+    <div style="font-size: 30px;">${icon}</div>
+    <div style="flex:1;">
+      <div style="font-size: 11px; color: ${color}; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Notificación</div>
+      <div style="font-size: 15px; font-weight: 600;">${msg}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(banner);
+  playAlert();
+
+  setTimeout(() => {
+    banner.style.opacity = '0';
+    banner.style.transform = 'translateX(-50%) translateY(-20px)';
+    banner.style.transition = 'all 0.5s ease-in';
+    setTimeout(() => banner.remove(), 500);
+  }, 5000);
 }

@@ -144,7 +144,7 @@ function showDriverAssigned(name, state) {
         <span style="color:#fff; font-size:17px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
       </div>
       <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor llegue, verás el mapa en tiempo real.</p>
-      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar</button>
+      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
 

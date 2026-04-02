@@ -2,7 +2,7 @@
  * Conductor realtime: Supabase subscriptions, ride accept/reject.
  */
 import { supabase } from '../config/supabase.js';
-import { renderViajes, showNewRideBanner, playAlert } from './ui.js';
+import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
 
 let activeViajes = [];
 
@@ -65,6 +65,19 @@ export function setupRealtimeChannel() {
       (payload) => {
         const index = activeViajes.findIndex((v) => v.id === payload.new.id);
         const validStates = ['buscando', 'aceptado', 'en_progreso'];
+
+        // Notificar si el cliente canceló un viaje que teníamos activo
+        if (payload.new.estado === 'cancelado' && index !== -1) {
+          showNotification('¡El cliente canceló el servicio!', 'error');
+        }
+
+        // Notificar si recibimos una calificación
+        if (payload.new.calificacion && payload.new.calificacion > 0) {
+            const currentDriver = document.getElementById('conductorName').value || 'Un Conductor';
+            if (payload.new.conductor_id === currentDriver) {
+                showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
+            }
+        }
 
         if (validStates.includes(payload.new.estado)) {
           if (index !== -1) {

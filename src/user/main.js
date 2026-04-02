@@ -110,7 +110,10 @@ document.getElementById('submitRatingBtn').addEventListener('click', async () =>
         await supabase.from('viajes').update({ calificacion: selectedRating }).eq('id', state.currentRideId);
     }
     
-    setTimeout(() => location.reload(), 2000);
+    setTimeout(() => {
+        document.getElementById('ratingOverlay').style.display = 'none';
+        location.reload();
+    }, 1800);
 });
 // Suggestion dismiss on outside click
 setupSuggestionDismiss();
