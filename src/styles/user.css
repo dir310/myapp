@@ -1,13 +1,14 @@
-/* ── Map ── */
 body {
-  height: 100vh;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
 }
 
 #map {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
+  background: #000;
 }
 
 /* ── Leaflet Overrides ── */
@@ -128,14 +129,15 @@ body {
 }
 
 .sheet-handle {
-  width: 5px;
+  width: 6px;
   height: 50px;
-  background: transparent;
+  background: rgba(255, 107, 0, 0.4);
   border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.sheet-header:hover .sheet-handle {
+.sheet-header:hover .sheet-handle,
+.sidebar.minimized .sheet-handle {
   background: #ff6b00;
   height: 65px;
   box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
@@ -150,7 +152,7 @@ body {
   font-size: 13px;
   font-weight: 700;
   color: #ff6b00;
-  opacity: 0;
+  opacity: 0.85; /* Visible by default as a cue */
   transition: opacity 0.3s;
   pointer-events: none;
   text-transform: uppercase;

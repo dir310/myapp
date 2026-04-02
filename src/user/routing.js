@@ -102,7 +102,7 @@ export function checkRoute(state, map) {
   document.getElementById('mainActions').innerHTML =
     '<button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled><span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...</button>';
 
-  state.routingControl = L.Routing.control({
+  const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
     addWaypoints: false,
@@ -112,10 +112,13 @@ export function checkRoute(state, map) {
       styles: [{ color: '#FF6B00', weight: 8, opacity: 0.7 }],
       addWaypoints: false
     },
-    createMarker: () => null
-  }).addTo(map);
+    createMarker: () => null,
+    router: L.Routing.osrmv1({
+      serviceUrl: 'https://router.project-osrm.org/route/v1',
+    }),
+  });
 
-  state.routingControl.on('routesfound', (e) => {
+  control.on('routesfound', (e) => {
     // 1. Limpiar estado visual
     showStatus('', false);
     const sBar = document.getElementById('statusBar');
@@ -152,7 +155,7 @@ export function checkRoute(state, map) {
     if (isSheetMinimized()) toggleSheet();
   });
 
-  state.routingControl.on('routingerror', (err) => {
+  control.on('routingerror', (err) => {
     console.error('Routing error:', err);
     showStatus('❌ Error de conexión. Intenta de nuevo.', true);
     const actionsEl = document.getElementById('mainActions');
@@ -161,4 +164,7 @@ export function checkRoute(state, map) {
       document.getElementById('retryRouteBtn')?.addEventListener('click', () => checkRoute(state, map));
     }
   });
+
+  state.routingControl = control;
+  control.addTo(map);
 }
