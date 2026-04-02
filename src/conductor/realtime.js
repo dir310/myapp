@@ -130,7 +130,7 @@ async function rejectViaje(id) {
 }
 
 /**
- * Accept a ride: update Supabase and open Waze navigation.
+ * Accept a ride: update Supabase and open Waze navigation to the pick-up point automatically.
  * @param {string} id - Ride UUID.
  * @param {number} lat - Origin latitude.
  * @param {number} lng - Origin longitude.
@@ -157,6 +157,9 @@ async function acceptViaje(id, lat, lng) {
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
     loadViajes();
+    if (lat && lng) {
+      window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+    }
   }
 }
 
