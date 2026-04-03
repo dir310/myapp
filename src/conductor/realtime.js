@@ -157,9 +157,6 @@ async function acceptViaje(id, lat, lng) {
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
     loadViajes();
-    if (lat && lng) {
-      window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
-    }
   }
 }
 
