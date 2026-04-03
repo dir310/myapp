@@ -15,13 +15,15 @@ export async function initAuth() {
   setupUIEvents();
   generateCaptcha();
 
-  // Escuchar cambios de sesión y verificar sesión inicial
-  const { data: { session } } = await supabase.auth.getSession();
-  handleSession(session);
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    handleSession(session);
-  });
+  // Custom Auth: Verificar sesión en LocalStorage
+  const driverId = localStorage.getItem('calmovil_driver_id');
+  
+  if (driverId) {
+    // Simular que tenemos una sesión buscando directamente al conductor
+    handleSession({ user: { id: driverId } });
+  } else {
+    handleSession(null);
+  }
 }
 
 // Lógica para mostrar/ocultar contraseña
@@ -58,7 +60,7 @@ function setupUIEvents() {
   profileBtn.onclick = openProfile;
   document.getElementById('closeProfileBtn').onclick = () => profileSidebar.classList.remove('open');
   document.getElementById('logoutBtn').onclick = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('calmovil_driver_id');
     window.location.reload();
   };
 }
@@ -110,14 +112,24 @@ async function handleLogin() {
   btn.textContent = 'Ingresando...';
   btn.disabled = true;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  // Custom Auth Login (Direct query)
+  const { data, error } = await supabase
+    .from('conductores')
+    .select('*')
+    .eq('email', email)
+    .eq('password', password)
+    .single();
 
-  if (error) {
-    alert('Error al iniciar sesión: ' + error.message);
+  if (error || !data) {
+    alert('Error al iniciar sesión: Correo o clave incorrectos.');
     btn.textContent = 'Ingresar';
     btn.disabled = false;
+    return;
   }
-  // Si no hay error, el onAuthStateChange maneja el resto
+
+  // Login successful
+  localStorage.setItem('calmovil_driver_id', data.id);
+  window.location.reload();
 }
 
 async function handleRegister() {
@@ -141,40 +153,31 @@ async function handleRegister() {
   btn.textContent = 'Creando cuenta...';
   btn.disabled = true;
 
-  // 1. Sign up en Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password
-  });
+  // Custom Auth Register (Direct Insert bypassing Supabase Auth)
+  const userId = crypto.randomUUID();
 
-  if (authError) {
-    if (authError.message.includes('rate limit')) {
-      alert('⚠️ ERROR ANTI-SPAM (SUPABASE)\n\nHas intentado crear muchas cuentas seguidas.\n\nSOLUCIONES:\n1. Tu cuenta anterior SÍ se guardó. Ve abajo donde dice "¿Ya tienes cuenta? Inicia sesión" y pon tu correo y clave.\n2. Si quieres crear una cuenta nueva, apaga tu WiFi y usa tus Datos Móviles para cambiar de IP.');
-    } else {
-      alert('Error en registro: ' + authError.message);
-    }
-    return resetRegisterBtn(btn);
-  }
-
-  const userId = authData.user.id;
-
-  // 2. Crear perfil en tabla `conductores`
-  btn.textContent = 'Guardando perfil...';
   const { error: dbError } = await supabase
     .from('conductores')
     .insert([{
       id: userId,
       nombre,
+      email,
+      password,
       telefono,
       placa
     }]);
 
   if (dbError) {
-    alert('Error creando el perfil: ' + dbError.message);
+    if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) {
+      alert('Error en registro: Ya existe una cuenta con este correo.');
+    } else {
+      alert('Error creando el perfil: ' + dbError.message);
+    }
     return resetRegisterBtn(btn);
   }
 
-  // Recarga la página para procesar la nueva sesión de forma limpia.
+  // Guardar en sesión local y recargar
+  localStorage.setItem('calmovil_driver_id', userId);
   btn.textContent = '¡Éxito! Entrando...';
   window.location.reload();
 }
