@@ -113,11 +113,10 @@ async function handleRegister() {
   const telefono = document.getElementById('regTelefono').value;
   const placa = document.getElementById('regPlaca').value;
   const userCaptcha = parseInt(document.getElementById('regCaptcha').value);
-  const fotoFile = document.getElementById('regFoto').files[0];
   const btn = document.getElementById('registerBtn');
 
-  if (!nombre || !email || !password || !telefono || !placa || !fotoFile) {
-    return alert('Por favor llena todos los campos y sube tu foto.');
+  if (!nombre || !email || !password || !telefono || !placa) {
+    return alert('Por favor llena todos los campos.');
   }
 
   if (userCaptcha !== captchaAnswer) {
@@ -141,25 +140,7 @@ async function handleRegister() {
 
   const userId = authData.user.id;
 
-  // 2. Subir Foto a Storage
-  btn.textContent = 'Subiendo foto...';
-  const fileExt = fotoFile.name.split('.').pop();
-  const filePath = `${userId}/avatar.${fileExt}`;
-  
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filePath, fotoFile, { upsert: true });
-
-  if (uploadError) {
-    alert('Error subiendo tu foto: ' + uploadError.message);
-    return resetRegisterBtn(btn);
-  }
-
-  const { data: publicUrlData } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(filePath);
-
-  // 3. Crear perfil en tabla `conductores`
+  // 2. Crear perfil en tabla `conductores`
   btn.textContent = 'Guardando perfil...';
   const { error: dbError } = await supabase
     .from('conductores')
@@ -167,8 +148,7 @@ async function handleRegister() {
       id: userId,
       nombre,
       telefono,
-      placa,
-      foto_url: publicUrlData.publicUrl
+      placa
     }]);
 
   if (dbError) {
