@@ -50,7 +50,7 @@ checkPassengerAuth();
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('savePassengerAuthBtn');
   if (btn) {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const n = document.getElementById('authNombre').value;
       const c = document.getElementById('authCedula').value;
       const t = document.getElementById('authTelefono').value;
@@ -59,10 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*).');
       if (!terms) return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder continuar.');
 
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        // Enviar a Supabase a la nueva tabla de clientes puros
+        await supabase.from('clientes').upsert([{ 
+          cedula: c, 
+          nombre: n, 
+          telefono: t 
+        }]);
+      } catch (err) {
+        console.warn('Network issue saving sync client', err);
+      }
+
+      // Guardar local para no volver a preguntarle
       localStorage.setItem('calmovil_cliente_nombre', n);
       localStorage.setItem('calmovil_cliente_cedula', c);
       localStorage.setItem('calmovil_cliente_telefono', t);
 
+      btn.disabled = false;
+      btn.textContent = 'Guardar y Continuar';
       document.getElementById('passengerAuthOverlay').style.display = 'none';
       checkPassengerAuth(); // Update sidebar widget
     });

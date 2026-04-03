@@ -8,6 +8,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         conductor: resolve(__dirname, 'conductor.html'),
+        clientes: resolve(__dirname, 'clientes.html'),
       },
     },
   },

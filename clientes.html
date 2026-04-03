@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio de Clientes | MovilCal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/common.css">
+    <link rel="stylesheet" href="/src/styles/conductor.css"> <!-- Reusing some layout -->
+    <style>
+        body { padding: 20px; text-align: left; background: #111; color: #fff; font-family: 'Inter', sans-serif; }
+        .table-container { width: 100%; overflow-x: auto; margin-top: 30px; }
+        table { width: 100%; min-width: 600px; border-collapse: collapse; background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; }
+        th { background: #FF6B00; color: white; text-align: left; padding: 15px; font-size: 13px; text-transform: uppercase; font-weight: 800; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        .phone-badge { background: rgba(48,209,88,.15); color: #30D158; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; font-size: 12px;}
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="title" style="margin:0;">👥 Panel Administrativo: Clientes Registrados</div>
+</div>
+
+<p style="color: rgba(255,255,255,.6); margin-top: 10px; font-size: 14px;">Aquí se muestran todas las personas que han abierto la aplicación y registrado sus datos, independientemente de si han pedido un viaje o no.</p>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre del Pasajero</th>
+                <th>Cédula</th>
+                <th>Teléfono</th>
+                <th>Fecha de Registro</th>
+            </tr>
+        </thead>
+        <tbody id="clientesList">
+            <tr><td colspan="4" style="text-align:center; padding:30px;"><div class="spinner"></div><br><br>Cargando directorio...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="module" src="/src/admin/clientes.js"></script>
+</body>
+</html>
