@@ -27,6 +27,10 @@ export async function acceptRide(state, map) {
   btn.disabled = true;
 
   try {
+    const cNombre = localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo';
+    const cCedula = localStorage.getItem('calmovil_cliente_cedula') || '';
+    const cTelefono = localStorage.getItem('calmovil_cliente_telefono') || '';
+
     const { data, error } = await supabase.from('viajes').insert([
       {
         origen_nombre: originName,
@@ -38,6 +42,9 @@ export async function acceptRide(state, map) {
         tarifa: price,
         distancia_km: distText,
         estado: 'buscando',
+        cliente_nombre: cNombre,
+        cliente_cedula: cCedula,
+        cliente_telefono: cTelefono
       },
     ]).select();
 

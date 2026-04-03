@@ -117,17 +117,27 @@ export function renderViajes(viajes, handlers) {
           </div>`;
       }
 
+      const cNombre = v.cliente_nombre ? v.cliente_nombre : 'Pasajero Anónimo';
+      const cTelefono = v.cliente_telefono ? v.cliente_telefono : '';
+
       return `
     <div class="card" id="viaje-${v.id}">
-      <div class="card-header">
-        <div>
+      <div class="card-header" style="padding-bottom: 8px;">
+        <div style="flex:1;">
           <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Ganancia</div>
           <div class="price">$${v.tarifa.toLocaleString('es-CO')}</div>
         </div>
-        <div class="dist" style="text-align:right">
+        <div style="flex:1; text-align:right;">
           <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Distancia</div>
-          ${v.distancia_km}
+          <div class="dist">${v.distancia_km}</div>
         </div>
+      </div>
+      <div style="background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="font-size: 13px;">
+            <span style="display:block; font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase;">Pasajero</span>
+            <b>${cNombre}</b>
+        </div>
+        ${cTelefono ? `<a href="tel:${cTelefono}" class="btn" style="padding: 5px 12px; font-size: 11px; background:#30D158; text-decoration:none;">📞 Llamar</a>` : ''}
       </div>
       <div class="route-info">
         <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>

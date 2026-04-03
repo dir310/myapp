@@ -24,6 +24,38 @@ const state = {
   pollerInterval: null,
 };
 
+// ── Passenger Auth Logic ──
+function checkPassengerAuth() {
+  const nombre = localStorage.getItem('calmovil_cliente_nombre');
+  const cedula = localStorage.getItem('calmovil_cliente_cedula');
+  const telefono = localStorage.getItem('calmovil_cliente_telefono');
+
+  if (!nombre || !cedula || !telefono) {
+    const overlay = document.getElementById('passengerAuthOverlay');
+    if (overlay) overlay.style.display = 'flex';
+  }
+}
+checkPassengerAuth();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('savePassengerAuthBtn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const n = document.getElementById('authNombre').value;
+      const c = document.getElementById('authCedula').value;
+      const t = document.getElementById('authTelefono').value;
+
+      if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*).');
+
+      localStorage.setItem('calmovil_cliente_nombre', n);
+      localStorage.setItem('calmovil_cliente_cedula', c);
+      localStorage.setItem('calmovil_cliente_telefono', t);
+
+      document.getElementById('passengerAuthOverlay').style.display = 'none';
+    });
+  }
+});
+
 // ── Initialize Map ──
 const map = createMap('map', LA_CALERA, 13);
 
