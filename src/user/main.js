@@ -44,8 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const n = document.getElementById('authNombre').value;
       const c = document.getElementById('authCedula').value;
       const t = document.getElementById('authTelefono').value;
+      const terms = document.getElementById('authTerms').checked;
 
       if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*).');
+      if (!terms) return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder continuar.');
 
       localStorage.setItem('calmovil_cliente_nombre', n);
       localStorage.setItem('calmovil_cliente_cedula', c);

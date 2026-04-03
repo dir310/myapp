@@ -189,10 +189,15 @@ async function handleRegister() {
   const telefono = document.getElementById('regTelefono').value;
   const placa = document.getElementById('regPlaca').value;
   const userCaptcha = parseInt(document.getElementById('regCaptcha').value);
+  const terms = document.getElementById('regTerms').checked;
   const btn = document.getElementById('registerBtn');
 
   if (!nombre || !email || !password || !telefono || !placa) {
     return alert('Por favor llena todos los campos.');
+  }
+
+  if (!terms) {
+    return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder registrarte.');
   }
 
   if (userCaptcha !== captchaAnswer) {
