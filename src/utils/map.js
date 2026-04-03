@@ -51,3 +51,63 @@ export function pinIcon(color, label) {
     iconAnchor: [17, 34],
   });
 }
+
+/**
+ * Creates a professional motorcycle map icon.
+ * @returns {L.DivIcon}
+ */
+export function motoIcon() {
+  return L.divIcon({
+    className: 'moto-icon-wrapper',
+    html: `<div style="width:40px; height:40px; background:#fff; border-radius:50%; border:3px solid #FF6B00; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;">
+                <circle cx="5" cy="18" r="3"></circle>
+                <circle cx="19" cy="18" r="3"></circle>
+                <path d="M5 15h14"></path>
+                <path d="M12 15V8L8 8V15"></path>
+                <path d="M15 15v-4l4-2"></path>
+            </svg>
+           </div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+}
+
+/**
+ * Animates a Leaflet marker smoothly from its current position to a new LatLng.
+ * @param {L.Marker} marker 
+ * @param {[number, number]} newLatLng 
+ * @param {number} durationMs 
+ */
+export function animateMarker(marker, newLatLng, durationMs = 2000) {
+  const startLatLng = marker.getLatLng();
+  const endLatLng = L.latLng(newLatLng);
+  
+  if (!startLatLng) {
+    marker.setLatLng(endLatLng);
+    return;
+  }
+
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    let progress = elapsed / durationMs;
+    
+    // Ease-out cubic calculation for smooth slide
+    progress = 1 - Math.pow(1 - progress, 3);
+    
+    if (progress > 1) progress = 1;
+
+    const currentLat = startLatLng.lat + (endLatLng.lat - startLatLng.lat) * progress;
+    const currentLng = startLatLng.lng + (endLatLng.lng - startLatLng.lng) * progress;
+
+    marker.setLatLng([currentLat, currentLng]);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}

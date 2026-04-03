@@ -8,6 +8,43 @@ import { getCurrentProfile } from './auth.js';
 let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
 
+// Tracker GPS
+let activeWatchId = null;
+let currentTrackingTripId = null;
+
+function startGPS(tripId) {
+  if (activeWatchId) return; // Ya estamos trackeando
+  if (!navigator.geolocation) return console.warn('GPS NO Soportado');
+  
+  currentTrackingTripId = tripId;
+  console.log('Iniciando rastreo GPS para el viaje:', tripId);
+
+  activeWatchId = navigator.geolocation.watchPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      // Update DB silently
+      await supabase
+        .from('viajes')
+        .update({ conductor_lat: lat, conductor_lng: lng })
+        .eq('id', tripId)
+        .in('estado', ['aceptado', 'en_progreso']);
+    },
+    (err) => console.error('GPS Error:', err.message),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+  );
+}
+
+function stopGPS() {
+  if (activeWatchId && navigator.geolocation) {
+    navigator.geolocation.clearWatch(activeWatchId);
+    activeWatchId = null;
+    currentTrackingTripId = null;
+    console.log('Rastreo GPS detenido.');
+  }
+}
+
 /**
  * Get handlers for ride card actions (curried with state).
  */
@@ -31,6 +68,7 @@ async function cancelActiveViaje(id) {
     if (!error) {
         activeViajes = activeViajes.filter((v) => v.id !== id);
         renderViajes(activeViajes, getHandlers());
+        stopGPS();
     } else {
         alert('Error al cancelar: ' + error.message);
     }
@@ -156,6 +194,7 @@ async function acceptViaje(id, lat, lng) {
     alert('Error técnico: ' + error.message);
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
+    startGPS(id); // EMPEZAR EL TRACKING AUTOMÁTICO
     loadViajes();
   }
 }
@@ -167,6 +206,8 @@ async function acceptViaje(id, lat, lng) {
 async function startViaje(id) {
   const { error } = await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
   if (!error) {
+    // Asegurar que el GPS siga activo
+    startGPS(id);
     loadViajes();
   } else {
     alert('Error al iniciar viaje: ' + error.message);
@@ -181,6 +222,7 @@ async function finishViaje(id) {
   if (confirm('¿Estás seguro de finalizar el viaje?')) {
     misViajesFinalizados.push(id); // Registrar para recibir calificación luego
     await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
+    stopGPS(); // Apagar GPS
     loadViajes();
   }
 }

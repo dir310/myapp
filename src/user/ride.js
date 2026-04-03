@@ -4,6 +4,9 @@
 import { supabase } from '../config/supabase.js';
 import { showStatus } from './ui.js';
 import { clearPoint } from './routing.js';
+import { motoIcon, animateMarker } from '../utils/map.js';
+
+let driverMarker = null; // Guardará el ícono en vivo de la moto
 
 /**
  * Request a ride by inserting into Supabase.
@@ -58,7 +61,7 @@ export async function acceptRide(state, map) {
     });
 
     // Start listening for driver
-    listenForDriver(state.currentRideId, state);
+    listenForDriver(state.currentRideId, state, map);
   } catch (err) {
     showStatus('❌ Error al pedir viaje. Intenta de nuevo.', true);
     btn.innerHTML = '🏍️ Pedir Viaje';
@@ -72,7 +75,7 @@ export async function acceptRide(state, map) {
  * @param {string} rideId - Ride UUID.
  * @param {object} state - Shared app state.
  */
-function listenForDriver(rideId, state) {
+function listenForDriver(rideId, state, map) {
   console.log('📡 Iniciando radar para viaje:', rideId);
 
   // Strategy 1: Real-time WebSocket
@@ -94,8 +97,32 @@ function listenForDriver(rideId, state) {
           showTripStarted(state);
         } else if (payload.new.estado === 'finalizado') {
           showRatingScreen(state);
+          if (driverMarker && map) {
+            map.removeLayer(driverMarker);
+            driverMarker = null;
+          }
         } else if (payload.new.estado === 'buscando') {
           showSearchingRecovery(state);
+          if (driverMarker && map) {
+            map.removeLayer(driverMarker);
+            driverMarker = null;
+          }
+        }
+
+        // Live Tracking de la Moto (GPS Update)
+        if (payload.new.conductor_lat && payload.new.conductor_lng && map) {
+          const lat = payload.new.conductor_lat;
+          const lng = payload.new.conductor_lng;
+          
+          if (!driverMarker) {
+            driverMarker = L.marker([lat, lng], {
+              icon: motoIcon(),
+              zIndexOffset: 1000 // Siempre arriba
+            }).addTo(map);
+          } else {
+            // Animar el movimiento suavemente (2 segundos de duración)
+            animateMarker(driverMarker, [lat, lng], 2000);
+          }
         }
       }
     )
@@ -139,7 +166,6 @@ function showDriverAssigned(name, state) {
 
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
-      <div style="font-size:35px; margin-bottom: 8px;">🚕</div>
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
         <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Datos del Conductor:</span>
