@@ -156,22 +156,44 @@ function listenForDriver(rideId, state, map) {
  * @param {string} name - Driver name/identifier.
  * @param {object} state - Shared app state.
  */
-function showDriverAssigned(name, state) {
+async function showDriverAssigned(driverId, state) {
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
 
-  const driverName = name || 'Un Conductor';
+  // Vista de carga inicial muy rápida
+  document.getElementById('priceSection').innerHTML = `
+    <div style="text-align:center; padding: 10px 0;">
+      <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor Asignado!</h3>
+      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
+        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Buscando datos del conductor...</span>
+      </div>
+    </div>
+  `;
+
+  // Fetch datos reales a base de datos
+  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono').eq('id', driverId).single();
+  
+  let driverName = 'Conducto Anónimo';
+  let driverDetails = 'Sin más datos';
+  
+  if (driver) {
+    driverName = driver.nombre;
+    driverDetails = `🏍️ ${driver.placa} &nbsp;|&nbsp; 📞 ${driver.telefono}`;
+  }
 
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
-      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
-        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Datos del Conductor:</span>
-        <span style="color:#fff; font-size:17px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
+      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px 12px; margin-bottom:10px;">
+        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px;">Datos del Conductor:</span>
+        <span style="color:#fff; font-size:18px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
+        <div style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); display:inline-block; padding:5px 10px; border-radius:8px; margin-top:8px; font-weight:bold; font-size:13px;">
+            ${driverDetails}
+        </div>
       </div>
-      <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor llegue, verás el mapa en tiempo real.</p>
+      <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor arranque, verás el radar en tiempo real.</p>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;

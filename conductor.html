@@ -80,6 +80,17 @@
         <h3 id="profileName" style="margin:10px 0 5px 0;">Cargando...</h3>
         <p id="profilePlaca" style="color:#FF6B00; font-weight:800; font-size:14px; margin:0;">...</p>
         <p id="profileTelefono" style="color:rgba(255,255,255,.5); font-size:12px; margin-top:5px;">...</p>
+        <button id="editProfileBtn" style="background:none; border:1px solid rgba(255,255,255,.2); color:white; padding:5px 15px; border-radius:15px; font-size:11px; margin-top:10px; cursor:pointer;">✏️ Cambiar Datos</button>
+        
+        <div id="editProfileForm" style="display:none; margin-top:15px; text-align:left; background:rgba(0,0,0,.3); padding:15px; border-radius:12px;">
+            <input type="text" id="editNombre" class="driver-name" placeholder="Nombre completo" style="padding:10px; font-size:13px; margin-bottom:8px;">
+            <input type="text" id="editPlaca" class="driver-name" placeholder="Placa de Moto" style="padding:10px; font-size:13px; margin-bottom:8px;">
+            <input type="text" id="editTelefono" class="driver-name" placeholder="Celular" style="padding:10px; font-size:13px; margin-bottom:8px;">
+            <div style="display:flex; gap:10px;">
+                <button id="saveProfileBtn" class="btn btn-accept" style="flex:1; padding:8px; font-size:12px;">Guardar</button>
+                <button id="cancelEditBtn" class="btn" style="flex:1; padding:8px; font-size:12px; background:rgba(255,255,255,.1);">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <div class="stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:25px;">

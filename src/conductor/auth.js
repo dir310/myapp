@@ -63,6 +63,56 @@ function setupUIEvents() {
     localStorage.removeItem('calmovil_driver_id');
     window.location.reload();
   };
+
+  // Edit Profile UI logic
+  document.getElementById('editProfileBtn').onclick = () => {
+    document.getElementById('editProfileForm').style.display = 'block';
+    document.getElementById('editProfileBtn').style.display = 'none';
+    if(currentProfile) {
+      document.getElementById('editNombre').value = currentProfile.nombre || '';
+      document.getElementById('editPlaca').value = currentProfile.placa || '';
+      document.getElementById('editTelefono').value = currentProfile.telefono || '';
+    }
+  };
+
+  document.getElementById('cancelEditBtn').onclick = () => {
+    document.getElementById('editProfileForm').style.display = 'none';
+    document.getElementById('editProfileBtn').style.display = 'inline-block';
+  };
+
+  document.getElementById('saveProfileBtn').onclick = async () => {
+    const btn = document.getElementById('saveProfileBtn');
+    const newNombre = document.getElementById('editNombre').value;
+    const newPlaca = document.getElementById('editPlaca').value;
+    const newTelefono = document.getElementById('editTelefono').value;
+
+    if (!newNombre || !newPlaca || !newTelefono) return alert('Llena todos los campos');
+
+    btn.textContent = '...';
+    btn.disabled = true;
+
+    const { error } = await supabase
+      .from('conductores')
+      .update({ nombre: newNombre, placa: newPlaca, telefono: newTelefono })
+      .eq('id', currentUser.id);
+
+    btn.textContent = 'Guardar';
+    btn.disabled = false;
+
+    if (error) {
+      alert('Error updating: ' + error.message);
+    } else {
+      // Modificar localmente para reflejar el cambio inmediato
+      currentProfile.nombre = newNombre;
+      currentProfile.placa = newPlaca;
+      currentProfile.telefono = newTelefono;
+      
+      // Esconder form y recargar visual
+      document.getElementById('editProfileForm').style.display = 'none';
+      document.getElementById('editProfileBtn').style.display = 'inline-block';
+      openProfile(); // Re-render text fields
+    }
+  };
 }
 
 function generateCaptcha() {
