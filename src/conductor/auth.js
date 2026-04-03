@@ -156,7 +156,9 @@ async function handleRegister() {
     return resetRegisterBtn(btn);
   }
 
-  // Listo, el onAuthStateChange se activa y la UI cambia
+  // Recarga la página para procesar la nueva sesión de forma limpia.
+  btn.textContent = '¡Éxito! Entrando...';
+  window.location.reload();
 }
 
 function resetRegisterBtn(btn) {
