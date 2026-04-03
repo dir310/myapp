@@ -95,8 +95,24 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('passengerAuthOverlay').style.display = 'flex';
       });
   }
-});
 
+  const logoutBtn = document.getElementById('logoutPassengerBtn');
+  if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+          if(confirm('¿Estás seguro de que quieres cerrar sesión? Asegúrate de no tener un viaje activo.')) {
+              localStorage.removeItem('calmovil_cliente_nombre');
+              localStorage.removeItem('calmovil_cliente_cedula');
+              localStorage.removeItem('calmovil_cliente_telefono');
+              // Usar 'authTerms' as a flag is unneeded since it's re-checked on form.
+              document.getElementById('authNombre').value = '';
+              document.getElementById('authCedula').value = '';
+              document.getElementById('authTelefono').value = '';
+              document.getElementById('authTerms').checked = false;
+              checkPassengerAuth();
+          }
+      });
+  }
+});
 // ── Initialize Map ──
 const map = createMap('map', LA_CALERA, 13);
 
