@@ -95,6 +95,11 @@ export function clearPoint(type, state, map) {
     document.getElementById('routePill').style.display = 'none';
   }
 
+  if (state.fallbackLine) {
+    map.removeLayer(state.fallbackLine);
+    state.fallbackLine = null;
+  }
+
   document.getElementById('mainActions').style.display = 'flex';
   document.getElementById('priceSection').style.display = 'none';
   document.getElementById('mainActions').innerHTML =
@@ -118,6 +123,11 @@ export function checkRoute(state, map) {
   if (state.routingControl) {
     map.removeControl(state.routingControl);
     state.routingControl = null;
+  }
+
+  if (state.fallbackLine) {
+    map.removeLayer(state.fallbackLine);
+    state.fallbackLine = null;
   }
 
   // Mostrar estado de carga mientras recibimos datos de ruta
@@ -185,6 +195,15 @@ export function checkRoute(state, map) {
     const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
     const mins = Math.round((distKm / 25) * 60);
     const dist = distKm.toFixed(1);
+    
+    // Dibujar línea visual de contingencia (punteada)
+    if (state.fallbackLine) map.removeLayer(state.fallbackLine);
+    state.fallbackLine = L.polyline([state.startLatLng, state.endLatLng], {
+      color: '#FF6B00',
+      weight: 6,
+      opacity: 0.8,
+      dashArray: '10, 10'
+    }).addTo(map);
     
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
