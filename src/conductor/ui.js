@@ -18,6 +18,17 @@ export function toggleRadar() {
   if (radarEnabled) {
     btn.className = 'radar-toggle radar-on';
     txt.innerText = 'RADAR ENCENDIDO';
+    
+    // Forzar petición de permisos GPS explícitamente 
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => console.log('✅ Permiso de GPS concedido por el conductor.'),
+        (err) => alert('⚠️ IMPORTANTE: Necesitas permitir el acceso a tu ubicación GPS para que los clientes puedan ver en el mapa por dónde vienes recogidos. Revisa los permisos de tu navegador.')
+      );
+    } else {
+      alert('Tu dispositivo no soporta GPS.');
+    }
+
     // Touch sound to unlock browser audio policy
     alertSound.play().then(() => {
       alertSound.pause();
@@ -25,7 +36,7 @@ export function toggleRadar() {
     }).catch((e) => console.log('Audio unlock failed:', e));
   } else {
     btn.className = 'radar-toggle radar-off';
-    txt.innerText = 'ACTIVAR RADAR (SONIDO)';
+    txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
   }
 }
 
