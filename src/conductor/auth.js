@@ -134,7 +134,11 @@ async function handleRegister() {
   });
 
   if (authError) {
-    alert('Error en registro: ' + authError.message);
+    if (authError.message.includes('rate limit')) {
+      alert('⚠️ ERROR ANTI-SPAM (SUPABASE)\n\nHas intentado crear muchas cuentas seguidas.\n\nSOLUCIONES:\n1. Tu cuenta anterior SÍ se guardó. Ve abajo donde dice "¿Ya tienes cuenta? Inicia sesión" y pon tu correo y clave.\n2. Si quieres crear una cuenta nueva, apaga tu WiFi y usa tus Datos Móviles para cambiar de IP.');
+    } else {
+      alert('Error en registro: ' + authError.message);
+    }
     return resetRegisterBtn(btn);
   }
 
