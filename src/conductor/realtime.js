@@ -136,16 +136,26 @@ export function setupRealtimeChannel() {
         }
 
         if (validStates.includes(payload.new.estado)) {
+          let needsRender = false;
           if (index !== -1) {
+            const oldTrip = activeViajes[index];
+            // Renderizar SOLO si cambió de estado (ej: de buscando a aceptado)
+            if (oldTrip.estado !== payload.new.estado || oldTrip.calificacion !== payload.new.calificacion) {
+              needsRender = true;
+            }
             activeViajes[index] = payload.new;
           } else {
             activeViajes.unshift(payload.new);
+            needsRender = true;
           }
+          if (needsRender) renderViajes(activeViajes, getHandlers());
         } else {
           // Remove if finished or cancelled
-          if (index !== -1) activeViajes.splice(index, 1);
+          if (index !== -1) {
+             activeViajes.splice(index, 1);
+             renderViajes(activeViajes, getHandlers());
+          }
         }
-        renderViajes(activeViajes, getHandlers());
       }
     )
     .subscribe();
