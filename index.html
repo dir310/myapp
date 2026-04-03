@@ -52,6 +52,18 @@
     </div>
     
     <div class="sheet-content">
+        <!-- Passenger Profile Header -->
+        <div id="passengerProfileDisplay" style="display:none; background:rgba(255,255,255,.05); border-radius:8px; padding:10px 15px; margin-bottom:15px; align-items:center; justify-content:space-between; cursor:pointer;" title="Haz clic para editar">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:24px;">👤</div>
+                <div>
+                    <div id="displayClientName" style="color:#fff; font-weight:bold; font-size:14px; text-transform:capitalize;">-</div>
+                    <div id="displayClientPhone" style="font-size:11px; color:rgba(255,255,255,.5);">-</div>
+                </div>
+            </div>
+            <button id="editPassengerBtn" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:12px; color:#FF6B00; font-size:11px; font-weight:600; cursor:pointer; padding:5px 10px;">✏️ Editar</button>
+        </div>
+
         <!-- Mode Toggle -->
         <div class="mode-toggle">
             <button class="mode-btn active" id="modeSearchBtn">🔍 Buscar lugar</button>
