@@ -120,10 +120,11 @@ export function checkRoute(state, map) {
     state.routingControl = null;
   }
 
-  // Show loading state
+  // Mostrar estado de carga mientras recibimos datos de ruta
   document.getElementById('mainActions').innerHTML =
     '<button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled><span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...</button>';
 
+  // ─── TRAZAR RUTA (en segundo plano) ───
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -147,15 +148,16 @@ export function checkRoute(state, map) {
     if (sBar) sBar.style.display = 'none';
 
     const r = e.routes[0];
-    // Usar OSRM si da distancia real, si no, usar Haversine como respaldo
     const osrmKm = r.summary.totalDistance / 1000;
+    
+    // Si OSRM falla en distancia, usamos Haversine como fallback
     const distKm = osrmKm > 0.05 ? osrmKm : haversineKm(state.startLatLng, state.endLatLng) * 1.3;
     const dist = distKm.toFixed(1);
     const mins = r.summary.totalTime > 0
       ? Math.round(r.summary.totalTime / 60)
-      : Math.round((distKm / 25) * 60); // 25 km/h promedio en moto en zona urbana
+      : Math.round((distKm / 25) * 60);
 
-    // 2. Mostrar datos de ruta
+    // 2. Mostrar datos de ruta en UI
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
     const pillEl = document.getElementById('routePill');
@@ -165,7 +167,7 @@ export function checkRoute(state, map) {
 
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
 
-    // 3. Calcular Tarifa Moto con distancia real garantizada
+    // 3. Calcular Tarifa Moto 
     showPrice(dist, mins);
 
     // 4. Cambiar vistas
@@ -179,25 +181,33 @@ export function checkRoute(state, map) {
 
   control.on('routingerror', (err) => {
     console.error('Routing error:', err);
-    // Aunque falle la ruta, calcular precio por Haversine como respaldo
+    // Fallback: Haversine si no hay conexión a internet / ruta fallida
     const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
     const mins = Math.round((distKm / 25) * 60);
     const dist = distKm.toFixed(1);
+    
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
     const pillEl = document.getElementById('routePill');
     if (distEl) distEl.textContent = dist;
     if (timeEl) timeEl.textContent = mins;
     if (pillEl) pillEl.style.display = 'flex';
+    
     showPrice(dist, mins);
     showStatus('⚠️ Ruta aproximada (sin conexión a servidores de mapa).', false);
+    
     const actionsEl = document.getElementById('mainActions');
     const priceSecEl = document.getElementById('priceSection');
     if (actionsEl) actionsEl.style.display = 'none';
     if (priceSecEl) priceSecEl.style.display = 'block';
+    
+    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
     if (isSheetMinimized()) toggleSheet();
   });
 
   state.routingControl = control;
   control.addTo(map);
 }
+
+
+
