@@ -28,7 +28,10 @@
         
         <div id="loginForm" class="auth-form active">
             <input type="email" id="loginEmail" class="driver-name" placeholder="Correo electrónico">
-            <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
+            <div class="password-wrapper">
+                <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
+                <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
+            </div>
             <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:10px;">Ingresar</button>
             <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
                 ¿No tienes cuenta? <a href="#" id="showRegister" style="color:#FF6B00;">Regístrate aquí</a>
@@ -38,7 +41,10 @@
         <div id="registerForm" class="auth-form" style="display:none;">
             <input type="text" id="regNombre" class="driver-name" placeholder="Nombre completo">
             <input type="email" id="regEmail" class="driver-name" placeholder="Correo electrónico">
-            <input type="password" id="regPassword" class="driver-name" placeholder="Contraseña">
+            <div class="password-wrapper">
+                <input type="password" id="regPassword" class="driver-name" placeholder="Contraseña">
+                <span class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</span>
+            </div>
             <input type="text" id="regTelefono" class="driver-name" placeholder="Número de celular">
             <input type="text" id="regPlaca" class="driver-name" placeholder="Placa de la moto (ej: ABC-123)">
             

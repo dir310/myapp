@@ -24,6 +24,20 @@ export async function initAuth() {
   });
 }
 
+// Lógica para mostrar/ocultar contraseña
+window.togglePassword = function(inputId, iconElement) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconElement.style.filter = 'grayscale(0)'; // Color completo
+    iconElement.style.opacity = '1';
+  } else {
+    input.type = 'password';
+    iconElement.style.filter = 'grayscale(1)'; // Blanco y negro / tenue
+    iconElement.style.opacity = '0.6';
+  }
+};
+
 function setupUIEvents() {
   document.getElementById('showRegister').onclick = (e) => {
     e.preventDefault();

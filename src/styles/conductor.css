@@ -250,6 +250,26 @@ body {
   border: 1px solid rgba(255,255,255,0.05);
 }
 
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.6;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
 .profile-sidebar {
   position: fixed;
   top: 0; right: -100%; width: 85%; max-width: 350px; height: 100%;
