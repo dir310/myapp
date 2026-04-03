@@ -3,6 +3,7 @@
  */
 import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
+import { getCurrentProfile } from './auth.js';
 
 let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
@@ -52,10 +53,7 @@ export async function loadViajes() {
   }
 }
 
-// Escuchar cambios en el nombre para filtrar la lista instantáneamente
-document.getElementById('conductorName')?.addEventListener('input', () => {
-  renderViajes(activeViajes, getHandlers());
-});
+
 
 /**
  * Set up real-time channel for new and updated rides.
@@ -91,10 +89,10 @@ export function setupRealtimeChannel() {
 
         // Notificar si recibimos una calificación
         if (payload.new.calificacion && payload.new.calificacion > 0) {
-            const currentDriver = document.getElementById('conductorName').value || 'Un Conductor';
+            const profile = getCurrentProfile();
+            const currentDriver = profile ? profile.id : 'Un Conductor';
             if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
                 showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
-                // Remover de la lista temporal para evitar notificaciones duplicadas en el futuro
                 misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
             }
         }
@@ -130,14 +128,16 @@ async function rejectViaje(id) {
 }
 
 /**
- * Accept a ride: update Supabase and open Waze navigation to the pick-up point automatically.
+ * Accept a ride: update Supabase and set driver.
  * @param {string} id - Ride UUID.
  * @param {number} lat - Origin latitude.
  * @param {number} lng - Origin longitude.
  */
 async function acceptViaje(id, lat, lng) {
-  const conductorName = document.getElementById('conductorName').value || 'Un Conductor';
-  const otp = Math.floor(100 + Math.random() * 900); // 3 dígitos aleatorios
+  const profile = getCurrentProfile();
+  if (!profile) return alert('Debes iniciar sesión primero.');
+  const conductorName = profile.nombre;
+  const conductorId = profile.id;
 
   console.log('Intentando aceptar viaje:', id, 'por:', conductorName);
 
@@ -145,7 +145,7 @@ async function acceptViaje(id, lat, lng) {
     .from('viajes')
     .update({ 
       estado: 'aceptado', 
-      conductor_id: conductorName
+      conductor_id: conductorId
     })
     .eq('id', id)
     .eq('estado', 'buscando')

@@ -11,8 +11,8 @@ import { loadViajes, setupRealtimeChannel } from './realtime.js';
 document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 
 // ── Initialize ──
-loadViajes();
-setupRealtimeChannel();
+import { initAuth } from './auth.js';
+initAuth();
 
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {

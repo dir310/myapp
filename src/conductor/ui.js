@@ -2,6 +2,8 @@
  * Conductor page UI: radar toggle and ride card rendering.
  */
 
+import { getCurrentProfile } from './auth.js';
+
 let radarEnabled = false;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
@@ -59,7 +61,8 @@ export function showNewRideBanner() {
  */
 export function renderViajes(viajes, handlers) {
   const container = document.getElementById('viajesList');
-  const currentConductor = document.getElementById('conductorName').value || 'Un Conductor';
+  const profile = getCurrentProfile();
+  const currentConductor = profile ? profile.id : 'Un Conductor';
 
   // Privacidad: Solo ves solicitudes ("buscando") y TUS propios viajes ya aceptados.
   const filteredViajes = viajes.filter((v) => {

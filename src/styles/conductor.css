@@ -225,3 +225,53 @@ body {
     opacity: 1;
   }
 }
+
+/* ── Auth & Profile Modal ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.auth-container {
+  background: #1c1c1e;
+  border-radius: 20px;
+  padding: 30px 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.profile-sidebar {
+  position: fixed;
+  top: 0; right: -100%; width: 85%; max-width: 350px; height: 100%;
+  background: #151515;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.6);
+  z-index: 9999;
+  transition: right 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255,255,255,0.05);
+}
+
+.profile-sidebar.open {
+  right: 0;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  color: #ff6b00;
+}
+
