@@ -161,18 +161,13 @@ async function acceptViaje(id, lat, lng) {
 }
 
 /**
- * Start a trip directly (skipping OTP) and open Waze to destination.
+ * Start a trip directly (skipping OTP) and open Waze to destination manually later.
  * @param {string} id - Ride UUID.
- * @param {number} lat - Destination latitude.
- * @param {number} lng - Destination longitude.
  */
-async function startViaje(id, lat, lng) {
+async function startViaje(id) {
   const { error } = await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
   if (!error) {
     loadViajes();
-    if (lat && lng) {
-      window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
-    }
   } else {
     alert('Error al iniciar viaje: ' + error.message);
   }
