@@ -177,6 +177,14 @@ async function acceptViaje(id, lat, lng) {
   const conductorName = profile.nombre;
   const conductorId = profile.id;
 
+  // Forzar petición explícita de GPS al momento de aceptar para activar permisos del navegador
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      () => console.log('Permiso GPS confirmado al aceptar viaje'),
+      (err) => alert('Para aceptar viajes debes permitir el uso de tu ubicación GPS cuando tu navegador te lo pida.')
+    );
+  }
+
   console.log('Intentando aceptar viaje:', id, 'por:', conductorName);
 
   const { data, error } = await supabase

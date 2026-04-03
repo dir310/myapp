@@ -90,22 +90,32 @@ function listenForDriver(rideId, state, map) {
         filter: `id=eq.${rideId}`,
       },
       (payload) => {
-        console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
-        if (payload.new.estado === 'aceptado') {
-          showDriverAssigned(payload.new.conductor_id, state);
-        } else if (payload.new.estado === 'en_progreso') {
-          showTripStarted(state);
-        } else if (payload.new.estado === 'finalizado') {
-          showRatingScreen(state);
-          if (driverMarker && map) {
-            map.removeLayer(driverMarker);
-            driverMarker = null;
-          }
-        } else if (payload.new.estado === 'buscando') {
-          showSearchingRecovery(state);
-          if (driverMarker && map) {
-            map.removeLayer(driverMarker);
-            driverMarker = null;
+        // Evitar redibujar la UI si el estado no ha cambiado realmente (útil para cuando sólo cambia el GPS)
+        const estadoCambio = payload.new.estado !== state.lastKnownEstado;
+        
+        if (estadoCambio) {
+          console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
+          state.lastKnownEstado = payload.new.estado;
+          
+          if (payload.new.estado === 'aceptado') {
+            showDriverAssigned(payload.new.conductor_id, state);
+          } else if (payload.new.estado === 'en_progreso') {
+            showTripStarted(state);
+          } else if (payload.new.estado === 'finalizado') {
+            showRatingScreen(state);
+            if (driverMarker && map) {
+              map.removeLayer(driverMarker);
+              driverMarker = null;
+            }
+          } else if (payload.new.estado === 'buscando') {
+            showSearchingRecovery(state);
+            if (driverMarker && map) {
+              map.removeLayer(driverMarker);
+              driverMarker = null;
+            }
+          } else if (payload.new.estado === 'cancelado') {
+            alert('⚠️ El conductor ha cancelado el servicio.');
+            cancelRide(state, map);
           }
         }
 
@@ -131,7 +141,6 @@ function listenForDriver(rideId, state, map) {
   // Strategy 2: Backup polling every 5 seconds
   if (state.pollerInterval) clearInterval(state.pollerInterval);
   state.pollerInterval = setInterval(async () => {
-    console.log('🔍 Verificando estado en base de datos (Backup Poller)...');
     const { data, error } = await supabase
       .from('viajes')
       .select('estado, conductor_id')
@@ -139,13 +148,18 @@ function listenForDriver(rideId, state, map) {
       .single();
 
     if (!error && data) {
-      if (data.estado === 'aceptado') {
-        console.log('✅ Conductor encontrado vía Poller!');
-        showDriverAssigned(data.conductor_id, state);
-      } else if (data.estado === 'en_progreso') {
-        showTripStarted(state);
-      } else if (data.estado === 'finalizado') {
-        showRatingScreen(state);
+      if (data.estado !== state.lastKnownEstado) {
+        state.lastKnownEstado = data.estado;
+        if (data.estado === 'aceptado') {
+          showDriverAssigned(data.conductor_id, state);
+        } else if (data.estado === 'en_progreso') {
+          showTripStarted(state);
+        } else if (data.estado === 'finalizado') {
+          showRatingScreen(state);
+        } else if (data.estado === 'cancelado') {
+          alert('⚠️ El conductor ha cancelado el servicio.');
+          cancelRide(state, map);
+        }
       }
     }
   }, 5000);
