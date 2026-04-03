@@ -140,8 +140,8 @@ export function renderViajes(viajes, handlers) {
         ${cTelefono ? `<a href="tel:${cTelefono}" class="btn" style="padding: 5px 12px; font-size: 11px; background:#30D158; text-decoration:none;">📞 Llamar</a>` : ''}
       </div>
       <div class="route-info">
-        <div class="dot-text"><div class="icon-o">🟠</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
-        <div class="dot-text"><div class="icon-d">🟢</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
+        <div class="dot-text"><div class="icon-o" style="color:#30D158">🟢</div><div><b>Recoger:</b><br>${v.origen_nombre}</div></div>
+        <div class="dot-text"><div class="icon-d" style="color:#FF6B00">🟠</div><div><b>Llevar a:</b><br>${v.destino_nombre}</div></div>
       </div>
       ${actions}
     </div>

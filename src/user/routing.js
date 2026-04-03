@@ -5,11 +5,11 @@ import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
-// Tarifas Moto
-const BASE_FARE = 1200;
-const PER_KM_FARE = 600;
-const PER_MIN_FARE = 100;
-const MIN_FARE = 3000;
+// Tarifas Moto (Estilo Picap/DiDi)
+const BASE_FARE = 2500;
+const PER_KM_FARE = 1000;
+const PER_MIN_FARE = 120;
+const MIN_FARE = 3500;
 
 /** Calcula distancia en km entre dos L.LatLng (fórmula Haversine) */
 function haversineKm(a, b) {
@@ -33,8 +33,8 @@ function showPrice(distKm, mins) {
   return price;
 }
 
-const iconStart = pinIcon('#FF6B00', 'A');
-const iconEnd = pinIcon('#30D158', 'B');
+const iconStart = pinIcon('#30D158', 'A'); // Verde para el Punto A (Inicio)
+const iconEnd = pinIcon('#FF6B00', 'B'); // Naranja para el Punto B (Destino)
 
 /**
  * Place a marker on the map for start or end point.
@@ -53,13 +53,13 @@ export function placeMarker(type, lat, lng, name, state, map) {
     state.startLatLng = ll;
     state.startMarker = L.marker(ll, { icon: iconStart })
       .addTo(map)
-      .bindPopup(`<b>🟠 Inicio</b><br>${name}`);
+      .bindPopup(`<b>🟢 Inicio</b><br>${name}`);
   } else {
     if (state.endMarker) map.removeLayer(state.endMarker);
     state.endLatLng = ll;
     state.endMarker = L.marker(ll, { icon: iconEnd })
       .addTo(map)
-      .bindPopup(`<b>🟢 Destino</b><br>${name}`);
+      .bindPopup(`<b>🟠 Destino</b><br>${name}`);
   }
 
   map.panTo(ll);
