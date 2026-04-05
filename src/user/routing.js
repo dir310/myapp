@@ -141,16 +141,31 @@ export function checkRoute(state, map) {
     state.fallbackLine = null;
   }
 
-  // Feedback visual inmediato
-  const actionsEl = document.getElementById('mainActions');
-  if (actionsEl) {
-    actionsEl.innerHTML = `
-      <button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled>
-        <span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa definitiva...
-      </button>`;
-  }
+  // ── TARIFA INSTANTÁNEA con Haversine mientras OSRM carga la vía ──
+  // El usuario ve el precio de inmediato, la línea naranja llega en 1-2s
+  const quickDistKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+  const quickMins   = Math.round((quickDistKm / 22) * 60) || 1;
+  const quickDist   = quickDistKm.toFixed(1);
 
-  // ─── ROUTER OSRM (Servidor original que demarcaba las vías correctamente) ───
+  // Mostrar píldora km/min
+  const distEl = document.getElementById('routeDistance');
+  const timeEl = document.getElementById('routeTime');
+  const pillEl = document.getElementById('routePill');
+  if (distEl) distEl.textContent = quickDist;
+  if (timeEl) timeEl.textContent = quickMins;
+  if (pillEl) pillEl.style.display = 'flex';
+
+  // Mostrar precio y sección de pedir viaje YA
+  showPrice(quickDist, quickMins);
+  const actionsEl = document.getElementById('mainActions');
+  const priceSec  = document.getElementById('priceSection');
+  if (actionsEl) actionsEl.style.display = 'none';
+  if (priceSec)  priceSec.style.display  = 'block';
+  map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
+  if (isSheetMinimized()) toggleSheet();
+
+  // ─── OSRM en segundo plano: dibuja la ruta real sobre las calles ───
+  // Cuando llega, actualiza km/min/precio con datos exactos
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
