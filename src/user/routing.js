@@ -2,9 +2,20 @@
  * Route calculation, marker management, and pricing.
  */
 import L from 'leaflet';
-import 'leaflet-routing-machine';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
+
+/** Dibuja (o reemplaza) la polilínea naranja en el mapa. */
+function drawRouteLine(coords, state, map) {
+  if (state.routeLine) { map.removeLayer(state.routeLine); state.routeLine = null; }
+  state.routeLine = L.polyline(coords, {
+    color:    '#FF6B00',
+    weight:   7,
+    opacity:  0.9,
+    lineCap:  'round',
+    lineJoin: 'round',
+  }).addTo(map);
+}
 
 // Tarifas Moto
 const BASE_FARE    = 2500;
@@ -107,14 +118,20 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // ── 2. Fetch OSRM directo → polilínea naranja por calles ──
+  // ── 2. Línea recta inmediata (siempre visible) ──
+  drawRouteLine(
+    [state.startLatLng, state.endLatLng],
+    state, map
+  );
+
+  // ── 3. Fetch OSRM → reemplaza con ruta real por calles ──
   const { lat: sLat, lng: sLng } = state.startLatLng;
   const { lat: eLat, lng: eLng } = state.endLatLng;
-  const url =
+  const osrmUrl =
     `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${eLng},${eLat}` +
     `?overview=full&geometries=geojson`;
 
-  fetch(url)
+  fetch(osrmUrl)
     .then(r => r.json())
     .then(data => {
       if (!data.routes || data.routes.length === 0) return;
@@ -130,18 +147,12 @@ export function checkRoute(state, map) {
       showPrice(distKm.toFixed(1), mins);
       showStatus('', false);
 
-      // Convertir GeoJSON [lng, lat] → Leaflet [lat, lng] y dibujar
-      const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      state.routeLine = L.polyline(coords, {
-        color:    '#FF6B00',
-        weight:   7,
-        opacity:  0.88,
-        lineCap:  'round',
-        lineJoin: 'round',
-      }).addTo(map);
+      // Reemplazar línea recta por la ruta curva real
+      const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      drawRouteLine(coords, state, map);
     })
     .catch(() => {
-      // OSRM no disponible — precio Haversine ya visible, sin línea
+      // OSRM no disponible — la línea recta ya está visible
       showStatus('', false);
     });
 }
