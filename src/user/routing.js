@@ -171,9 +171,6 @@ export function checkRoute(state, map) {
     const mins = Math.round(r.summary.totalTime / 60) || 1;
     
     // Si la distancia es insignificante, ignorar (error de red)
-    if (distKm < 0.005) return;
-    
-    // Si la distancia es ridículamente corta (error de servidor), ignorar
     if (distKm < 0.01) return;
 
     // Actualizar Píldora de Info
