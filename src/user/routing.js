@@ -67,8 +67,7 @@ export function clearPoint(type, state, map) {
     if (el) el.value = '';
   }
 
-  if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
-  if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine      = null; }
+  if (state.routeLine) { map.removeLayer(state.routeLine); state.routeLine = null; }
 
   const pill = document.getElementById('routePill');
   if (pill) pill.style.display = 'none';
@@ -81,55 +80,26 @@ export function clearPoint(type, state, map) {
   }
   if (priceSec) priceSec.style.display = 'none';
   showStatus('', false);
-
-  if (state.pollerInterval) { clearInterval(state.pollerInterval); state.pollerInterval = null; }
 }
 
-// ── Dibujo de ruta naranja (Implementación robusta con L.polyline) ──────────
-function renderRoute(coords, state, map) {
-  // Eliminar capa previa si existe
+// ── Cálculo de ruta (Solo Vía Real) ────────────────────────────────────────
+export function checkRoute(state, map) {
+  if (!(state.startLatLng && state.endLatLng)) return;
+
+  // Limpiar ruta previa
   if (state.routeLine) {
     map.removeLayer(state.routeLine);
     state.routeLine = null;
   }
 
-  // Dibujar la polilínea con un "borde" oscuro para visibilidad sobre satélite
-  state.routeLine = L.featureGroup([
-    // Sombra/Borde exterior
-    L.polyline(coords, {
-      color: '#000',
-      weight: 10,
-      opacity: 0.3,
-      lineCap: 'round'
-    }),
-    // Línea naranja principal
-    L.polyline(coords, {
-      color: '#FF6B00',
-      weight: 7,
-      opacity: 0.95,
-      lineCap: 'round',
-      lineJoin: 'round'
-    })
-  ]).addTo(map);
-
-  console.log('[MovilCal] Ruta dibujada con', coords.length, 'puntos');
-}
-
-// ── Cálculo de ruta ────────────────────────────────────────────────────────
-export function checkRoute(state, map) {
-  if (!(state.startLatLng && state.endLatLng)) return;
-
-  // Limpiar ruta previa
-  if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
-  if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine = null; }
-
-  // 1. Precio inmediato con Haversine
+  // 1. Precio instantáneo UX
   const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
   const distEl = document.getElementById('routeDistance');
   const timeEl = document.getElementById('routeTime');
   const pillEl = document.getElementById('routePill');
+
   if (distEl) distEl.textContent = quickKm.toFixed(1);
   if (timeEl) timeEl.textContent = quickMins;
   if (pillEl) pillEl.style.display = 'flex';
@@ -140,22 +110,12 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 1.1 Dibujar línea recta inmediata (fallback visual)
-  renderRoute([state.startLatLng, state.endLatLng], state, map);
-
-  // 2. OSRM → ruta real por vías por vías
-  const osrmUrl =
-    `https://router.project-osrm.org/route/v1/driving/` +
-    `${state.startLatLng.lng},${state.startLatLng.lat};` +
-    `${state.endLatLng.lng},${state.endLatLng.lat}` +
-    `?overview=full&geometries=geojson`;
-
-  console.log('[MovilCal] Fetch OSRM:', osrmUrl);
+  // 2. Fetch OSRM → Solo ruta real por vías (sin línea recta)
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
 
   fetch(osrmUrl)
-    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(r => r.json())
     .then(data => {
-      console.log('[MovilCal] OSRM resp:', data.code, data.routes?.length, 'rutas');
       if (data.code !== 'Ok' || !data.routes?.length) return;
 
       const route  = data.routes[0];
@@ -165,12 +125,20 @@ export function checkRoute(state, map) {
       if (distEl) distEl.textContent = distKm;
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
-      // Dibujar la ruta real siguiendo las calles (flipped coords)
-      const flippedCoords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      renderRoute(flippedCoords, state, map);
+
+      // Dibujar ruta curvilínea naranja
+      const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+      state.routeLine = L.polyline(coords, {
+        color: '#FF6B00',
+        weight: 7,
+        opacity: 0.9,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+
+      console.log('[MovilCal] Ruta OSRM lista.');
     })
     .catch(err => {
-      console.error('[MovilCal] OSRM error:', err.message);
-      showStatus('', false);
+      console.error('[MovilCal] OSRM error:', err);
     });
 }
