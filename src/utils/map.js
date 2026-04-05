@@ -13,19 +13,20 @@ export const LA_CALERA = [4.7203, -73.9687];
 export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   const map = L.map(elementId, { 
     zoomControl: false,
-    maxZoom: 18 // Evita el error de "Map data not yet available"
+    minZoom: 10,
+    maxZoom: 17 // Zoom máximo seguro — evita pantalla negra en nivel 18
   }).setView(center, zoom);
 
   // Satellite imagery
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri', maxZoom: 18 }
+    { attribution: 'Tiles © Esri', maxZoom: 17 }
   ).addTo(map);
 
   // Labels overlay
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom: 18, opacity: 0.85 }
+    { maxZoom: 17, opacity: 0.85 }
   ).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);

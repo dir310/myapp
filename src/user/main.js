@@ -18,7 +18,7 @@ const state = {
   startMarker: null,
   endMarker: null,
   routingControl: null,
-  mode: 'search',
+  mode: 'click',       // Por defecto: tocar mapa
   nextClick: 'start',
   currentRideId: null,
   pollerInterval: null,
@@ -120,6 +120,9 @@ const map = createMap('map', LA_CALERA, 13);
 const boundPlaceMarker = (type, lat, lng, name) => placeMarker(type, lat, lng, name, state, map);
 const boundClearPoint = (type) => clearPoint(type, state, map);
 
+// ── Activar modo por defecto: Tocar Mapa ──
+setMode('click', state, map);
+
 // ── Event Listeners ──
 
 // Sidebar tab toggle
@@ -166,11 +169,17 @@ map.on('click', (e) => {
 
   if (state.nextClick === 'start') {
     state.nextClick = 'end';
-    showStatus('📍 Inicio colocado. Selecciona destino.', false);
+    // Actualizar hint para guiar al segundo toque
+    const hint = document.getElementById('clickHint');
+    if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
+    showStatus('', false); // Sin texto extra, el hint ya orienta
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
-    showStatus('📍 Destino colocado. Calculando...', false);
+    // La tarifa y la línea naranja aparecen solas — no mostrar texto de calculando
+    const hint = document.getElementById('clickHint');
+    if (hint) hint.textContent = 'Toca el mapa para colocar inicio y destino';
+    showStatus('', false);
     boundPlaceMarker('end', lat, lng, name);
   }
 });
