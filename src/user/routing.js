@@ -3,7 +3,6 @@
  */
 import L from 'leaflet';
 import 'leaflet-routing-machine';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 // Tarifas Moto (Estilo Picap/DiDi)
@@ -151,7 +150,7 @@ export function checkRoute(state, map) {
       </button>`;
   }
 
-  // ─── CONFIGURACIÓN DEL ROUTER (Motor por Defecto - El más estable) ───
+  // ─── ROUTER OSRM (Servidor original que demarcaba las vías correctamente) ───
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -159,12 +158,13 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }],
       addWaypoints: false
     },
     createMarker: () => null,
-    // Usamos el motor por defecto de Leaflet Routing Machine.
-    // Históricamente es el que mejor funciona en producción para este proyecto.
+    router: L.Routing.osrmv1({
+      serviceUrl: 'https://router.project-osrm.org/route/v1'
+    })
   });
 
   control.on('routesfound', (e) => {
