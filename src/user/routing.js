@@ -131,7 +131,7 @@ export function clearPoint(type, state, map) {
 export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
-  // Limpiar cualquier ruta previa antes de calcular
+  // Limpiar cualquier ruta previa
   if (state.routingControl) {
     map.removeControl(state.routingControl);
     state.routingControl = null;
@@ -141,24 +141,36 @@ export function checkRoute(state, map) {
     state.fallbackLine = null;
   }
 
-  // Feedback visual mientras OSRM calcula
-  const actionsEl = document.getElementById('mainActions');
-  if (actionsEl) {
-    actionsEl.innerHTML = `
-      <button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled>
-        <span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...
-      </button>`;
-  }
+  // ── 1. PRECIO INSTANTÁNEO con Haversine (0ms de espera) ──
+  const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+  const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
-  // ─── ROUTER OSRM (Servidor original que demarcaba las vías correctamente) ───
+  const distEl = document.getElementById('routeDistance');
+  const timeEl = document.getElementById('routeTime');
+  const pillEl = document.getElementById('routePill');
+  if (distEl) distEl.textContent = quickKm.toFixed(1);
+  if (timeEl) timeEl.textContent  = quickMins;
+  if (pillEl) pillEl.style.display = 'flex';
+
+  showPrice(quickKm.toFixed(1), quickMins);
+
+  const actionsEl = document.getElementById('mainActions');
+  const priceSecEl = document.getElementById('priceSection');
+  if (actionsEl) actionsEl.style.display = 'none';
+  if (priceSecEl) priceSecEl.style.display = 'block';
+  if (isSheetMinimized()) toggleSheet();
+
+  // ── 2. OSRM en segundo plano: dibuja la línea naranja por las calles ──
+  // No tocamos el mapa antes de addTo() para no interferir con OSRM
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
     addWaypoints: false,
     draggableWaypoints: false,
     show: false,
+    fitSelectedRoutes: true,  // OSRM ajusta el mapa él mismo
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }],
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
       addWaypoints: false
     },
     createMarker: () => null,
@@ -170,63 +182,21 @@ export function checkRoute(state, map) {
   control.on('routesfound', (e) => {
     const r = e.routes[0];
     const distKm = r.summary.totalDistance / 1000;
-    const mins = Math.round(r.summary.totalTime / 60) || 1;
-    
+    const mins   = Math.round(r.summary.totalTime / 60) || 1;
     if (distKm < 0.01) return;
 
-    // 1. Ocultar estados previos
-    showStatus('', false);
-
-    // 2. Actualizar Píldora de Info
+    // Actualizar con datos exactos de OSRM (la línea por calles ya está dibujada)
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
-    const pillEl = document.getElementById('routePill');
     if (distEl) distEl.textContent = distKm.toFixed(1);
     if (timeEl) timeEl.textContent = mins;
-    if (pillEl) pillEl.style.display = 'flex';
-
-    // 3. Ajustar mapa
-    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
-
-    // 4. Mostrar Precio
     showPrice(distKm.toFixed(1), mins);
-
-    // 5. Activar sección de pedido
-    document.getElementById('mainActions').style.display = 'none';
-    document.getElementById('priceSection').style.display = 'block';
-
-    if (isSheetMinimized()) toggleSheet();
+    showStatus('', false);
   });
 
-  control.on('routingerror', (err) => {
-    console.warn('Routing fallback triggered');
-    
-    // Fallback: Línea sólida sin mensajes ruidosos en la UI
-    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
-    const mins = Math.round((distKm / 22) * 60);
-    
-    state.fallbackLine = L.polyline([state.startLatLng, state.endLatLng], {
-      color: '#FF6B00',
-      weight: 6,
-      opacity: 0.7
-    }).addTo(map);
-
-    const distEl = document.getElementById('routeDistance');
-    const timeEl = document.getElementById('routeTime');
-    if (distEl) distEl.textContent = distKm.toFixed(1);
-    if (timeEl) timeEl.textContent = mins;
-    document.getElementById('routePill').style.display = 'flex';
-
-    showPrice(distKm.toFixed(1), mins);
-    
-    // Reemplazamos el letrero molesto por un mensaje simple de "Calculando..." o nada
-    showStatus('', false); 
-
-    document.getElementById('mainActions').style.display = 'none';
-    document.getElementById('priceSection').style.display = 'block';
-
+  control.on('routingerror', () => {
+    // OSRM falló: la UI ya tiene precio Haversine, solo ajustamos el mapa
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
-    if (isSheetMinimized()) toggleSheet();
   });
 
   state.routingControl = control;
