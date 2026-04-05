@@ -358,6 +358,26 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12);
 }
 
+.auth-input {
+  width: 100%;
+  padding: 12px 13px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  margin-bottom: 15px;
+  display: block;
+  box-sizing: border-box;
+}
+
+.auth-input:focus {
+  border-color: #ff6b00;
+  background: rgba(255, 107, 0, 0.05);
+}
+
 .clear-btn {
   position: absolute;
   right: 10px;
