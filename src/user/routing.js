@@ -85,22 +85,34 @@ export function clearPoint(type, state, map) {
   if (state.pollerInterval) { clearInterval(state.pollerInterval); state.pollerInterval = null; }
 }
 
-// ── Dibujo de ruta naranja (NUEVA implementación) ──────────────────────────
-function renderRoute(geojsonGeometry, state, map) {
+// ── Dibujo de ruta naranja (Implementación robusta con L.polyline) ──────────
+function renderRoute(coords, state, map) {
+  // Eliminar capa previa si existe
   if (state.routeLine) {
     map.removeLayer(state.routeLine);
     state.routeLine = null;
   }
-  state.routeLine = L.geoJSON(geojsonGeometry, {
-    style: {
-      color:    '#FF6B00',
-      weight:   7,
-      opacity:  0.92,
-      lineCap:  'round',
-      lineJoin: 'round',
-    },
-  }).addTo(map);
-  console.log('[MovilCal] Ruta dibujada:', state.routeLine.getBounds());
+
+  // Dibujar la polilínea con un "borde" oscuro para visibilidad sobre satélite
+  state.routeLine = L.featureGroup([
+    // Sombra/Borde exterior
+    L.polyline(coords, {
+      color: '#000',
+      weight: 10,
+      opacity: 0.3,
+      lineCap: 'round'
+    }),
+    // Línea naranja principal
+    L.polyline(coords, {
+      color: '#FF6B00',
+      weight: 7,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    })
+  ]).addTo(map);
+
+  console.log('[MovilCal] Ruta dibujada con', coords.length, 'puntos');
 }
 
 // ── Cálculo de ruta ────────────────────────────────────────────────────────
@@ -128,7 +140,10 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 2. OSRM → ruta real por vías
+  // 1.1 Dibujar línea recta inmediata (fallback visual)
+  renderRoute([state.startLatLng, state.endLatLng], state, map);
+
+  // 2. OSRM → ruta real por vías por vías
   const osrmUrl =
     `https://router.project-osrm.org/route/v1/driving/` +
     `${state.startLatLng.lng},${state.startLatLng.lat};` +
@@ -150,9 +165,9 @@ export function checkRoute(state, map) {
       if (distEl) distEl.textContent = distKm;
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
-      showStatus('', false);
-
-      renderRoute(route.geometry, state, map);
+      // Dibujar la ruta real siguiendo las calles (flipped coords)
+      const flippedCoords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      renderRoute(flippedCoords, state, map);
     })
     .catch(err => {
       console.error('[MovilCal] OSRM error:', err.message);
