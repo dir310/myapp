@@ -141,22 +141,27 @@
         <h2 style="color: #FF6B00; font-weight: 800; margin-bottom: 10px; text-align:center;">¡Bienvenido a MovilCal!</h2>
         <p style="color: rgba(255,255,255,.6); font-size: 13px; text-align:center; margin-bottom: 20px;">Por seguridad, necesitamos conocerte antes de viajar.</p>
         
-        <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="authNombre" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
-        </div>
+        <button class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 14px; background: #FF6B00; border: none; color: white; border-radius: 12px; cursor: pointer; margin-bottom: 12px;" id="registerBtn">📝 Registrarme</button>
+        <button class="btn" style="width: 100%; font-size: 16px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,0,0.3); color: white; border-radius: 12px; cursor: pointer; margin-bottom: 20px;" id="loginBtn">🔑 Ya tengo cuenta / Ingresar</button>
         
-        <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número de Cédula *</label>
-        <div style="margin-bottom: 15px;">
-            <input type="number" id="authCedula" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 1000222333" min="100000" max="9999999999" oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
-        </div>
-        
-        <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono (Celular) *</label>
-        <div style="margin-bottom: 25px;">
-            <input type="tel" id="authTelefono" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
-        </div>
+        <div id="authForm" style="display:none;">
+            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="authNombre" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
+            </div>
+            
+            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número de Cédula *</label>
+            <div style="margin-bottom: 15px;">
+                <input type="number" id="authCedula" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 1000222333" min="100000" max="9999999999" oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
+            </div>
+            
+            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono (Celular) *</label>
+            <div style="margin-bottom: 25px;">
+                <input type="tel" id="authTelefono" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
+            </div>
 
-        <button class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 14px;" id="savePassengerAuthBtn">Guardar y Continuar</button>
+            <button class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 14px;" id="savePassengerAuthBtn">Guardar y Continuar</button>
+        </div>
         <label style="display:flex; align-items:flex-start; margin-top:20px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
             <input type="checkbox" id="authTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
             <span>Al continuar, aceptas que MovilCal actúa únicamente como intermediario tecnológico para facilitar el contacto con conductores independientes. MovilCal no asume responsabilidad patrimonial ni legal por el servicio prestado.</span>

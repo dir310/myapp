@@ -85,14 +85,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── Toggle Login/Register Choice ──
+  const regChoiceBtn = document.getElementById('registerBtn');
+  const loginChoiceBtn = document.getElementById('loginBtn');
+  const authForm = document.getElementById('authForm');
+
+  if (regChoiceBtn && loginChoiceBtn && authForm) {
+    const showForm = (btnText) => {
+        regChoiceBtn.style.display = 'none';
+        loginChoiceBtn.style.display = 'none';
+        authForm.style.display = 'block';
+        if (btnText) document.getElementById('savePassengerAuthBtn').textContent = btnText;
+    };
+
+    regChoiceBtn.addEventListener('click', () => showForm('Registrarme y Continuar'));
+    loginChoiceBtn.addEventListener('click', () => showForm('Ingresar'));
+  }
+
   const editBtn = document.getElementById('editPassengerBtn');
   if (editBtn) {
       editBtn.addEventListener('click', () => {
+          if (regChoiceBtn) regChoiceBtn.style.display = 'none';
+          if (loginChoiceBtn) loginChoiceBtn.style.display = 'none';
+          if (authForm) authForm.style.display = 'block';
+          
           document.getElementById('authNombre').value = localStorage.getItem('calmovil_cliente_nombre') || '';
           document.getElementById('authCedula').value = localStorage.getItem('calmovil_cliente_cedula') || '';
           document.getElementById('authTelefono').value = localStorage.getItem('calmovil_cliente_telefono') || '';
           document.getElementById('authTerms').checked = true; // They accepted it before
           document.getElementById('passengerAuthOverlay').style.display = 'flex';
+          
+          const saveBtn = document.getElementById('savePassengerAuthBtn');
+          if (saveBtn) saveBtn.textContent = 'Guardar Cambios';
       });
   }
 
