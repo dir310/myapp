@@ -150,8 +150,7 @@ export function checkRoute(state, map) {
       </button>`;
   }
 
-  // ─── CONFIGURACIÓN DEL ROUTER ───
-  // Usamos el router por defecto de la librería (OSRM) con la configuración más simple posible
+  // ─── CONFIGURACIÓN DEL ROUTER (FOSSGIS - Más estable que project-osrm) ───
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -159,13 +158,13 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }], // Un solo estilo para máxima compatibilidad
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.9 }], 
       addWaypoints: false
     },
     createMarker: () => null,
     router: L.Routing.osrmv1({
-      serviceUrl: 'https://router.project-osrm.org/route/v1',
-      profile: 'car' // Aseguramos que use vías transitables
+      serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
+      useHints: false // Ayuda a que no falle por caché antigua
     }),
   });
 
