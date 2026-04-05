@@ -121,16 +121,14 @@ export function checkRoute(state, map) {
 
   // 1.1 ELIMINADO: Ya no dibujamos línea recta de respaldo. Esperamos a la curva real.
 
-  // 2. PEDIR RUTA REAL A OSRM (A través de Proxy para saltar CORS)
+  // 2. PEDIR RUTA REAL A OSRM (A través de Proxy Robusto para saltar CORS)
+  // Usamos corsproxy.io que es mucho más rápido que allorigins.
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(osrmUrl)}`;
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
 
   fetch(proxyUrl)
     .then(r => r.json())
-    .then(proxyData => {
-      // AllOrigins envuelve la respuesta en .contents como string
-      const data = JSON.parse(proxyData.contents);
-      
+    .then(data => {
       if (data.code !== 'Ok' || !data.routes?.length) {
           console.warn('[MovilCal] OSRM no retornó ruta Ok');
           return;
