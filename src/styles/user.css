@@ -246,6 +246,23 @@ body {
   color: #ff6b00;
 }
 
+.reset-btn {
+  flex: 0.8 !important; /* Slightly smaller than the mode buttons */
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 69, 58, 0.1) !important;
+  color: #ff453a !important;
+  border-color: rgba(255, 69, 58, 0.3) !important;
+}
+
+.reset-btn:active {
+  transform: scale(0.95);
+}
+
 /* ── Route Inputs ── */
 .route-row {
   display: flex;

@@ -79,20 +79,22 @@ export function clearPoint(type, state, map) {
       state.startMarker = null;
     }
     state.startLatLng = null;
-    document.getElementById('startInput').value = '';
+    const input = document.getElementById('startInput');
+    if (input) input.value = '';
   } else {
     if (state.endMarker) {
       map.removeLayer(state.endMarker);
       state.endMarker = null;
     }
     state.endLatLng = null;
-    document.getElementById('endInput').value = '';
+    const input = document.getElementById('endInput');
+    if (input) input.value = '';
   }
 
+  // Limpiar rutas de cualquier tipo
   if (state.routingControl) {
     map.removeControl(state.routingControl);
     state.routingControl = null;
-    document.getElementById('routePill').style.display = 'none';
   }
 
   if (state.fallbackLine) {
@@ -100,10 +102,19 @@ export function clearPoint(type, state, map) {
     state.fallbackLine = null;
   }
 
-  document.getElementById('mainActions').style.display = 'flex';
-  document.getElementById('priceSection').style.display = 'none';
-  document.getElementById('mainActions').innerHTML =
-    '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
+  // Ocultar info de ruta
+  const pill = document.getElementById('routePill');
+  if (pill) pill.style.display = 'none';
+
+  // Mostrar acciones iniciales
+  const actions = document.getElementById('mainActions');
+  const priceSec = document.getElementById('priceSection');
+  if (actions) {
+    actions.style.display = 'flex';
+    actions.innerHTML = '<button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
+  }
+  if (priceSec) priceSec.style.display = 'none';
+  
   showStatus('', false);
 
   if (state.pollerInterval) {
@@ -120,21 +131,27 @@ export function clearPoint(type, state, map) {
 export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
+  // Limpiar cualquier ruta previa antes de calcular
   if (state.routingControl) {
     map.removeControl(state.routingControl);
     state.routingControl = null;
   }
-
   if (state.fallbackLine) {
     map.removeLayer(state.fallbackLine);
     state.fallbackLine = null;
   }
 
-  // Mostrar estado de carga mientras recibimos datos de ruta
-  document.getElementById('mainActions').innerHTML =
-    '<button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled><span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa...</button>';
+  // Feedback visual inmediato
+  const actionsEl = document.getElementById('mainActions');
+  if (actionsEl) {
+    actionsEl.innerHTML = `
+      <button class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); width:100%" disabled>
+        <span class="spinner" style="border-top-color:#FF6B00; width:14px; height:14px;"></span>&nbsp; Calculando tarifa definitiva...
+      </button>`;
+  }
 
-  // ─── TRAZAR RUTA (en segundo plano) ───
+  // ─── CONFIGURACIÓN DEL ROUTER ───
+  // Intentamos primero con OSRM público oficial (que suele seguir las calles)
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -142,85 +159,76 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.7 }],
+      styles: [
+        { color: '#000', weight: 10, opacity: 0.3 }, // Borde/Sombra
+        { color: '#FF6B00', weight: 6, opacity: 1 }    // Línea principal
+      ],
       addWaypoints: false
     },
-    createMarker: () => null,
+    createMarker: () => null, // No duplicar marcadores
     router: L.Routing.osrmv1({
       serviceUrl: 'https://router.project-osrm.org/route/v1',
+      timeout: 8000 // Aumentamos un poco el timeout para evitar fallos por red lenta
     }),
   });
 
   control.on('routesfound', (e) => {
-    // 1. Limpiar estado visual
-    showStatus('', false);
-    const sBar = document.getElementById('statusBar');
-    if (sBar) sBar.style.display = 'none';
-
     const r = e.routes[0];
-    const osrmKm = r.summary.totalDistance / 1000;
+    const distKm = r.summary.totalDistance / 1000;
+    const mins = Math.round(r.summary.totalTime / 60) || 1;
     
-    // Si OSRM falla en distancia, usamos Haversine como fallback
-    const distKm = osrmKm > 0.05 ? osrmKm : haversineKm(state.startLatLng, state.endLatLng) * 1.3;
-    const dist = distKm.toFixed(1);
-    const mins = r.summary.totalTime > 0
-      ? Math.round(r.summary.totalTime / 60)
-      : Math.round((distKm / 25) * 60);
+    // Si la distancia es ridículamente corta (error de servidor), ignorar
+    if (distKm < 0.01) return;
 
-    // 2. Mostrar datos de ruta en UI
+    // Actualizar Píldora de Info
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
     const pillEl = document.getElementById('routePill');
-    if (distEl) distEl.textContent = dist;
+    if (distEl) distEl.textContent = distKm.toFixed(1);
     if (timeEl) timeEl.textContent = mins;
     if (pillEl) pillEl.style.display = 'flex';
 
-    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
+    // Ajustar mapa
+    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
 
-    // 3. Calcular Tarifa Moto 
-    showPrice(dist, mins);
+    // Mostrar Precio
+    showPrice(distKm.toFixed(1), mins);
 
-    // 4. Cambiar vistas
-    const actionsEl = document.getElementById('mainActions');
-    const priceSecEl = document.getElementById('priceSection');
-    if (actionsEl) actionsEl.style.display = 'none';
-    if (priceSecEl) priceSecEl.style.display = 'block';
+    // Activar sección de pedido
+    document.getElementById('mainActions').style.display = 'none';
+    document.getElementById('priceSection').style.display = 'block';
 
     if (isSheetMinimized()) toggleSheet();
+    showStatus('', false);
   });
 
   control.on('routingerror', (err) => {
-    console.error('Routing error:', err);
-    // Fallback: Haversine si no hay conexión a internet / ruta fallida
-    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
-    const mins = Math.round((distKm / 25) * 60);
-    const dist = distKm.toFixed(1);
+    console.warn('OSRM falló, usando cálculo de contingencia (haversine)...');
     
-    // Dibujar línea visual de contingencia (punteada)
-    if (state.fallbackLine) map.removeLayer(state.fallbackLine);
+    // Fallback: Línea sólida pero con estilo de "estimación"
+    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.35; // Factor de curvatura estimado
+    const mins = Math.round((distKm / 20) * 60); // Estimación moto 20km/h
+    
     state.fallbackLine = L.polyline([state.startLatLng, state.endLatLng], {
       color: '#FF6B00',
-      weight: 6,
-      opacity: 0.8,
-      dashArray: '10, 10'
+      weight: 5,
+      opacity: 0.6,
+      dashArray: 'none' // Línea sólida para evitar confusión con "cortado"
     }).addTo(map);
-    
+
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
-    const pillEl = document.getElementById('routePill');
-    if (distEl) distEl.textContent = dist;
+    if (distEl) distEl.textContent = distKm.toFixed(1);
     if (timeEl) timeEl.textContent = mins;
-    if (pillEl) pillEl.style.display = 'flex';
-    
-    showPrice(dist, mins);
-    showStatus('⚠️ Ruta aproximada (sin conexión a servidores de mapa).', false);
-    
-    const actionsEl = document.getElementById('mainActions');
-    const priceSecEl = document.getElementById('priceSection');
-    if (actionsEl) actionsEl.style.display = 'none';
-    if (priceSecEl) priceSecEl.style.display = 'block';
-    
-    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.2));
+    document.getElementById('routePill').style.display = 'flex';
+
+    showPrice(distKm.toFixed(1), mins);
+    showStatus('⚠️ Servidor de rutas lento. Tarifa calculada por distancia aérea.', false);
+
+    document.getElementById('mainActions').style.display = 'none';
+    document.getElementById('priceSection').style.display = 'block';
+
+    map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
     if (isSheetMinimized()) toggleSheet();
   });
 

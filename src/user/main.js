@@ -129,6 +129,20 @@ document.getElementById('sidebarHeader').addEventListener('click', toggleSheet);
 document.getElementById('modeSearchBtn').addEventListener('click', () => setMode('search', state, map));
 document.getElementById('modeClickBtn').addEventListener('click', () => setMode('click', state, map));
 
+// Reset points button
+document.getElementById('resetPointsBtn').addEventListener('click', () => {
+  boundClearPoint('start');
+  boundClearPoint('end');
+  state.nextClick = 'start';
+  showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
+  
+  // Dar feedback visual al botón
+  const btn = document.getElementById('resetPointsBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '✅ Reiniciado';
+  setTimeout(() => btn.innerHTML = originalText, 1500);
+});
+
 // Search inputs
 document.getElementById('startInput').addEventListener('input', (e) => onInput(e.target, 'start', boundPlaceMarker));
 document.getElementById('startInput').addEventListener('focus', () => showLocationSugg(boundPlaceMarker));
