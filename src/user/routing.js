@@ -119,8 +119,7 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 1.1 DIBUJAR LÍNEA RECTA DE RESPALDO (Aparece al instante)
-  renderRouteOnMap([state.startLatLng, state.endLatLng], state, map);
+  // 1.1 ELIMINADO: Ya no dibujamos línea recta de respaldo. Esperamos a la curva real.
 
   // 2. PEDIR RUTA REAL A OSRM (Aparece un segundo después)
   const url = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
