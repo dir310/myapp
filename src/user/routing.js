@@ -82,17 +82,25 @@ export function clearPoint(type, state, map) {
   showStatus('', false);
 }
 
-// ── Cálculo de ruta (Solo Vía Real) ────────────────────────────────────────
-export function checkRoute(state, map) {
-  if (!(state.startLatLng && state.endLatLng)) return;
-
-  // Limpiar ruta previa
+// ── Dibujar polilínea (Naranja con borde oscuro) ──────────────────────────
+function renderRouteOnMap(coords, state, map) {
   if (state.routeLine) {
     map.removeLayer(state.routeLine);
     state.routeLine = null;
   }
 
-  // 1. Precio instantáneo UX
+  // Dibujamos un "borde" oscuro para visibilidad y la línea naranja brillante
+  state.routeLine = L.featureGroup([
+    L.polyline(coords, { color: '#000', weight: 9, opacity: 0.25, lineCap: 'round' }),
+    L.polyline(coords, { color: '#FF6B00', weight: 6, opacity: 0.95, lineCap: 'round', lineJoin: 'round' })
+  ]).addTo(map);
+}
+
+// ── Cálculo de ruta (INMEDIATO -> REAL) ───────────────────────────────────
+export function checkRoute(state, map) {
+  if (!(state.startLatLng && state.endLatLng)) return;
+
+  // 1. Mostrar Pills y Precio Haversine al instante
   const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
@@ -107,13 +115,17 @@ export function checkRoute(state, map) {
   showPrice(quickKm.toFixed(1), quickMins);
   document.getElementById('mainActions').style.display  = 'none';
   document.getElementById('priceSection').style.display = 'block';
+  
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 2. Fetch OSRM → Solo ruta real por vías (sin línea recta)
-  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  // 1.1 DIBUJAR LÍNEA RECTA DE RESPALDO (Aparece al instante)
+  renderRouteOnMap([state.startLatLng, state.endLatLng], state, map);
 
-  fetch(osrmUrl)
+  // 2. PEDIR RUTA REAL A OSRM (Aparece un segundo después)
+  const url = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+
+  fetch(url)
     .then(r => r.json())
     .then(data => {
       if (data.code !== 'Ok' || !data.routes?.length) return;
@@ -126,19 +138,14 @@ export function checkRoute(state, map) {
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
 
-      // Dibujar ruta curvilínea naranja
-      const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      state.routeLine = L.polyline(coords, {
-        color: '#FF6B00',
-        weight: 7,
-        opacity: 0.9,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }).addTo(map);
-
-      console.log('[MovilCal] Ruta OSRM lista.');
+      // Invertir coordenadas [lng, lat] -> [lat, lng]
+      const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+      
+      // REEMPLAZAR la línea recta por la curva real
+      renderRouteOnMap(curvyCoords, state, map);
+      console.log('[MovilCal] Ruta real aplicada.');
     })
     .catch(err => {
-      console.error('[MovilCal] OSRM error:', err);
+      console.error('[MovilCal] OSRM error (usando recta):', err);
     });
 }
