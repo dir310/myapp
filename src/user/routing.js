@@ -1,18 +1,16 @@
 /**
  * Route calculation, marker management, and pricing.
- * Usa fetch con reintentos automáticos para máxima fiabilidad con el servidor OSRM.
  */
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 
-// Tarifas Moto (Estilo Picap/DiDi)
+// Tarifas Moto
 const BASE_FARE    = 2500;
 const PER_KM_FARE  = 1000;
 const PER_MIN_FARE = 120;
 const MIN_FARE     = 3500;
 
-/** Calcula distancia en km entre dos L.LatLng (fórmula Haversine) */
 function haversineKm(a, b) {
   const R    = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
@@ -23,7 +21,6 @@ function haversineKm(a, b) {
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-/** Calcula y muestra el precio dado distancia (km) y tiempo (min) */
 function showPrice(distKm, mins) {
   const km = parseFloat(distKm) || 0;
   let price = BASE_FARE + (km * PER_KM_FARE) + (mins * PER_MIN_FARE);
@@ -35,33 +32,54 @@ function showPrice(distKm, mins) {
 }
 
 /**
- * Llama a OSRM con reintentos automáticos.
- * El servidor a veces devuelve 504 en el primer intento pero responde en el segundo.
+ * Obtiene las coordenadas de la ruta real por calles.
+ * Intenta Valhalla primero, luego OSRM como respaldo.
+ * Devuelve { distKm, mins, coords: [[lat,lng],...] } o null.
  */
-async function fetchRoute(slng, slat, elng, elat) {
-  const url    = `https://router.project-osrm.org/route/v1/driving/${slng},${slat};${elng},${elat}?overview=full&geometries=geojson`;
-  const WAIT   = [500, 1500, 3000]; // ms de espera entre reintentos
-
-  for (let attempt = 0; attempt <= WAIT.length; attempt++) {
-    try {
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 9000);
-      const res   = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(timer);
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no-route');
-
-      return data; // éxito
-    } catch (e) {
-      if (attempt < WAIT.length) {
-        // Esperar antes de reintentar
-        await new Promise(r => setTimeout(r, WAIT[attempt]));
-      }
+async function fetchRouteLine(slng, slat, elng, elat) {
+  // ── Intento 1: Valhalla (routing engine diferente a OSRM, más estable) ──
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch('https://valhalla1.openstreetmap.de/route', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        locations:    [{ lon: slng, lat: slat }, { lon: elng, lat: elat }],
+        costing:      'auto',
+        shape_format: 'geojson'
+      }),
+      signal: ctrl.signal
+    });
+    const data = await res.json();
+    const leg  = data?.trip?.legs?.[0];
+    if (leg?.shape?.coordinates?.length) {
+      return {
+        distKm: leg.summary.length,
+        mins:   Math.round(leg.summary.time / 60) || 1,
+        coords: leg.shape.coordinates.map(([lng, lat]) => [lat, lng])
+      };
     }
-  }
-  return null; // todos los intentos fallaron
+  } catch (_) { /* Valhalla falló, probar OSRM */ }
+
+  // ── Intento 2: OSRM ──
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 10000);
+    const url  = `https://router.project-osrm.org/route/v1/driving/${slng},${slat};${elng},${elat}?overview=full&geometries=geojson`;
+    const res  = await fetch(url, { signal: ctrl.signal });
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes?.[0]) {
+      const route = data.routes[0];
+      return {
+        distKm: route.legs[0].distance / 1000,
+        mins:   Math.round(route.legs[0].duration / 60) || 1,
+        coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
+      };
+    }
+  } catch (_) { /* OSRM también falló */ }
+
+  return null;
 }
 
 const iconStart = pinIcon('#30D158', 'A');
@@ -122,7 +140,7 @@ export function checkRoute(state, map) {
   if (state.routeLine)    { map.removeLayer(state.routeLine);    state.routeLine    = null; }
   if (state.fallbackLine) { map.removeLayer(state.fallbackLine); state.fallbackLine = null; }
 
-  // ── 1. PRECIO INSTANTÁNEO con Haversine ──
+  // ── 1. Precio y UI instantáneos con Haversine ──
   const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
@@ -134,48 +152,39 @@ export function checkRoute(state, map) {
   if (pillEl) pillEl.style.display = 'flex';
 
   showPrice(quickKm.toFixed(1), quickMins);
-
-  const actionsEl  = document.getElementById('mainActions');
-  const priceSecEl = document.getElementById('priceSection');
-  if (actionsEl)  actionsEl.style.display  = 'none';
-  if (priceSecEl) priceSecEl.style.display = 'block';
+  document.getElementById('mainActions').style.display  = 'none';
+  document.getElementById('priceSection').style.display = 'block';
   if (isSheetMinimized()) toggleSheet();
 
-  // Guardar referencia del mapa para la coroutina
-  const startLL = state.startLatLng;
-  const endLL   = state.endLatLng;
+  // Capturar referencias por si los puntos cambian mientras el fetch corre
+  const startSnap = state.startLatLng;
+  const endSnap   = state.endLatLng;
 
-  // ── 2. Fetch OSRM con reintentos automáticos para dibujar la vía real ──
-  const { lat: slat, lng: slng } = startLL;
-  const { lat: elat, lng: elng } = endLL;
+  // ── 2. Obtener ruta real por calles (Valhalla → OSRM) ──
+  const { lat: slat, lng: slng } = startSnap;
+  const { lat: elat, lng: elng } = endSnap;
 
-  fetchRoute(slng, slat, elng, elat).then(data => {
-    // Verificar que los puntos no cambiaron mientras esperábamos
-    if (!state.startLatLng || !state.endLatLng) return;
-    if (state.startLatLng !== startLL || state.endLatLng !== endLL) return;
+  fetchRouteLine(slng, slat, elng, elat).then(result => {
+    // Ignorar si los puntos cambiaron mientras esperábamos
+    if (state.startLatLng !== startSnap || state.endLatLng !== endSnap) return;
 
-    if (!data) {
-      // Todos los intentos fallaron: ajustar mapa sin línea
-      map.fitBounds(L.latLngBounds([startLL, endLL]).pad(0.3));
+    if (!result) {
+      // Sin resultado: ajustar mapa y listo (precio Haversine ya está visible)
+      map.fitBounds(L.latLngBounds([startSnap, endSnap]).pad(0.3));
       return;
     }
 
-    const route  = data.routes[0];
-    const distKm = route.legs[0].distance / 1000;
-    const mins   = Math.round(route.legs[0].duration / 60) || 1;
-
-    // Dibujar la línea naranja por las calles
-    const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    state.routeLine = L.polyline(latlngs, {
+    // Dibujar línea naranja siguiendo las calles
+    state.routeLine = L.polyline(result.coords, {
       color:   '#FF6B00',
       weight:  8,
       opacity: 0.85
     }).addTo(map);
 
-    // Actualizar precio con valores exactos de OSRM
-    if (distEl) distEl.textContent = distKm.toFixed(1);
-    if (timeEl) timeEl.textContent = mins;
-    showPrice(distKm.toFixed(1), mins);
+    // Actualizar km/min/precio con valores exactos
+    if (distEl) distEl.textContent = result.distKm.toFixed(1);
+    if (timeEl) timeEl.textContent = result.mins;
+    showPrice(result.distKm.toFixed(1), result.mins);
     showStatus('', false);
 
     map.fitBounds(state.routeLine.getBounds().pad(0.3));
