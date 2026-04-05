@@ -168,7 +168,6 @@ export function checkRoute(state, map) {
     addWaypoints: false,
     draggableWaypoints: false,
     show: false,
-    fitSelectedRoutes: true,  // OSRM ajusta el mapa él mismo
     lineOptions: {
       styles: [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
       addWaypoints: false
@@ -195,7 +194,12 @@ export function checkRoute(state, map) {
   });
 
   control.on('routingerror', () => {
-    // OSRM falló: la UI ya tiene precio Haversine, solo ajustamos el mapa
+    // OSRM falló: dibuja la línea recta naranja como respaldo visual
+    state.fallbackLine = L.polyline([state.startLatLng, state.endLatLng], {
+      color: '#FF6B00',
+      weight: 7,
+      opacity: 0.8
+    }).addTo(map);
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   });
 
