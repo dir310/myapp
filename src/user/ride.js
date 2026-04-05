@@ -9,6 +9,21 @@ import { motoIcon, animateMarker } from '../utils/map.js';
 let driverMarker = null; // Guardará el ícono en vivo de la moto
 
 /**
+ * Sanitiza un string eliminando caracteres HTML/SQL peligrosos.
+ * @param {string} str
+ * @param {number} maxLen - Longitud máxima permitida
+ * @returns {string}
+ */
+function sanitizeInput(str, maxLen = 100) {
+  if (!str) return '';
+  return String(str)
+    .replace(/[<>"'`;\\]/g, '') // eliminar caracteres peligrosos
+    .trim()
+    .slice(0, maxLen);
+}
+
+
+/**
  * Request a ride by inserting into Supabase.
  * @param {object} state - Shared app state.
  * @param {L.Map} map - Leaflet map instance.
@@ -16,8 +31,8 @@ let driverMarker = null; // Guardará el ícono en vivo de la moto
 export async function acceptRide(state, map) {
   if (!state.startLatLng || !state.endLatLng) return;
 
-  const originName = document.getElementById('startInput').value || 'Punto de Inicio';
-  const destName = document.getElementById('endInput').value || 'Destino';
+  const originName = sanitizeInput(document.getElementById('startInput').value || 'Punto de Inicio', 120);
+  const destName = sanitizeInput(document.getElementById('endInput').value || 'Destino', 120);
   const priceStr = document.getElementById('priceValue').textContent.replace(/[^0-9]/g, '');
   const price = parseInt(priceStr, 10);
   const distText = document.getElementById('routeDistance').textContent + ' km';
@@ -27,9 +42,15 @@ export async function acceptRide(state, map) {
   btn.disabled = true;
 
   try {
-    const cNombre = localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo';
-    const cCedula = localStorage.getItem('calmovil_cliente_cedula') || '';
-    const cTelefono = localStorage.getItem('calmovil_cliente_telefono') || '';
+    // Sanitizar datos del cliente antes de enviar
+    const cNombre = sanitizeInput(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
+    const cCedula = sanitizeInput(localStorage.getItem('calmovil_cliente_cedula') || '', 12);
+    const cTelefono = sanitizeInput(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
+
+    // Validar que el precio sea un número válido
+    if (isNaN(price) || price <= 0) {
+      throw new Error('Tarifa inválida. Por favor recalcula la ruta.');
+    }
 
     const { data, error } = await supabase.from('viajes').insert([
       {

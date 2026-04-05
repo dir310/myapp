@@ -5,6 +5,12 @@ let currentUser = null;
 let currentProfile = null;
 let captchaAnswer = 0;
 
+// ── Configuración de seguridad ──
+const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 horas
+const MAX_LOGIN_ATTEMPTS = 3;
+const LOCK_DURATION_MS = 60 * 1000; // 60 segundos
+const STORAGE_KEY = 'calmovil_driver_session'; // Formato: { id, timestamp }
+
 // Elementos UI
 const authModal = document.getElementById('authModal');
 const mainAppContent = document.getElementById('mainAppContent');
@@ -15,15 +21,23 @@ export async function initAuth() {
   setupUIEvents();
   generateCaptcha();
 
-  // Custom Auth: Verificar sesión en LocalStorage
-  const driverId = localStorage.getItem('calmovil_driver_id');
-  
-  if (driverId) {
-    // Simular que tenemos una sesión buscando directamente al conductor
-    handleSession({ user: { id: driverId } });
-  } else {
-    handleSession(null);
+  // Verificar sesión con timestamp — expira en 12 horas
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      const { id, timestamp } = JSON.parse(raw);
+      if (id && Date.now() - timestamp < SESSION_DURATION_MS) {
+        handleSession({ user: { id } });
+        return;
+      } else {
+        // Sesión expirada
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
+  handleSession(null);
 }
 
 // Lógica para mostrar/ocultar contraseña
@@ -60,7 +74,8 @@ function setupUIEvents() {
   profileBtn.onclick = openProfile;
   document.getElementById('closeProfileBtn').onclick = () => profileSidebar.classList.remove('open');
   document.getElementById('logoutBtn').onclick = async () => {
-    localStorage.removeItem('calmovil_driver_id');
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('calmovil_driver_id'); // compatibilidad con sesión anterior
     window.location.reload();
   };
 
@@ -153,11 +168,19 @@ async function handleSession(session) {
 }
 
 async function handleLogin() {
-  const email = document.getElementById('loginEmail').value;
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const btn = document.getElementById('loginBtn');
 
   if (!email || !password) return alert('Por favor llena todos los campos.');
+
+  // ── Rate Limiting: verificar bloqueo ──
+  const blockUntil = parseInt(sessionStorage.getItem('login_block_until') || '0');
+  if (Date.now() < blockUntil) {
+    const secsLeft = Math.ceil((blockUntil - Date.now()) / 1000);
+    alert(`Demasiados intentos fallidos. Espera ${secsLeft} segundos antes de intentar de nuevo.`);
+    return;
+  }
 
   btn.textContent = 'Ingresando...';
   btn.disabled = true;
@@ -171,14 +194,44 @@ async function handleLogin() {
     .single();
 
   if (error || !data) {
-    alert('Error al iniciar sesión: Correo o clave incorrectos.');
-    btn.textContent = 'Ingresar';
-    btn.disabled = false;
+    // Contar intento fallido
+    let attempts = parseInt(sessionStorage.getItem('login_attempts') || '0') + 1;
+    sessionStorage.setItem('login_attempts', attempts);
+
+    if (attempts >= MAX_LOGIN_ATTEMPTS) {
+      const until = Date.now() + LOCK_DURATION_MS;
+      sessionStorage.setItem('login_block_until', until);
+      sessionStorage.removeItem('login_attempts');
+      
+      // Mostrar cuenta regresiva en el botón
+      let secsLeft = Math.ceil(LOCK_DURATION_MS / 1000);
+      btn.textContent = `Bloqueado (${secsLeft}s)`;
+      btn.disabled = true;
+      const countdown = setInterval(() => {
+        secsLeft--;
+        if (secsLeft <= 0) {
+          clearInterval(countdown);
+          btn.textContent = 'Ingresar';
+          btn.disabled = false;
+        } else {
+          btn.textContent = `Bloqueado (${secsLeft}s)`;
+        }
+      }, 1000);
+      
+      alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS/1000)} segundos.`);
+    } else {
+      alert(`Correo o clave incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
+      btn.textContent = 'Ingresar';
+      btn.disabled = false;
+    }
+    generateCaptcha();
     return;
   }
 
-  // Login successful
-  localStorage.setItem('calmovil_driver_id', data.id);
+  // Login exitoso — limpiar contadores y guardar sesión con timestamp
+  sessionStorage.removeItem('login_attempts');
+  sessionStorage.removeItem('login_block_until');
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: data.id, timestamp: Date.now() }));
   window.location.reload();
 }
 
@@ -231,8 +284,8 @@ async function handleRegister() {
     return resetRegisterBtn(btn);
   }
 
-  // Guardar en sesión local y recargar
-  localStorage.setItem('calmovil_driver_id', userId);
+  // Guardar en sesión local con timestamp y recargar
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: userId, timestamp: Date.now() }));
   btn.textContent = '¡Éxito! Entrando...';
   window.location.reload();
 }
