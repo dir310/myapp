@@ -151,7 +151,7 @@ export function checkRoute(state, map) {
   }
 
   // ─── CONFIGURACIÓN DEL ROUTER ───
-  // Intentamos primero con OSRM público oficial (que suele seguir las calles)
+  // Usamos el router por defecto de la librería (OSRM) con la configuración más simple posible
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -159,16 +159,13 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [
-        { color: '#000', weight: 10, opacity: 0.3 }, // Borde/Sombra
-        { color: '#FF6B00', weight: 6, opacity: 1 }    // Línea principal
-      ],
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }], // Un solo estilo para máxima compatibilidad
       addWaypoints: false
     },
-    createMarker: () => null, // No duplicar marcadores
+    createMarker: () => null,
     router: L.Routing.osrmv1({
       serviceUrl: 'https://router.project-osrm.org/route/v1',
-      timeout: 8000 // Aumentamos un poco el timeout para evitar fallos por red lenta
+      profile: 'car' // Aseguramos que use vías transitables
     }),
   });
 
