@@ -5,19 +5,7 @@ import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 
-/** Dibuja (o reemplaza) la polilínea naranja en el mapa. */
-function drawRouteLine(coords, state, map) {
-  if (state.routeLine) { map.removeLayer(state.routeLine); state.routeLine = null; }
-  state.routeLine = L.polyline(coords, {
-    color:    '#FF6B00',
-    weight:   7,
-    opacity:  0.9,
-    lineCap:  'round',
-    lineJoin: 'round',
-  }).addTo(map);
-}
-
-// Tarifas Moto
+// ── Tarifas Moto ───────────────────────────────────────────────────────────
 const BASE_FARE    = 2500;
 const PER_KM_FARE  = 1000;
 const PER_MIN_FARE = 120;
@@ -43,9 +31,11 @@ function showPrice(distKm, mins) {
   return price;
 }
 
+// ── Íconos ─────────────────────────────────────────────────────────────────
 const iconStart = pinIcon('#30D158', 'A');
 const iconEnd   = pinIcon('#FF6B00', 'B');
 
+// ── Marcadores ─────────────────────────────────────────────────────────────
 export function placeMarker(type, lat, lng, name, state, map) {
   const ll = L.latLng(lat, lng);
   if (type === 'start') {
@@ -63,6 +53,7 @@ export function placeMarker(type, lat, lng, name, state, map) {
   checkRoute(state, map);
 }
 
+// ── Limpiar punto ──────────────────────────────────────────────────────────
 export function clearPoint(type, state, map) {
   if (type === 'start') {
     if (state.startMarker) { map.removeLayer(state.startMarker); state.startMarker = null; }
@@ -94,6 +85,25 @@ export function clearPoint(type, state, map) {
   if (state.pollerInterval) { clearInterval(state.pollerInterval); state.pollerInterval = null; }
 }
 
+// ── Dibujo de ruta naranja (NUEVA implementación) ──────────────────────────
+function renderRoute(geojsonGeometry, state, map) {
+  if (state.routeLine) {
+    map.removeLayer(state.routeLine);
+    state.routeLine = null;
+  }
+  state.routeLine = L.geoJSON(geojsonGeometry, {
+    style: {
+      color:    '#FF6B00',
+      weight:   7,
+      opacity:  0.92,
+      lineCap:  'round',
+      lineJoin: 'round',
+    },
+  }).addTo(map);
+  console.log('[MovilCal] Ruta dibujada:', state.routeLine.getBounds());
+}
+
+// ── Cálculo de ruta ────────────────────────────────────────────────────────
 export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
@@ -101,7 +111,7 @@ export function checkRoute(state, map) {
   if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
   if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine = null; }
 
-  // ── 1. Precio instantáneo (Haversine, sin espera) ──
+  // 1. Precio inmediato con Haversine
   const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
@@ -118,34 +128,34 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // ── 2. Fetch OSRM → ruta real por calles (sin línea recta previa) ──
-  const { lat: sLat, lng: sLng } = state.startLatLng;
-  const { lat: eLat, lng: eLng } = state.endLatLng;
+  // 2. OSRM → ruta real por vías
   const osrmUrl =
-    `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${eLng},${eLat}` +
+    `https://router.project-osrm.org/route/v1/driving/` +
+    `${state.startLatLng.lng},${state.startLatLng.lat};` +
+    `${state.endLatLng.lng},${state.endLatLng.lat}` +
     `?overview=full&geometries=geojson`;
 
+  console.log('[MovilCal] Fetch OSRM:', osrmUrl);
+
   fetch(osrmUrl)
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(data => {
-      if (!data.routes || data.routes.length === 0) return;
+      console.log('[MovilCal] OSRM resp:', data.code, data.routes?.length, 'rutas');
+      if (data.code !== 'Ok' || !data.routes?.length) return;
 
       const route  = data.routes[0];
-      const distKm = route.distance / 1000;
+      const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
-      if (distKm < 0.01) return;
 
-      // Actualizar con valores reales de OSRM
-      if (distEl) distEl.textContent = distKm.toFixed(1);
+      if (distEl) distEl.textContent = distKm;
       if (timeEl) timeEl.textContent = mins;
-      showPrice(distKm.toFixed(1), mins);
+      showPrice(distKm, mins);
       showStatus('', false);
 
-      // Dibujar la ruta real siguiendo las calles
-      const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      drawRouteLine(coords, state, map);
+      renderRoute(route.geometry, state, map);
     })
-    .catch(() => {
+    .catch(err => {
+      console.error('[MovilCal] OSRM error:', err.message);
       showStatus('', false);
     });
 }
