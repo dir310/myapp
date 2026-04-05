@@ -1,6 +1,6 @@
 /**
  * Route calculation, marker management, and pricing.
- * Usa fetch() directo a OSRM con dos servidores en paralelo para máxima fiabilidad.
+ * Usa fetch con reintentos automáticos para máxima fiabilidad con el servidor OSRM.
  */
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
@@ -34,16 +34,34 @@ function showPrice(distKm, mins) {
   return price;
 }
 
-/** Llama a un endpoint OSRM y devuelve los datos de ruta o lanza error */
-function fetchOSRM(url) {
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 10000);
-  return fetch(url, { signal: ctrl.signal })
-    .then(r => { clearTimeout(timer); return r.json(); })
-    .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no route');
-      return data;
-    });
+/**
+ * Llama a OSRM con reintentos automáticos.
+ * El servidor a veces devuelve 504 en el primer intento pero responde en el segundo.
+ */
+async function fetchRoute(slng, slat, elng, elat) {
+  const url    = `https://router.project-osrm.org/route/v1/driving/${slng},${slat};${elng},${elat}?overview=full&geometries=geojson`;
+  const WAIT   = [500, 1500, 3000]; // ms de espera entre reintentos
+
+  for (let attempt = 0; attempt <= WAIT.length; attempt++) {
+    try {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 9000);
+      const res   = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no-route');
+
+      return data; // éxito
+    } catch (e) {
+      if (attempt < WAIT.length) {
+        // Esperar antes de reintentar
+        await new Promise(r => setTimeout(r, WAIT[attempt]));
+      }
+    }
+  }
+  return null; // todos los intentos fallaron
 }
 
 const iconStart = pinIcon('#30D158', 'A');
@@ -123,40 +141,43 @@ export function checkRoute(state, map) {
   if (priceSecEl) priceSecEl.style.display = 'block';
   if (isSheetMinimized()) toggleSheet();
 
-  // ── 2. DOS servidores OSRM en paralelo - gana el que responda primero ──
-  const { lat: slat, lng: slng } = state.startLatLng;
-  const { lat: elat, lng: elng } = state.endLatLng;
-  const coords  = `${slng},${slat};${elng},${elat}`;
-  const params  = 'overview=full&geometries=geojson';
+  // Guardar referencia del mapa para la coroutina
+  const startLL = state.startLatLng;
+  const endLL   = state.endLatLng;
 
-  const url1 = `https://router.project-osrm.org/route/v1/driving/${coords}?${params}`;
-  const url2 = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coords}?${params}`;
+  // ── 2. Fetch OSRM con reintentos automáticos para dibujar la vía real ──
+  const { lat: slat, lng: slng } = startLL;
+  const { lat: elat, lng: elng } = endLL;
 
-  // Promise.any resuelve con el primer fetch exitoso
-  Promise.any([fetchOSRM(url1), fetchOSRM(url2)])
-    .then(data => {
-      const route  = data.routes[0];
-      const distKm = route.legs[0].distance / 1000;
-      const mins   = Math.round(route.legs[0].duration / 60) || 1;
+  fetchRoute(slng, slat, elng, elat).then(data => {
+    // Verificar que los puntos no cambiaron mientras esperábamos
+    if (!state.startLatLng || !state.endLatLng) return;
+    if (state.startLatLng !== startLL || state.endLatLng !== endLL) return;
 
-      // Dibujar la línea naranja siguiendo las calles
-      const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      state.routeLine = L.polyline(latlngs, {
-        color:   '#FF6B00',
-        weight:  8,
-        opacity: 0.85
-      }).addTo(map);
+    if (!data) {
+      // Todos los intentos fallaron: ajustar mapa sin línea
+      map.fitBounds(L.latLngBounds([startLL, endLL]).pad(0.3));
+      return;
+    }
 
-      // Actualizar precio con valores exactos
-      if (distEl) distEl.textContent = distKm.toFixed(1);
-      if (timeEl) timeEl.textContent = mins;
-      showPrice(distKm.toFixed(1), mins);
-      showStatus('', false);
+    const route  = data.routes[0];
+    const distKm = route.legs[0].distance / 1000;
+    const mins   = Math.round(route.legs[0].duration / 60) || 1;
 
-      map.fitBounds(state.routeLine.getBounds().pad(0.3));
-    })
-    .catch(() => {
-      // Si los DOS servidores fallan, ajustar mapa sin línea
-      map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
-    });
+    // Dibujar la línea naranja por las calles
+    const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    state.routeLine = L.polyline(latlngs, {
+      color:   '#FF6B00',
+      weight:  8,
+      opacity: 0.85
+    }).addTo(map);
+
+    // Actualizar precio con valores exactos de OSRM
+    if (distEl) distEl.textContent = distKm.toFixed(1);
+    if (timeEl) timeEl.textContent = mins;
+    showPrice(distKm.toFixed(1), mins);
+    showStatus('', false);
+
+    map.fitBounds(state.routeLine.getBounds().pad(0.3));
+  });
 }
