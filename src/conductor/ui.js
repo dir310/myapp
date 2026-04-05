@@ -3,11 +3,6 @@
  */
 
 import { getCurrentProfile } from './auth.js';
-import { map } from './main.js';
-import L from 'leaflet';
-
-let routeLine = null;
-let markers = [];
 
 let radarEnabled = false;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -154,21 +149,6 @@ export function renderViajes(viajes, handlers) {
     })
     .join('');
 
-  // ── Lógica de Mapa del Conductor ──
-  const activeTrip = filteredViajes.find(v => v.estado === 'aceptado' || v.estado === 'en_progreso');
-  const mapElement = document.getElementById('map');
-  
-  if (activeTrip && mapElement) {
-    mapElement.style.display = 'block';
-    drawRouteOnConductorMap(
-      [activeTrip.origen_lat, activeTrip.origen_lng],
-      [activeTrip.destino_lat, activeTrip.destino_lng]
-    );
-  } else if (mapElement) {
-    // Si no hay viaje activo, podemos ocultar el mapa o dejarlo centrado en La Calera
-    mapElement.style.display = 'none';
-  }
-
   // Attach event listeners via delegation
   container.querySelectorAll('[data-action="reject"]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onReject(btn.dataset.id));
@@ -235,58 +215,4 @@ export function showNotification(msg, type = 'success') {
     banner.style.transition = 'all 0.5s ease-in';
     setTimeout(() => banner.remove(), 500);
   }, 5000);
-}
-
-/**
- * Draws a curved route (OSRM) on the conductor map.
- * @param {[number, number]} start 
- * @param {[number, number]} end 
- */
-export function drawRouteOnConductorMap(start, end) {
-  // Clear previous
-  if (routeLine) map.removeLayer(routeLine);
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-
-  // Add markers
-  const startIcon = L.divIcon({
-    className: '',
-    html: '<div style="width:12px;height:12px;background:#30D158;border:2px solid #fff;border-radius:50%;box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-  const endIcon = L.divIcon({
-    className: '',
-    html: '<div style="width:12px;height:12px;background:#FF6B00;border:2px solid #fff;border-radius:50%;box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-
-  markers.push(L.marker(start, { icon: startIcon }).addTo(map));
-  markers.push(L.marker(end, { icon: endIcon }).addTo(map));
-
-  // 1. Línea Recta inmediata
-  routeLine = L.featureGroup([
-    L.polyline([start, end], { color: '#000', weight: 8, opacity: 0.2, lineCap: 'round' }),
-    L.polyline([start, end], { color: '#FF6B00', weight: 5, opacity: 0.9, lineCap: 'round' })
-  ]).addTo(map);
-
-  map.fitBounds(L.latLngBounds(start, end), { padding: [40, 40] });
-
-  // 2. OSRM Curvo
-  const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
-
-  fetch(url)
-    .then(r => r.json())
-    .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) return;
-      const curvyCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-      
-      if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.featureGroup([
-        L.polyline(curvyCoords, { color: '#000', weight: 8, opacity: 0.2, lineCap: 'round' }),
-        L.polyline(curvyCoords, { color: '#FF6B00', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round' })
-      ]).addTo(map);
-    })
-    .catch(err => console.error('OSRM Conductor Error:', err));
 }

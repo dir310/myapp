@@ -6,11 +6,6 @@ import '../styles/conductor.css';
 
 import { toggleRadar } from './ui.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
-import { createMap, LA_CALERA } from '../utils/map.js';
-
-// ── Global Map Instance ──
-const map = createMap('map', LA_CALERA, 13);
-export { map };
 
 // ── Event Listeners ──
 document.getElementById('radarBtn').addEventListener('click', toggleRadar);
