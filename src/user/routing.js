@@ -91,8 +91,8 @@ function renderRouteOnMap(coords, state, map) {
 
   // Dibujamos un "borde" oscuro para visibilidad y la línea naranja brillante
   state.routeLine = L.featureGroup([
-    L.polyline(coords, { color: '#000', weight: 9, opacity: 0.25, lineCap: 'round' }),
-    L.polyline(coords, { color: '#FF6B00', weight: 6, opacity: 0.95, lineCap: 'round', lineJoin: 'round' })
+    L.polyline(coords, { color: '#000', weight: 15, opacity: 0.4, lineCap: 'round' }),
+    L.polyline(coords, { color: '#FF6B00', weight: 10, opacity: 1, lineCap: 'round', lineJoin: 'round' })
   ]).addTo(map);
 }
 
