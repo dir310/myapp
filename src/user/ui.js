@@ -42,14 +42,14 @@ export function setMode(m, state, map) {
   const hint = document.getElementById('clickHint');
 
   if (m === 'click') {
-    document.querySelectorAll('.route-input').forEach((i) => (i.style.display = 'none'));
+    document.querySelectorAll('.inputs-col .route-input').forEach((i) => (i.style.display = 'none'));
     document.querySelector('.route-dots').style.display = 'none';
     hint.style.display = 'block';
     state.nextClick = state.startLatLng ? 'end' : 'start';
     map.getContainer().style.cursor = 'crosshair';
     if (sheetMinimized) toggleSheet();
   } else {
-    document.querySelectorAll('.route-input').forEach((i) => (i.style.display = ''));
+    document.querySelectorAll('.inputs-col .route-input').forEach((i) => (i.style.display = ''));
     document.querySelector('.route-dots').style.display = '';
     hint.style.display = 'none';
     map.getContainer().style.cursor = '';
