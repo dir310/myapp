@@ -123,12 +123,16 @@ export function checkRoute(state, map) {
   renderRouteOnMap([state.startLatLng, state.endLatLng], state, map);
 
   // 2. PEDIR RUTA REAL A OSRM (Aparece un segundo después)
-  const url = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson&steps=true`;
 
   fetch(url)
     .then(r => r.json())
     .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) return;
+      // Si OSRM falla o no es Ok, mantenemos la línea recta de respaldo.
+      if (data.code !== 'Ok' || !data.routes?.length) {
+          console.warn('[MovilCal] OSRM no retornó ruta Ok');
+          return;
+      }
 
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
