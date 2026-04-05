@@ -150,7 +150,7 @@ export function checkRoute(state, map) {
       </button>`;
   }
 
-  // ─── CONFIGURACIÓN DEL ROUTER (Original Estable) ───
+  // ─── CONFIGURACIÓN DEL ROUTER (OSRM Francia - Muy estable) ───
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -158,11 +158,14 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }], // Estilo clásico naranja
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
       addWaypoints: false
     },
     createMarker: () => null,
-    // Dejamos que la librería use su servidor demo por defecto, que es el más confiable
+    router: L.Routing.osrmv1({
+      serviceUrl: 'https://routing.openstreetmap.fr/router/route/v1/driving',
+      timeout: 10000
+    }),
   });
 
   control.on('routesfound', (e) => {
@@ -170,10 +173,12 @@ export function checkRoute(state, map) {
     const distKm = r.summary.totalDistance / 1000;
     const mins = Math.round(r.summary.totalTime / 60) || 1;
     
-    // Si la distancia es insignificante, ignorar (error de red)
     if (distKm < 0.01) return;
 
-    // Actualizar Píldora de Info
+    // 1. Ocultar estados previos
+    showStatus('', false);
+
+    // 2. Actualizar Píldora de Info
     const distEl = document.getElementById('routeDistance');
     const timeEl = document.getElementById('routeTime');
     const pillEl = document.getElementById('routePill');
@@ -181,32 +186,30 @@ export function checkRoute(state, map) {
     if (timeEl) timeEl.textContent = mins;
     if (pillEl) pillEl.style.display = 'flex';
 
-    // Ajustar mapa
+    // 3. Ajustar mapa
     map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
 
-    // Mostrar Precio
+    // 4. Mostrar Precio
     showPrice(distKm.toFixed(1), mins);
 
-    // Activar sección de pedido
+    // 5. Activar sección de pedido
     document.getElementById('mainActions').style.display = 'none';
     document.getElementById('priceSection').style.display = 'block';
 
     if (isSheetMinimized()) toggleSheet();
-    showStatus('', false);
   });
 
   control.on('routingerror', (err) => {
-    console.warn('OSRM falló, usando cálculo de contingencia (haversine)...');
+    console.warn('Routing fallback triggered');
     
-    // Fallback: Línea sólida pero con estilo de "estimación"
-    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.35; // Factor de curvatura estimado
-    const mins = Math.round((distKm / 20) * 60); // Estimación moto 20km/h
+    // Fallback: Línea sólida sin mensajes ruidosos en la UI
+    const distKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+    const mins = Math.round((distKm / 22) * 60);
     
     state.fallbackLine = L.polyline([state.startLatLng, state.endLatLng], {
       color: '#FF6B00',
-      weight: 5,
-      opacity: 0.6,
-      dashArray: 'none' // Línea sólida para evitar confusión con "cortado"
+      weight: 6,
+      opacity: 0.7
     }).addTo(map);
 
     const distEl = document.getElementById('routeDistance');
@@ -216,7 +219,9 @@ export function checkRoute(state, map) {
     document.getElementById('routePill').style.display = 'flex';
 
     showPrice(distKm.toFixed(1), mins);
-    showStatus('⚠️ Servidor de rutas lento. Tarifa calculada por distancia aérea.', false);
+    
+    // Reemplazamos el letrero molesto por un mensaje simple de "Calculando..." o nada
+    showStatus('', false); 
 
     document.getElementById('mainActions').style.display = 'none';
     document.getElementById('priceSection').style.display = 'block';
