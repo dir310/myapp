@@ -2,6 +2,7 @@
  * Route calculation, marker management, and pricing.
  */
 import L from 'leaflet';
+import 'leaflet-routing-machine';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 
@@ -29,57 +30,6 @@ function showPrice(distKm, mins) {
   const el = document.getElementById('priceValue');
   if (el) el.textContent = '$' + price.toLocaleString('es-CO');
   return price;
-}
-
-/**
- * Obtiene las coordenadas de la ruta real por calles.
- * Intenta Valhalla primero, luego OSRM como respaldo.
- * Devuelve { distKm, mins, coords: [[lat,lng],...] } o null.
- */
-async function fetchRouteLine(slng, slat, elng, elat) {
-  // ── Intento 1: Valhalla (routing engine diferente a OSRM, más estable) ──
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 10000);
-    const res = await fetch('https://valhalla1.openstreetmap.de/route', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        locations:    [{ lon: slng, lat: slat }, { lon: elng, lat: elat }],
-        costing:      'auto',
-        shape_format: 'geojson'
-      }),
-      signal: ctrl.signal
-    });
-    const data = await res.json();
-    const leg  = data?.trip?.legs?.[0];
-    if (leg?.shape?.coordinates?.length) {
-      return {
-        distKm: leg.summary.length,
-        mins:   Math.round(leg.summary.time / 60) || 1,
-        coords: leg.shape.coordinates.map(([lng, lat]) => [lat, lng])
-      };
-    }
-  } catch (_) { /* Valhalla falló, probar OSRM */ }
-
-  // ── Intento 2: OSRM ──
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 10000);
-    const url  = `https://router.project-osrm.org/route/v1/driving/${slng},${slat};${elng},${elat}?overview=full&geometries=geojson`;
-    const res  = await fetch(url, { signal: ctrl.signal });
-    const data = await res.json();
-    if (data.code === 'Ok' && data.routes?.[0]) {
-      const route = data.routes[0];
-      return {
-        distKm: route.legs[0].distance / 1000,
-        mins:   Math.round(route.legs[0].duration / 60) || 1,
-        coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
-      };
-    }
-  } catch (_) { /* OSRM también falló */ }
-
-  return null;
 }
 
 const iconStart = pinIcon('#30D158', 'A');
@@ -115,8 +65,8 @@ export function clearPoint(type, state, map) {
     if (el) el.value = '';
   }
 
-  if (state.routeLine)    { map.removeLayer(state.routeLine);    state.routeLine    = null; }
-  if (state.fallbackLine) { map.removeLayer(state.fallbackLine); state.fallbackLine = null; }
+  if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
+  if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine      = null; }
 
   const pill = document.getElementById('routePill');
   if (pill) pill.style.display = 'none';
@@ -136,11 +86,11 @@ export function clearPoint(type, state, map) {
 export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
-  // Limpiar líneas previas
-  if (state.routeLine)    { map.removeLayer(state.routeLine);    state.routeLine    = null; }
-  if (state.fallbackLine) { map.removeLayer(state.fallbackLine); state.fallbackLine = null; }
+  // Limpiar control previo
+  if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
+  if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine = null; }
 
-  // ── 1. Precio y UI instantáneos con Haversine ──
+  // ── 1. Precio instantáneo (Haversine, sin espera) ──
   const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
@@ -154,39 +104,44 @@ export function checkRoute(state, map) {
   showPrice(quickKm.toFixed(1), quickMins);
   document.getElementById('mainActions').style.display  = 'none';
   document.getElementById('priceSection').style.display = 'block';
+  map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // Capturar referencias por si los puntos cambian mientras el fetch corre
-  const startSnap = state.startLatLng;
-  const endSnap   = state.endLatLng;
-
-  // ── 2. Obtener ruta real por calles (Valhalla → OSRM) ──
-  const { lat: slat, lng: slng } = startSnap;
-  const { lat: elat, lng: elng } = endSnap;
-
-  fetchRouteLine(slng, slat, elng, elat).then(result => {
-    // Ignorar si los puntos cambiaron mientras esperábamos
-    if (state.startLatLng !== startSnap || state.endLatLng !== endSnap) return;
-
-    if (!result) {
-      // Sin resultado: ajustar mapa y listo (precio Haversine ya está visible)
-      map.fitBounds(L.latLngBounds([startSnap, endSnap]).pad(0.3));
-      return;
-    }
-
-    // Dibujar línea naranja siguiendo las calles
-    state.routeLine = L.polyline(result.coords, {
-      color:   '#FF6B00',
-      weight:  8,
-      opacity: 0.85
-    }).addTo(map);
-
-    // Actualizar km/min/precio con valores exactos
-    if (distEl) distEl.textContent = result.distKm.toFixed(1);
-    if (timeEl) timeEl.textContent = result.mins;
-    showPrice(result.distKm.toFixed(1), result.mins);
-    showStatus('', false);
-
-    map.fitBounds(state.routeLine.getBounds().pad(0.3));
+  // ── 2. L.Routing.control dibuja la línea naranja por las calles ──
+  const control = L.Routing.control({
+    waypoints:         [state.startLatLng, state.endLatLng],
+    routeWhileDragging: false,
+    addWaypoints:      false,
+    draggableWaypoints: false,
+    show:              false,
+    lineOptions: {
+      styles:      [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
+      addWaypoints: false
+    },
+    createMarker: () => null,
+    router: L.Routing.osrmv1({
+      serviceUrl: 'https://router.project-osrm.org/route/v1'
+    })
   });
+
+  control.on('routesfound', (e) => {
+    const r      = e.routes[0];
+    const distKm = r.summary.totalDistance / 1000;
+    const mins   = Math.round(r.summary.totalTime / 60) || 1;
+    if (distKm < 0.01) return;
+
+    // Actualizar con valores exactos de OSRM
+    if (distEl) distEl.textContent = distKm.toFixed(1);
+    if (timeEl) timeEl.textContent = mins;
+    showPrice(distKm.toFixed(1), mins);
+    showStatus('', false);
+  });
+
+  control.on('routingerror', () => {
+    // OSRM no pudo calcular la ruta — el precio Haversine ya está visible
+    showStatus('', false);
+  });
+
+  state.routingControl = control;
+  control.addTo(map);
 }
