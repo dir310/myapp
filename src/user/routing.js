@@ -119,17 +119,22 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 1.1 DIBUJAR LÍNEA RECTA DE RESPALDO (INSTANTÁNEO Y SEGURO)
-  // Esto asegura que siempre veas la línea naranja, incluso si el servidor de rutas falla.
-  renderRouteOnMap([state.startLatLng, state.endLatLng], state, map);
+  // 1.1 ELIMINADO: Ya no dibujamos línea recta de respaldo. Esperamos a la curva real.
 
-  // 2. INTENTAR RUTA REAL A OSRM (Se ajustará si el servidor lo permite)
-  const url = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  // 2. PEDIR RUTA REAL A OSRM (A través de Proxy para saltar CORS)
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(osrmUrl)}`;
 
-  fetch(url)
+  fetch(proxyUrl)
     .then(r => r.json())
-    .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) return;
+    .then(proxyData => {
+      // AllOrigins envuelve la respuesta en .contents como string
+      const data = JSON.parse(proxyData.contents);
+      
+      if (data.code !== 'Ok' || !data.routes?.length) {
+          console.warn('[MovilCal] OSRM no retornó ruta Ok');
+          return;
+      }
 
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
