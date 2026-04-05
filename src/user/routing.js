@@ -118,13 +118,7 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // ── 2. Línea recta inmediata (siempre visible) ──
-  drawRouteLine(
-    [state.startLatLng, state.endLatLng],
-    state, map
-  );
-
-  // ── 3. Fetch OSRM → reemplaza con ruta real por calles ──
+  // ── 2. Fetch OSRM → ruta real por calles (sin línea recta previa) ──
   const { lat: sLat, lng: sLng } = state.startLatLng;
   const { lat: eLat, lng: eLng } = state.endLatLng;
   const osrmUrl =
@@ -147,12 +141,11 @@ export function checkRoute(state, map) {
       showPrice(distKm.toFixed(1), mins);
       showStatus('', false);
 
-      // Reemplazar línea recta por la ruta curva real
+      // Dibujar la ruta real siguiendo las calles
       const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
       drawRouteLine(coords, state, map);
     })
     .catch(() => {
-      // OSRM no disponible — la línea recta ya está visible
       showStatus('', false);
     });
 }

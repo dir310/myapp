@@ -14,19 +14,19 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   const map = L.map(elementId, { 
     zoomControl: false,
     minZoom: 10,
-    maxZoom: 19 // Los tiles escalan hasta aquí sin ponerse negros
+    maxZoom: 21 // upscale seguro — tiles nativos llegan a 17, de ahí escalan
   }).setView(center, zoom);
 
   // Satellite imagery
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri', maxNativeZoom: 17, maxZoom: 19 }
+    { attribution: 'Tiles © Esri', maxNativeZoom: 17, maxZoom: 21 }
   ).addTo(map);
 
   // Labels overlay
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    { maxNativeZoom: 17, maxZoom: 19, opacity: 0.85 }
+    { maxNativeZoom: 17, maxZoom: 21, opacity: 0.85 }
   ).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
