@@ -86,7 +86,7 @@ export function clearPoint(type, state, map) {
 export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
-  // Limpiar control previo
+  // Limpiar ruta previa
   if (state.routingControl) { map.removeControl(state.routingControl); state.routingControl = null; }
   if (state.routeLine)      { map.removeLayer(state.routeLine);        state.routeLine = null; }
 
@@ -107,41 +107,41 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // ── 2. L.Routing.control dibuja la línea naranja por las calles ──
-  const control = L.Routing.control({
-    waypoints:         [state.startLatLng, state.endLatLng],
-    routeWhileDragging: false,
-    addWaypoints:      false,
-    draggableWaypoints: false,
-    show:              false,
-    lineOptions: {
-      styles:      [{ color: '#FF6B00', weight: 8, opacity: 0.85 }],
-      addWaypoints: false
-    },
-    createMarker: () => null,
-    router: L.Routing.osrmv1({
-      serviceUrl: 'https://router.project-osrm.org/route/v1'
+  // ── 2. Fetch OSRM directo → polilínea naranja por calles ──
+  const { lat: sLat, lng: sLng } = state.startLatLng;
+  const { lat: eLat, lng: eLng } = state.endLatLng;
+  const url =
+    `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${eLng},${eLat}` +
+    `?overview=full&geometries=geojson`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.routes || data.routes.length === 0) return;
+
+      const route  = data.routes[0];
+      const distKm = route.distance / 1000;
+      const mins   = Math.round(route.duration / 60) || 1;
+      if (distKm < 0.01) return;
+
+      // Actualizar con valores reales de OSRM
+      if (distEl) distEl.textContent = distKm.toFixed(1);
+      if (timeEl) timeEl.textContent = mins;
+      showPrice(distKm.toFixed(1), mins);
+      showStatus('', false);
+
+      // Convertir GeoJSON [lng, lat] → Leaflet [lat, lng] y dibujar
+      const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      state.routeLine = L.polyline(coords, {
+        color:    '#FF6B00',
+        weight:   7,
+        opacity:  0.88,
+        lineCap:  'round',
+        lineJoin: 'round',
+      }).addTo(map);
     })
-  });
-
-  control.on('routesfound', (e) => {
-    const r      = e.routes[0];
-    const distKm = r.summary.totalDistance / 1000;
-    const mins   = Math.round(r.summary.totalTime / 60) || 1;
-    if (distKm < 0.01) return;
-
-    // Actualizar con valores exactos de OSRM
-    if (distEl) distEl.textContent = distKm.toFixed(1);
-    if (timeEl) timeEl.textContent = mins;
-    showPrice(distKm.toFixed(1), mins);
-    showStatus('', false);
-  });
-
-  control.on('routingerror', () => {
-    // OSRM no pudo calcular la ruta — el precio Haversine ya está visible
-    showStatus('', false);
-  });
-
-  state.routingControl = control;
-  control.addTo(map);
+    .catch(() => {
+      // OSRM no disponible — precio Haversine ya visible, sin línea
+      showStatus('', false);
+    });
 }
