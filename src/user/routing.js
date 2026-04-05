@@ -150,7 +150,7 @@ export function checkRoute(state, map) {
       </button>`;
   }
 
-  // ─── CONFIGURACIÓN DEL ROUTER (FOSSGIS - Más estable que project-osrm) ───
+  // ─── CONFIGURACIÓN DEL ROUTER (Original Estable) ───
   const control = L.Routing.control({
     waypoints: [state.startLatLng, state.endLatLng],
     routeWhileDragging: false,
@@ -158,20 +158,20 @@ export function checkRoute(state, map) {
     draggableWaypoints: false,
     show: false,
     lineOptions: {
-      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.9 }], 
+      styles: [{ color: '#FF6B00', weight: 8, opacity: 0.8 }], // Estilo clásico naranja
       addWaypoints: false
     },
     createMarker: () => null,
-    router: L.Routing.osrmv1({
-      serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-      useHints: false // Ayuda a que no falle por caché antigua
-    }),
+    // Dejamos que la librería use su servidor demo por defecto, que es el más confiable
   });
 
   control.on('routesfound', (e) => {
     const r = e.routes[0];
     const distKm = r.summary.totalDistance / 1000;
     const mins = Math.round(r.summary.totalTime / 60) || 1;
+    
+    // Si la distancia es insignificante, ignorar (error de red)
+    if (distKm < 0.005) return;
     
     // Si la distancia es ridículamente corta (error de servidor), ignorar
     if (distKm < 0.01) return;
