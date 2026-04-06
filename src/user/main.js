@@ -50,7 +50,6 @@ function checkPassengerAuth() {
     }
   }
 }
-checkPassengerAuth();
 
 function setAuthMode(mode) {
   const btn = document.getElementById('savePassengerAuthBtn');
@@ -76,6 +75,9 @@ function setAuthMode(mode) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Verificar auth una vez que el DOM esté listo
+  checkPassengerAuth();
+
   const btn = document.getElementById('savePassengerAuthBtn');
   if (btn) {
     btn.addEventListener('click', async () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'la-calera-v5';
+const CACHE_NAME = 'la-calera-v6';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
