@@ -147,12 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
               localStorage.removeItem('calmovil_cliente_nombre');
               localStorage.removeItem('calmovil_cliente_cedula');
               localStorage.removeItem('calmovil_cliente_telefono');
-              // Usar 'authTerms' as a flag is unneeded since it's re-checked on form.
-              document.getElementById('authNombre').value = '';
-              document.getElementById('authCedula').value = '';
-              document.getElementById('authTelefono').value = '';
-              document.getElementById('authTerms').checked = false;
-              checkPassengerAuth();
+              location.reload(); // Hard reset for the mandatory auth wall
           }
       });
   }
