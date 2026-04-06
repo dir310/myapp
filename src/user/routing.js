@@ -140,8 +140,8 @@ export function checkRoute(state, map) {
 
       // Coordenadas para la vía real
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      renderRouteOnMap(curvyCoords, state, map); 
-      console.log('[MovilCal] Ruta por vía principal aplicada.');
+      // renderRouteOnMap(curvyCoords, state, map); 
+      console.log('[MovilCal] Ruta calculada pero visualización desactivada por petición.');
     })
     .catch(err => {
       console.error('[MovilCal] Error en ruteo por vía:', err);
