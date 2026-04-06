@@ -135,14 +135,29 @@ export function checkRoute(state, map) {
     [state.endLatLng.lat, state.endLatLng.lng]
   ], state, map, true); // true = dashed fallback
 
-  // 2. PEDIR RUTA REAL A OSRM — Intento directo primero (suele tener CORS habilitado)
-  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  // 2. PEDIR RUTA REAL A OSRM — Estrategia de multi-servidor para máxima fiabilidad
+  const coordsStr = `${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}`;
+  const endpoints = [
+    `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`,
+    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`
+  ];
 
-  fetch(osrmUrl)
-    .then(r => r.json())
+  const tryEndpoints = async (urls) => {
+    for (const url of urls) {
+      try {
+        console.log('[MovilCal] Intentando ruta en:', new URL(url).hostname);
+        const r = await fetch(url);
+        const data = await r.json();
+        if (data.code === 'Ok' && data.routes?.length > 0) return data;
+      } catch (e) {
+        console.warn(`[MovilCal] Falló servidor ${new URL(url).hostname}, reintentando...`);
+      }
+    }
+    throw new Error('Todos los servidores de ruta fallaron');
+  };
+
+  tryEndpoints(endpoints)
     .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('No route ok');
-      
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
@@ -153,21 +168,9 @@ export function checkRoute(state, map) {
 
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
       renderRouteOnMap(curvyCoords, state, map, false); 
-      console.log('[MovilCal] Ruta por calles cargada exitosamente.');
+      console.log('[MovilCal] Ruta por calles aplicada exitosamente.');
     })
     .catch(err => {
-      console.warn('[MovilCal] Intento directo falló, probando proxy de respaldo...');
-      // Fallback a AllOrigins pero formato JSON envuelto (más estable)
-      fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(osrmUrl)}`)
-        .then(r => r.json())
-        .then(wrapped => {
-          const data = JSON.parse(wrapped.contents);
-          if (data.code !== 'Ok') return;
-          const route = data.routes[0];
-          const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-          renderRouteOnMap(curvyCoords, state, map, false);
-          console.log('[MovilCal] Ruta por calles cargada vía backup.');
-        })
-        .catch(e => console.error('[MovilCal] Error total en ruta:', e));
+      console.error('[MovilCal] Error total en ruta (se mantiene recta):', err);
     });
 }
