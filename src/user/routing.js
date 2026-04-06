@@ -135,17 +135,22 @@ export function checkRoute(state, map) {
     [state.endLatLng.lat, state.endLatLng.lng]
   ], state, map, true); // true = dashed fallback
 
-  // 2. PEDIR RUTA REAL A OSRM
+  // 2. PEDIR RUTA REAL A OSRM — vía proxy CORS para que funcione desde el navegador
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  const proxy1  = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
+  const proxy2  = `https://api.allorigins.win/raw?url=${encodeURIComponent(osrmUrl)}`;
 
-  fetch(osrmUrl)
-    .then(r => r.json())
+  const tryRoute = (url) =>
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no route');
+        return data;
+      });
+
+  tryRoute(proxy1)
+    .catch(() => tryRoute(proxy2))
     .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) {
-          console.warn('[MovilCal] OSRM no retornó ruta Ok, manteniendo recta.');
-          return;
-      }
-
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
@@ -154,10 +159,11 @@ export function checkRoute(state, map) {
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
 
+      // Invertir [lng, lat] -> [lat, lng] para Leaflet
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      renderRouteOnMap(curvyCoords, state, map, false); // false = solid real route
+      renderRouteOnMap(curvyCoords, state, map, false); // sólida, por calles reales
     })
     .catch(err => {
-      console.error('[MovilCal] OSRM error, se queda la recta:', err);
+      console.error('[MovilCal] Ambos proxies fallaron, se queda la recta:', err);
     });
 }
