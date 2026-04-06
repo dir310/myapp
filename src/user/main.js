@@ -144,12 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const logoutBtn = document.getElementById('logoutPassengerBtn');
   if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-          if(confirm('¿Estás seguro de que quieres cerrar sesión? Asegúrate de no tener un viaje activo.')) {
-              localStorage.removeItem('calmovil_cliente_nombre');
-              localStorage.removeItem('calmovil_cliente_cedula');
-              localStorage.removeItem('calmovil_cliente_telefono');
-              location.reload(); // Hard reset for the mandatory auth wall
+      logoutBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Evitar conflictos de clics
+          if(confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+              // Limpieza total agresiva
+              localStorage.clear(); 
+              sessionStorage.clear();
+              // Redirección forzada para limpiar memoria del navegador
+              window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
           }
       });
   }

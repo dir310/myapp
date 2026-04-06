@@ -135,22 +135,14 @@ export function checkRoute(state, map) {
     [state.endLatLng.lat, state.endLatLng.lng]
   ], state, map, true); // true = dashed fallback
 
-  // 2. PEDIR RUTA REAL A OSRM — vía proxy CORS para que funcione desde el navegador
+  // 2. PEDIR RUTA REAL A OSRM — Intento directo primero (suele tener CORS habilitado)
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
-  const proxy1  = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
-  const proxy2  = `https://api.allorigins.win/raw?url=${encodeURIComponent(osrmUrl)}`;
 
-  const tryRoute = (url) =>
-    fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no route');
-        return data;
-      });
-
-  tryRoute(proxy1)
-    .catch(() => tryRoute(proxy2))
+  fetch(osrmUrl)
+    .then(r => r.json())
     .then(data => {
+      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('No route ok');
+      
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
@@ -159,11 +151,23 @@ export function checkRoute(state, map) {
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
 
-      // Invertir [lng, lat] -> [lat, lng] para Leaflet
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      renderRouteOnMap(curvyCoords, state, map, false); // sólida, por calles reales
+      renderRouteOnMap(curvyCoords, state, map, false); 
+      console.log('[MovilCal] Ruta por calles cargada exitosamente.');
     })
     .catch(err => {
-      console.error('[MovilCal] Ambos proxies fallaron, se queda la recta:', err);
+      console.warn('[MovilCal] Intento directo falló, probando proxy de respaldo...');
+      // Fallback a AllOrigins pero formato JSON envuelto (más estable)
+      fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(osrmUrl)}`)
+        .then(r => r.json())
+        .then(wrapped => {
+          const data = JSON.parse(wrapped.contents);
+          if (data.code !== 'Ok') return;
+          const route = data.routes[0];
+          const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+          renderRouteOnMap(curvyCoords, state, map, false);
+          console.log('[MovilCal] Ruta por calles cargada vía backup.');
+        })
+        .catch(e => console.error('[MovilCal] Error total en ruta:', e));
     });
 }
