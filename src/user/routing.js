@@ -83,16 +83,26 @@ export function clearPoint(type, state, map) {
 }
 
 // ── Dibujar polilínea (Naranja con borde oscuro) ──────────────────────────
-function renderRouteOnMap(coords, state, map) {
+function renderRouteOnMap(coords, state, map, isFallback = false) {
   if (state.routeLine) {
     map.removeLayer(state.routeLine);
     state.routeLine = null;
   }
 
-  // Dibujamos un "borde" oscuro para visibilidad y la línea naranja brillante
+  const weight = isFallback ? 8 : 10;
+  const dashArray = isFallback ? '10, 10' : null;
+  const opacity = isFallback ? 0.6 : 1;
+
   state.routeLine = L.featureGroup([
-    L.polyline(coords, { color: '#000', weight: 15, opacity: 0.4, lineCap: 'round' }),
-    L.polyline(coords, { color: '#FF6B00', weight: 10, opacity: 1, lineCap: 'round', lineJoin: 'round' })
+    L.polyline(coords, { color: '#000', weight: weight + 5, opacity: 0.3, lineCap: 'round' }),
+    L.polyline(coords, { 
+      color: '#FF6B00', 
+      weight: weight, 
+      opacity: opacity, 
+      lineCap: 'round', 
+      lineJoin: 'round',
+      dashArray: dashArray
+    })
   ]).addTo(map);
 }
 
@@ -119,18 +129,23 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 1.1 ELIMINADO: Ya no dibujamos línea recta de respaldo. Esperamos a la curva real.
+  map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
+  if (isSheetMinimized()) toggleSheet();
 
-  // 2. PEDIR RUTA REAL A OSRM (A través de Proxy Robusto para saltar CORS)
-  // Usamos corsproxy.io que es mucho más rápido que allorigins.
+  // 1.1 Línea recta de respaldo inmediata (mientras carga la real)
+  renderRouteOnMap([
+    [state.startLatLng.lat, state.startLatLng.lng],
+    [state.endLatLng.lat, state.endLatLng.lng]
+  ], state, map, true); // true = dashed fallback
+
+  // 2. PEDIR RUTA REAL A OSRM
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
-  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
 
-  fetch(proxyUrl)
+  fetch(osrmUrl)
     .then(r => r.json())
     .then(data => {
       if (data.code !== 'Ok' || !data.routes?.length) {
-          console.warn('[MovilCal] OSRM no retornó ruta Ok');
+          console.warn('[MovilCal] OSRM no retornó ruta Ok, manteniendo recta.');
           return;
       }
 
@@ -142,14 +157,10 @@ export function checkRoute(state, map) {
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
 
-      // Invertir coordenadas [lng, lat] -> [lat, lng]
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      
-      // REEMPLAZAR la línea recta por la curva real
-      renderRouteOnMap(curvyCoords, state, map);
-      console.log('[MovilCal] Ruta real aplicada.');
+      renderRouteOnMap(curvyCoords, state, map, false); // false = solid real route
     })
     .catch(err => {
-      console.error('[MovilCal] OSRM error (usando recta):', err);
+      console.error('[MovilCal] OSRM error, se queda la recta:', err);
     });
 }

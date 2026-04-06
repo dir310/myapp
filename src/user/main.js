@@ -34,9 +34,14 @@ function checkPassengerAuth() {
   const profileWidget = document.getElementById('passengerProfileDisplay');
 
   if (!nombre || !cedula || !telefono) {
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+      overlay.style.display = 'flex';
+      // Ensure the form is in "Login" mode by default if shown
+      setAuthMode('login');
+    }
     if (profileWidget) profileWidget.style.display = 'none';
   } else {
+    if (overlay) overlay.style.display = 'none';
     // Fill the sidebar widget
     if (profileWidget) {
         profileWidget.style.display = 'flex';
@@ -47,6 +52,29 @@ function checkPassengerAuth() {
 }
 checkPassengerAuth();
 
+function setAuthMode(mode) {
+  const btn = document.getElementById('savePassengerAuthBtn');
+  const switchBtn = document.getElementById('authSwitchBtn');
+  const switchText = document.getElementById('authSwitchText');
+  const nombreGroup = document.getElementById('authNombre').closest('div');
+  const cedulaLabel = document.getElementById('authCedula').previousElementSibling;
+  const nombreLabel = document.getElementById('authNombre').previousElementSibling;
+
+  if (mode === 'register') {
+    btn.textContent = 'Registrarme y Entrar';
+    switchBtn.textContent = '¡Ya tengo cuenta!';
+    switchText.textContent = '¿Ya eres usuario?';
+    nombreGroup.style.display = 'block';
+    if(nombreLabel) nombreLabel.style.display = 'block';
+  } else {
+    btn.textContent = 'Ingresar';
+    switchBtn.textContent = '¡Registrarme!';
+    switchText.textContent = '¿No tienes cuenta?';
+    // For login, we can still ask for everything or just phone/cedula. 
+    // To keep it simple and ensure "registration" feel, let's just keep all fields but change text.
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('savePassengerAuthBtn');
   if (btn) {
@@ -56,32 +84,44 @@ document.addEventListener('DOMContentLoaded', () => {
       const t = document.getElementById('authTelefono').value;
       const terms = document.getElementById('authTerms').checked;
 
-      if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*).');
+      if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*) para continuar.');
       if (!terms) return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder continuar.');
 
       btn.disabled = true;
-      btn.textContent = 'Guardando...';
+      const originalText = btn.textContent;
+      btn.textContent = 'Validando...';
 
       try {
-        // Enviar a Supabase a la nueva tabla de clientes puros
+        // Enviar a Supabase — si ya existe lo actualiza
         await supabase.from('clientes').upsert([{ 
           cedula: c, 
           nombre: n, 
           telefono: t 
         }]);
+
+        // Guardar local
+        localStorage.setItem('calmovil_cliente_nombre', n);
+        localStorage.setItem('calmovil_cliente_cedula', c);
+        localStorage.setItem('calmovil_cliente_telefono', t);
+
+        document.getElementById('passengerAuthOverlay').style.display = 'none';
+        checkPassengerAuth();
       } catch (err) {
-        console.warn('Network issue saving sync client', err);
+        alert('Hubo un error al conectar con el servidor. Inténtalo de nuevo.');
+        console.error('Auth error:', err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
+    });
+  }
 
-      // Guardar local para no volver a preguntarle
-      localStorage.setItem('calmovil_cliente_nombre', n);
-      localStorage.setItem('calmovil_cliente_cedula', c);
-      localStorage.setItem('calmovil_cliente_telefono', t);
-
-      btn.disabled = false;
-      btn.textContent = 'Guardar y Continuar';
-      document.getElementById('passengerAuthOverlay').style.display = 'none';
-      checkPassengerAuth(); // Update sidebar widget
+  const switchBtn = document.getElementById('authSwitchBtn');
+  if (switchBtn) {
+    switchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isLogin = document.getElementById('savePassengerAuthBtn').textContent === 'Ingresar';
+      setAuthMode(isLogin ? 'register' : 'login');
     });
   }
 
@@ -173,14 +213,12 @@ map.on('click', (e) => {
 
   if (state.nextClick === 'start') {
     state.nextClick = 'end';
-    // Actualizar hint para guiar al segundo toque
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
-    showStatus('', false); // Sin texto extra, el hint ya orienta
+    showStatus('', false);
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
-    // La tarifa y la línea naranja aparecen solas — no mostrar texto de calculando
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = 'Toca el mapa para colocar inicio y destino';
     showStatus('', false);
