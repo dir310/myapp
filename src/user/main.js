@@ -213,12 +213,14 @@ map.on('click', (e) => {
 
   if (state.nextClick === 'start') {
     state.nextClick = 'end';
+    // Actualizar hint para guiar al segundo toque
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
-    showStatus('', false);
+    showStatus('', false); // Sin texto extra, el hint ya orienta
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
+    // La tarifa y la línea naranja aparecen solas — no mostrar texto de calculando
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = 'Toca el mapa para colocar inicio y destino';
     showStatus('', false);
