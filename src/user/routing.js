@@ -83,26 +83,16 @@ export function clearPoint(type, state, map) {
 }
 
 // ── Dibujar polilínea (Naranja con borde oscuro) ──────────────────────────
-function renderRouteOnMap(coords, state, map, isFallback = false) {
+function renderRouteOnMap(coords, state, map) {
   if (state.routeLine) {
     map.removeLayer(state.routeLine);
     state.routeLine = null;
   }
 
-  const weight = isFallback ? 8 : 10;
-  const dashArray = isFallback ? '10, 10' : null;
-  const opacity = isFallback ? 0.6 : 1;
-
+  // Dibujamos un "borde" oscuro para visibilidad y la línea naranja brillante (curva)
   state.routeLine = L.featureGroup([
-    L.polyline(coords, { color: '#000', weight: weight + 5, opacity: 0.3, lineCap: 'round' }),
-    L.polyline(coords, { 
-      color: '#FF6B00', 
-      weight: weight, 
-      opacity: opacity, 
-      lineCap: 'round', 
-      lineJoin: 'round',
-      dashArray: dashArray
-    })
+    L.polyline(coords, { color: '#000', weight: 15, opacity: 0.4, lineCap: 'round' }),
+    L.polyline(coords, { color: '#FF6B00', weight: 10, opacity: 1, lineCap: 'round', lineJoin: 'round' })
   ]).addTo(map);
 }
 
@@ -129,35 +119,17 @@ export function checkRoute(state, map) {
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
-  // 1.1 Línea recta de respaldo inmediata (mientras carga la real)
-  renderRouteOnMap([
-    [state.startLatLng.lat, state.startLatLng.lng],
-    [state.endLatLng.lat, state.endLatLng.lng]
-  ], state, map, true); // true = dashed fallback
+  // 1.1 ELIMINADO: Ya no dibujamos línea recta. Esperamos a la curva por la vía.
 
-  // 2. PEDIR RUTA REAL A OSRM — Estrategia de multi-servidor para máxima fiabilidad
-  const coordsStr = `${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}`;
-  const endpoints = [
-    `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`,
-    `https://routing.openstreetmap.de/routed-car/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`
-  ];
+  // 2. PEDIR RUTA REAL A OSRM (Vía Proxy para saltar límites y CORS)
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
+  const secureUrl = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
 
-  const tryEndpoints = async (urls) => {
-    for (const url of urls) {
-      try {
-        console.log('[MovilCal] Intentando ruta en:', new URL(url).hostname);
-        const r = await fetch(url);
-        const data = await r.json();
-        if (data.code === 'Ok' && data.routes?.length > 0) return data;
-      } catch (e) {
-        console.warn(`[MovilCal] Falló servidor ${new URL(url).hostname}, reintentando...`);
-      }
-    }
-    throw new Error('Todos los servidores de ruta fallaron');
-  };
-
-  tryEndpoints(endpoints)
+  fetch(secureUrl)
+    .then(r => r.json())
     .then(data => {
+      if (data.code !== 'Ok' || !data.routes?.length) return;
+      
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
@@ -166,11 +138,12 @@ export function checkRoute(state, map) {
       if (timeEl) timeEl.textContent = mins;
       showPrice(distKm, mins);
 
+      // Coordenadas para la vía real
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      renderRouteOnMap(curvyCoords, state, map, false); 
-      console.log('[MovilCal] Ruta por calles aplicada exitosamente.');
+      renderRouteOnMap(curvyCoords, state, map); 
+      console.log('[MovilCal] Ruta por vía principal aplicada.');
     })
     .catch(err => {
-      console.error('[MovilCal] Error total en ruta (se mantiene recta):', err);
+      console.error('[MovilCal] Error en ruteo por vía:', err);
     });
 }
