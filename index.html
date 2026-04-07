@@ -127,19 +127,25 @@
         </div>
         <div style="font-size: 40px; margin-bottom: 10px; text-align:center;">👋</div>
         <div id="authForm">
-            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>
-            <div style="margin-bottom: 15px;">
-                <input type="text" id="authNombre" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
+            <div id="groupNombre">
+                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="authNombre" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
+                </div>
             </div>
             
-            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número de Cédula *</label>
-            <div style="margin-bottom: 15px;">
-                <input type="number" id="authCedula" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 1000222333" min="100000" max="9999999999" oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
+            <div id="groupCedula">
+                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número de Cédula *</label>
+                <div style="margin-bottom: 15px;">
+                    <input type="number" id="authCedula" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 1000222333" min="100000" max="9999999999" oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
+                </div>
             </div>
             
-            <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono (Celular) *</label>
-            <div style="margin-bottom: 15px;">
-                <input type="tel" id="authTelefono" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
+            <div id="groupTelefono">
+                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono (Celular) *</label>
+                <div style="margin-bottom: 15px;">
+                    <input type="tel" id="authTelefono" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
+                </div>
             </div>
 
             <!-- Captcha Matemático Pasajero -->

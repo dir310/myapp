@@ -61,26 +61,31 @@ function setAuthMode(mode) {
   const btn = document.getElementById('savePassengerAuthBtn');
   const switchBtn = document.getElementById('authSwitchBtn');
   const switchText = document.getElementById('authSwitchText');
-  const nombreGroup = document.getElementById('authNombre').closest('div');
-  const cedulaLabel = document.getElementById('authCedula').previousElementSibling;
-  const nombreLabel = document.getElementById('authNombre').previousElementSibling;
-
+  
+  const groupNombre = document.getElementById('groupNombre');
+  const groupCedula = document.getElementById('groupCedula');
+  const groupTelefono = document.getElementById('groupTelefono');
   const backBtn = document.getElementById('authBackBtn');
 
   if (mode === 'register') {
     btn.textContent = 'Registrarme y Entrar';
     switchBtn.textContent = '¡Ya tengo cuenta!';
     switchText.textContent = '¿Ya eres usuario?';
-    nombreGroup.style.display = 'block';
-    if(nombreLabel) nombreLabel.style.display = 'block';
+    
+    if(groupNombre) groupNombre.style.display = 'block';
+    if(groupCedula) groupCedula.style.display = 'block';
+    if(groupTelefono) groupTelefono.style.display = 'block';
     if(backBtn) backBtn.style.display = 'flex';
   } else {
     btn.textContent = 'Ingresar';
     switchBtn.textContent = '¡Registrarme!';
     switchText.textContent = '¿No tienes cuenta?';
-    nombreGroup.style.display = 'none';
-    if(nombreLabel) nombreLabel.style.display = 'none';
-    if(backBtn) backBtn.style.display = 'none';
+    
+    if(groupNombre) groupNombre.style.display = 'none';
+    if(groupCedula) groupCedula.style.display = 'block';
+    if(groupTelefono) groupTelefono.style.display = 'block';
+    // En login simple (solo cedula/tel), mostramos el atrás para cerrar si se desea.
+    if(backBtn) backBtn.style.display = 'flex'; 
   }
 }
 
@@ -202,7 +207,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const backBtn = document.getElementById('authBackBtn');
   if (backBtn) {
     backBtn.addEventListener('click', () => {
-      setAuthMode('login');
+      const isRegister = document.getElementById('savePassengerAuthBtn').textContent.includes('Registrarme');
+      if (isRegister) {
+        setAuthMode('login');
+      } else {
+        // En login, el "Atrás" cierra el overlay (para ver el mapa)
+        document.getElementById('passengerAuthOverlay').style.display = 'none';
+      }
     });
   }
 
