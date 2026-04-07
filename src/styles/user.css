@@ -534,21 +534,20 @@ body {
   inset: 0;
   z-index: 2000;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
-  padding: 40px 20px;
+  align-items: center;
+  padding: 80px 20px; /* Mas espacio para deslizar */
   text-align: center;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .rating-overlay > * {
   flex-shrink: 0;
-  margin-top: auto;
-  margin-bottom: auto;
+  margin: auto 0; /* Centrado inteligente que permite el scroll */
 }
 
 .rating-card {
