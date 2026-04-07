@@ -12,6 +12,10 @@ import { acceptRide, cancelRide, stopListening } from './ride.js';
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
 
+let passengerCaptchaAnswer = 0;
+const PASSENGER_MAX_ATTEMPTS = 3;
+const PASSENGER_LOCK_MS = 60000; // 60s
+
 // ── Shared State ──
 const state = {
   startLatLng: null,
@@ -76,17 +80,74 @@ function setAuthMode(mode) {
   }
 }
 
+function generatePassengerCaptcha() {
+  const n1 = Math.floor(Math.random() * 9) + 1;
+  const n2 = Math.floor(Math.random() * 9) + 1;
+  passengerCaptchaAnswer = n1 + n2;
+  const el = document.getElementById('passengerCaptchaQuestion');
+  if (el) el.textContent = `${n1} + ${n2} =`;
+  const input = document.getElementById('passengerCaptcha');
+  if (input) input.value = '';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Verificar auth una vez que el DOM esté listo
   checkPassengerAuth();
+  generatePassengerCaptcha();
 
   const btn = document.getElementById('savePassengerAuthBtn');
+  const errorEl = document.getElementById('passengerAuthError');
+
   if (btn) {
+    // ── Lógica de Bloqueo ──
+    function checkBlockState() {
+      const blockUntil = parseInt(sessionStorage.getItem('passenger_block_until') || '0');
+      if (Date.now() < blockUntil) {
+        const remaining = Math.ceil((blockUntil - Date.now()) / 1000);
+        btn.disabled = true;
+        btn.textContent = `Bloqueado (${remaining}s)`;
+        if (errorEl) errorEl.textContent = 'Demasiados intentos. Espera un momento.';
+        return true;
+      }
+      return false;
+    }
+
+    if (checkBlockState()) {
+      const timer = setInterval(() => {
+        if (!checkBlockState()) {
+          clearInterval(timer);
+          btn.disabled = false;
+          btn.textContent = 'Ingresar';
+          if (errorEl) errorEl.textContent = '';
+          sessionStorage.removeItem('passenger_attempts');
+        }
+      }, 1000);
+    }
+
     btn.addEventListener('click', async () => {
+      if (checkBlockState()) return;
+
       const n = sanitizeHTML(document.getElementById('authNombre').value);
       const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
       const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
+      const captcha = parseInt(document.getElementById('passengerCaptcha').value);
       const terms = document.getElementById('authTerms').checked;
+
+      // Validar Captcha Primero
+      if (isNaN(captcha) || captcha !== passengerCaptchaAnswer) {
+        let attempts = (parseInt(sessionStorage.getItem('passenger_attempts') || '0')) + 1;
+        sessionStorage.setItem('passenger_attempts', attempts);
+        
+        if (attempts >= PASSENGER_MAX_ATTEMPTS) {
+          const until = Date.now() + PASSENGER_LOCK_MS;
+          sessionStorage.setItem('passenger_block_until', until);
+          checkBlockState(); // Activar bloqueo inmediato
+        } else {
+          alert('Suma de seguridad incorrecta.');
+          generatePassengerCaptcha();
+        }
+        return;
+      }
 
       if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*) para continuar.');
       if (!terms) return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder continuar.');
@@ -107,6 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('calmovil_cliente_nombre', n);
         localStorage.setItem('calmovil_cliente_cedula', c);
         localStorage.setItem('calmovil_cliente_telefono', t);
+        
+        // Limpiar intentos al tener éxito
+        sessionStorage.removeItem('passenger_attempts');
 
         document.getElementById('passengerAuthOverlay').style.display = 'none';
         checkPassengerAuth();
@@ -114,8 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Hubo un error al conectar con el servidor. Inténtalo de nuevo.');
         console.error('Auth error:', err);
       } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+        if (!checkBlockState()) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
       }
     });
   }

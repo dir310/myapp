@@ -3,7 +3,8 @@ import { loadViajes, setupRealtimeChannel } from './realtime.js';
 
 let currentUser = null;
 let currentProfile = null;
-let captchaAnswer = 0;
+let captchaAnswerRegister = 0;
+let captchaAnswerLogin = 0;
 
 // ── Configuración de seguridad ──
 const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 horas
@@ -131,10 +132,19 @@ function setupUIEvents() {
 }
 
 function generateCaptcha() {
-  const n1 = Math.floor(Math.random() * 9) + 1;
-  const n2 = Math.floor(Math.random() * 9) + 1;
-  captchaAnswer = n1 + n2;
-  document.getElementById('captchaQuestion').textContent = `¿${n1} + ${n2}? =`;
+  // Captcha para Registro
+  const r1 = Math.floor(Math.random() * 9) + 1;
+  const r2 = Math.floor(Math.random() * 9) + 1;
+  captchaAnswerRegister = r1 + r2;
+  const regQ = document.getElementById('captchaQuestion');
+  if(regQ) regQ.textContent = `¿${r1} + ${r2}? =`;
+
+  // Captcha para Login
+  const l1 = Math.floor(Math.random() * 9) + 1;
+  const l2 = Math.floor(Math.random() * 9) + 1;
+  captchaAnswerLogin = l1 + l2;
+  const loginQ = document.getElementById('loginCaptchaQuestion');
+  if(loginQ) loginQ.textContent = `¿${l1} + ${l2}? =`;
 }
 
 async function handleSession(session) {
@@ -170,9 +180,16 @@ async function handleSession(session) {
 async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
   const btn = document.getElementById('loginBtn');
 
   if (!email || !password) return alert('Por favor llena todos los campos.');
+  
+  if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
+    alert('La respuesta a la suma de seguridad es incorrecta.');
+    generateCaptcha();
+    return;
+  }
 
   // ── Rate Limiting: verificar bloqueo ──
   const blockUntil = parseInt(sessionStorage.getItem('login_block_until') || '0');
@@ -253,7 +270,7 @@ async function handleRegister() {
     return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder registrarte.');
   }
 
-  if (userCaptcha !== captchaAnswer) {
+  if (userCaptcha !== captchaAnswerRegister) {
     generateCaptcha();
     return alert('La respuesta matemática es incorrecta.');
   }

@@ -32,7 +32,20 @@
                 <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
                 <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
             </div>
-            <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:10px;">Ingresar</button>
+
+            <!-- Captcha Matemático para Login -->
+            <div id="loginCaptchaContainer" style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
+                <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">Seguridad: Resuelve la suma</p>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span id="loginCaptchaQuestion" style="font-weight:bold; font-size:14px; flex:1; text-align:right;"></span>
+                    <input type="number" id="loginCaptcha" class="driver-name" placeholder="?" style="flex:1; margin-bottom:0; padding:8px;">
+                </div>
+            </div>
+
+            <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
+            <div style="text-align:center; margin-top:12px;">
+                <a href="#" id="forgotPasswordLink" style="color:rgba(255,255,255,.4); font-size:12px; text-decoration:none;">¿Olvidaste tu contraseña o correo?</a>
+            </div>
             <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
                 ¿No tienes cuenta? <a href="#" id="showRegister" style="color:#FF6B00;">Regístrate aquí</a>
             </p>
