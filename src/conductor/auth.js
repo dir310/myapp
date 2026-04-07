@@ -152,12 +152,17 @@ async function handleSession(session) {
     currentUser = session.user;
     
     // Cargar perfil completo
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('conductores')
       .select('*')
       .eq('id', currentUser.id)
       .single();
       
+    if (profileError || !profile) {
+      console.error('Error cargando perfil:', profileError);
+      return handleSession(null); // Si no hay perfil, forzar login de nuevo
+    }
+
     currentProfile = profile;
     
     // Configurar UI para usuario logueado
@@ -165,7 +170,7 @@ async function handleSession(session) {
     mainAppContent.style.display = 'block';
     profileBtn.style.display = 'block';
     
-    // Iniciar carga de viajes y eventos realtime (solo cuando está logueado)
+    // Iniciar carga de viajes y eventos realtime
     loadViajes();
     setupRealtimeChannel();
   } else {

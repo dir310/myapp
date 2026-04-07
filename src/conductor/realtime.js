@@ -183,7 +183,11 @@ async function rejectViaje(id) {
  */
 async function acceptViaje(id, lat, lng) {
   const profile = getCurrentProfile();
-  if (!profile) return alert('Debes iniciar sesión primero.');
+  
+  if (!profile) {
+    alert('Error de sesión: No se pudo obtener tu perfil de conductor. Por favor refresca la página o inicia sesión de nuevo.');
+    return;
+  }
   const conductorName = profile.nombre;
   const conductorId = profile.id;
 
