@@ -191,20 +191,9 @@ async function acceptViaje(id, lat, lng) {
   const conductorName = profile.nombre;
   const conductorId = profile.id;
 
-  // Forzar petición explícita de GPS al momento de aceptar para activar permisos y capturar posición inicial
-  let initialLocation = null;
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        initialLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        console.log('Ubicación inicial capturada al aceptar');
-      },
-      (err) => alert('Para aceptar viajes debes permitir el uso de tu ubicación GPS.')
-    );
-  }
+  console.log('Intentando aceptar viaje instantáneamente:', id);
 
-  console.log('Intentando aceptar viaje:', id, 'por:', conductorName);
-
+  // 1. ACEPTAR VIAJE DE INMEDIATO (Feedback instantáneo)
   const { data, error } = await supabase
     .from('viajes')
     .update({ 
@@ -218,19 +207,30 @@ async function acceptViaje(id, lat, lng) {
   if (error) {
     console.error('Error de Supabase:', error);
     alert('Error técnico: ' + error.message);
-  } else if (data && data.length > 0) {
-    console.log('Viaje aceptado con éxito');
-    
-    // Si tenemos la ubicación inicial, actualizarla de una vez para que el cliente vea la moto de inmediato
-    if (initialLocation) {
-        await supabase.from('viajes').update({ 
-            conductor_lat: initialLocation.lat, 
-            conductor_lng: initialLocation.lng 
-        }).eq('id', id);
-    }
-
+    return;
+  } 
+  
+  if (data && data.length > 0) {
+    console.log('Viaje aceptado con éxito (UI)');
     startGPS(id); // EMPEZAR EL TRACKING CONTINUO
     loadViajes();
+
+    // 2. CAPTURAR GPS EN SEGUNDO PLANO (Sin bloquear el botón)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          await supabase.from('viajes').update({ 
+              conductor_lat: lat, 
+              conductor_lng: lng 
+          }).eq('id', id);
+          console.log('GPS inicial enviado en segundo plano');
+        },
+        null, // Fallo silencioso aquí para no molestar al conductor
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
   }
 }
 
