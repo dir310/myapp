@@ -22,6 +22,7 @@ const state = {
   nextClick: 'start',
   currentRideId: null,
   pollerInterval: null,
+  isLocked: false,     // Bloquea interacción tras elegir destino
 };
 
 // ── Passenger Auth Logic ──
@@ -180,6 +181,7 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   boundClearPoint('start');
   boundClearPoint('end');
   state.nextClick = 'start';
+  state.isLocked = false;
   showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
   
   // Dar feedback visual al botón
@@ -202,6 +204,8 @@ document.querySelectorAll('.clear-btn').forEach((btn, i) => {
 
 // Map click (for 'click' mode)
 map.on('click', (e) => {
+  if (state.isLocked) return; // No permitir clics si está bloqueado
+
   if (state.mode !== 'click') {
     if (!isSheetMinimized()) toggleSheet();
     return;
@@ -219,9 +223,10 @@ map.on('click', (e) => {
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
+    state.isLocked = true; // Bloquear tras seleccionar el destino
     // La tarifa y la línea naranja aparecen solas — no mostrar texto de calculando
     const hint = document.getElementById('clickHint');
-    if (hint) hint.textContent = 'Toca el mapa para colocar inicio y destino';
+    if (hint) hint.textContent = '📍 Ruta fijada. Usa "Reiniciar" para cambiar.';
     showStatus('', false);
     boundPlaceMarker('end', lat, lng, name);
   }
