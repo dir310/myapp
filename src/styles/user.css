@@ -1,14 +1,17 @@
 html {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   margin: 0;
   padding: 0;
   background: #111;
+  -webkit-overflow-scrolling: touch;
 }
 
 #map {
@@ -532,12 +535,20 @@ body {
   z-index: 2000;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
-  display: none;
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  padding: 20px;
+  padding: 40px 20px;
   text-align: center;
+  overflow-y: auto;
+}
+
+.rating-overlay > * {
+  flex-shrink: 0;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .rating-card {

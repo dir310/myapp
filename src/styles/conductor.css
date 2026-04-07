@@ -1,6 +1,8 @@
 /* ── Conductor Page ── */
 body {
   padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .header {
@@ -237,7 +239,14 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  padding: 20px;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.modal-overlay > * {
+  flex-shrink: 0;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .auth-container {
