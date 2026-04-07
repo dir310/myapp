@@ -84,8 +84,8 @@ function setAuthMode(mode) {
     if(groupNombre) groupNombre.style.display = 'none';
     if(groupCedula) groupCedula.style.display = 'block';
     if(groupTelefono) groupTelefono.style.display = 'block';
-    // En login simple (solo cedula/tel), mostramos el atrás para cerrar si se desea.
-    if(backBtn) backBtn.style.display = 'flex'; 
+    // En login (menú principal), ocultamos el atrás porque no hay a donde volver
+    if(backBtn) backBtn.style.display = 'none'; 
   }
 }
 
@@ -207,13 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const backBtn = document.getElementById('authBackBtn');
   if (backBtn) {
     backBtn.addEventListener('click', () => {
-      const isRegister = document.getElementById('savePassengerAuthBtn').textContent.includes('Registrarme');
-      if (isRegister) {
-        setAuthMode('login');
-      } else {
-        // En login, el "Atrás" cierra el overlay (para ver el mapa)
-        document.getElementById('passengerAuthOverlay').style.display = 'none';
-      }
+      // Siempre vuelve al modo Login
+      setAuthMode('login');
     });
   }
 
