@@ -107,6 +107,19 @@ function generatePassengerCaptcha() {
   if (input) input.value = '';
 }
 
+window.togglePassword = function(inputId, iconElement) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconElement.style.filter = 'grayscale(0)'; // Color completo
+    iconElement.style.opacity = '1';
+  } else {
+    input.type = 'password';
+    iconElement.style.filter = 'grayscale(1)'; // Blanco y negro / tenue
+    iconElement.style.opacity = '0.6';
+  }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // Verificar auth una vez que el DOM esté listo
   checkPassengerAuth();

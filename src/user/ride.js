@@ -11,6 +11,13 @@ let driverMarker = null; // Guardará el ícono en vivo de la moto
 let rideChannel  = null; // Referencia al canal de Supabase
 
 // local sanitizeInput removed in favor of centralized security.js
+function playNotificationSound() {
+  const audio = document.getElementById('notificationSound');
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(e => console.log('Audio play blocked:', e));
+  }
+}
 
 
 /**
@@ -117,6 +124,7 @@ function listenForDriver(rideId, state, map) {
           state.lastKnownEstado = payload.new.estado;
           
           if (payload.new.estado === 'aceptado') {
+            playNotificationSound();
             showDriverAssigned(payload.new.conductor_id, state);
           } else if (payload.new.estado === 'en_progreso') {
             showTripStarted(state);
@@ -133,6 +141,7 @@ function listenForDriver(rideId, state, map) {
               driverMarker = null;
             }
           } else if (payload.new.estado === 'cancelado') {
+            playNotificationSound();
             alert('⚠️ El conductor ha cancelado el servicio.');
             cancelRide(state, map);
           }
@@ -170,12 +179,14 @@ function listenForDriver(rideId, state, map) {
       if (data.estado !== state.lastKnownEstado) {
         state.lastKnownEstado = data.estado;
         if (data.estado === 'aceptado') {
+          playNotificationSound();
           showDriverAssigned(data.conductor_id, state);
         } else if (data.estado === 'en_progreso') {
           showTripStarted(state);
         } else if (data.estado === 'finalizado') {
           showRatingScreen(state);
         } else if (data.estado === 'cancelado') {
+          playNotificationSound();
           alert('⚠️ El conductor ha cancelado el servicio.');
           cancelRide(state, map);
         }
