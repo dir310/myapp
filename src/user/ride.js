@@ -309,12 +309,13 @@ function showSearchingRecovery(state) {
 }
 
 /**
- * Show the rating screen.
+ * Show the rating screen (Redirected to simple reload).
  * @param {object} state - Shared app state.
  */
 function showRatingScreen(state) {
   stopListening(state);
-  document.getElementById('ratingOverlay').style.display = 'flex';
+  alert('🏁 ¡Viaje Finalizado! Gracias por usar MovilCal.');
+  location.reload();
 }
 
 /**
