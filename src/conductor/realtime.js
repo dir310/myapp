@@ -191,11 +191,15 @@ async function acceptViaje(id, lat, lng) {
   const conductorName = profile.nombre;
   const conductorId = profile.id;
 
-  // Forzar petición explícita de GPS al momento de aceptar para activar permisos del navegador
+  // Forzar petición explícita de GPS al momento de aceptar para activar permisos y capturar posición inicial
+  let initialLocation = null;
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      () => console.log('Permiso GPS confirmado al aceptar viaje'),
-      (err) => alert('Para aceptar viajes debes permitir el uso de tu ubicación GPS cuando tu navegador te lo pida.')
+      (pos) => {
+        initialLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        console.log('Ubicación inicial capturada al aceptar');
+      },
+      (err) => alert('Para aceptar viajes debes permitir el uso de tu ubicación GPS.')
     );
   }
 
@@ -216,7 +220,16 @@ async function acceptViaje(id, lat, lng) {
     alert('Error técnico: ' + error.message);
   } else if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito');
-    startGPS(id); // EMPEZAR EL TRACKING AUTOMÁTICO
+    
+    // Si tenemos la ubicación inicial, actualizarla de una vez para que el cliente vea la moto de inmediato
+    if (initialLocation) {
+        await supabase.from('viajes').update({ 
+            conductor_lat: initialLocation.lat, 
+            conductor_lng: initialLocation.lng 
+        }).eq('id', id);
+    }
+
+    startGPS(id); // EMPEZAR EL TRACKING CONTINUO
     loadViajes();
   }
 }

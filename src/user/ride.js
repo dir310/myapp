@@ -171,11 +171,12 @@ function listenForDriver(rideId, state, map) {
   state.pollerInterval = setInterval(async () => {
     const { data, error } = await supabase
       .from('viajes')
-      .select('estado, conductor_id')
+      .select('estado, conductor_id, conductor_lat, conductor_lng')
       .eq('id', rideId)
       .single();
 
     if (!error && data) {
+      // 1. Actualizar Estado si cambió
       if (data.estado !== state.lastKnownEstado) {
         state.lastKnownEstado = data.estado;
         if (data.estado === 'aceptado') {
@@ -189,6 +190,21 @@ function listenForDriver(rideId, state, map) {
           playNotificationSound();
           alert('⚠️ El conductor ha cancelado el servicio.');
           cancelRide(state, map);
+        }
+      }
+
+      // 2. Actualización de GPS (Respaldo si falla el Websocket)
+      if (data.conductor_lat && data.conductor_lng && map) {
+        const lat = data.conductor_lat;
+        const lng = data.conductor_lng;
+        
+        if (!driverMarker) {
+          driverMarker = L.marker([lat, lng], {
+            icon: motoIcon(),
+            zIndexOffset: 1000
+          }).addTo(map);
+        } else {
+          animateMarker(driverMarker, [lat, lng], 2000);
         }
       }
     }
