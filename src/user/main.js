@@ -32,25 +32,22 @@ const state = {
 
 // ── Passenger Auth Logic ──
 function checkPassengerAuth() {
-  const nombre = localStorage.getItem('calmovil_cliente_nombre');
-  const cedula = localStorage.getItem('calmovil_cliente_cedula');
-  const telefono = localStorage.getItem('calmovil_cliente_telefono');
-
+  const email = localStorage.getItem('calmovil_cliente_email');
   const overlay = document.getElementById('passengerAuthOverlay');
   const profileWidget = document.getElementById('passengerProfileDisplay');
 
-  if (!nombre || !cedula || !telefono) {
+  if (!email) {
     if (overlay) {
       overlay.style.display = 'flex';
-      // Ensure the form is in "Login" mode by default if shown
       setAuthMode('login');
     }
     if (profileWidget) profileWidget.style.display = 'none';
   } else {
     if (overlay) overlay.style.display = 'none';
-    // Fill the sidebar widget
     if (profileWidget) {
         profileWidget.style.display = 'flex';
+        const nombre = localStorage.getItem('calmovil_cliente_nombre') || 'Cliente';
+        const telefono = localStorage.getItem('calmovil_cliente_telefono') || '-';
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
     }
@@ -62,9 +59,13 @@ function setAuthMode(mode) {
   const switchBtn = document.getElementById('authSwitchBtn');
   const switchText = document.getElementById('authSwitchText');
   
+  const groupEmail = document.getElementById('groupEmail');
+  const groupPassword = document.getElementById('groupPassword');
   const groupNombre = document.getElementById('groupNombre');
   const groupCedula = document.getElementById('groupCedula');
   const groupTelefono = document.getElementById('groupTelefono');
+  const captchaCont = document.getElementById('passengerCaptchaContainer');
+  const termsLabel = document.getElementById('authTerms').closest('label');
   const backBtn = document.getElementById('authBackBtn');
 
   if (mode === 'register') {
@@ -72,19 +73,26 @@ function setAuthMode(mode) {
     switchBtn.textContent = '¡Ya tengo cuenta!';
     switchText.textContent = '¿Ya eres usuario?';
     
+    if(groupEmail) groupEmail.style.display = 'block';
+    if(groupPassword) groupPassword.style.display = 'block';
     if(groupNombre) groupNombre.style.display = 'block';
     if(groupCedula) groupCedula.style.display = 'block';
     if(groupTelefono) groupTelefono.style.display = 'block';
+    if(captchaCont) captchaCont.style.display = 'block';
+    if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'flex';
   } else {
     btn.textContent = 'Ingresar';
     switchBtn.textContent = '¡Registrarme!';
     switchText.textContent = '¿No tienes cuenta?';
     
+    if(groupEmail) groupEmail.style.display = 'block';
+    if(groupPassword) groupPassword.style.display = 'block';
     if(groupNombre) groupNombre.style.display = 'none';
-    if(groupCedula) groupCedula.style.display = 'block';
-    if(groupTelefono) groupTelefono.style.display = 'block';
-    // En login (menú principal), ocultamos el atrás porque no hay a donde volver
+    if(groupCedula) groupCedula.style.display = 'none';
+    if(groupTelefono) groupTelefono.style.display = 'none';
+    if(captchaCont) captchaCont.style.display = 'none';
+    if(termsLabel) termsLabel.style.display = 'none';
     if(backBtn) backBtn.style.display = 'none'; 
   }
 }
@@ -136,60 +144,94 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', async () => {
       if (checkBlockState()) return;
 
-      const n = sanitizeHTML(document.getElementById('authNombre').value);
-      const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
-      const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
-      const captcha = parseInt(document.getElementById('passengerCaptcha').value);
-      const terms = document.getElementById('authTerms').checked;
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const isRegister = btn.textContent.includes('Registrar');
 
-      // Validar Captcha Primero
-      if (isNaN(captcha) || captcha !== passengerCaptchaAnswer) {
-        let attempts = (parseInt(sessionStorage.getItem('passenger_attempts') || '0')) + 1;
-        sessionStorage.setItem('passenger_attempts', attempts);
-        
-        if (attempts >= PASSENGER_MAX_ATTEMPTS) {
-          const until = Date.now() + PASSENGER_LOCK_MS;
-          sessionStorage.setItem('passenger_block_until', until);
-          checkBlockState(); // Activar bloqueo inmediato
-        } else {
+      if (!email || !password) return alert('Por favor llena el correo y la clave.');
+
+      if (isRegister) {
+        const n = sanitizeHTML(document.getElementById('authNombre').value);
+        const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
+        const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
+        const captcha = parseInt(document.getElementById('passengerCaptcha').value);
+        const terms = document.getElementById('authTerms').checked;
+
+        if (isNaN(captcha) || captcha !== passengerCaptchaAnswer) {
           alert('Suma de seguridad incorrecta.');
           generatePassengerCaptcha();
+          return;
         }
-        return;
-      }
 
-      if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*) para continuar.');
-      if (!terms) return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder continuar.');
+        if (!n || !c || !t) return alert('Por favor llena todos los campos del registro.');
+        if (!terms) return alert('Debes marcar la casilla aceptando los términos.');
 
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = 'Validando...';
+        btn.disabled = true;
+        btn.textContent = 'Creando cuenta...';
 
-      try {
-        // Enviar a Supabase — si ya existe lo actualiza
-        await supabase.from('clientes').upsert([{ 
-          cedula: c, 
-          nombre: n, 
-          telefono: t 
-        }]);
+        try {
+          const { error: dbError } = await supabase
+            .from('clientes')
+            .insert([{
+              nombre: n,
+              cedula: c,
+              telefono: t,
+              email: email,
+              password: password
+            }]);
 
-        // Guardar local
-        localStorage.setItem('calmovil_cliente_nombre', n);
-        localStorage.setItem('calmovil_cliente_cedula', c);
-        localStorage.setItem('calmovil_cliente_telefono', t);
-        
-        // Limpiar intentos al tener éxito
-        sessionStorage.removeItem('passenger_attempts');
+          if (dbError) throw dbError;
 
-        document.getElementById('passengerAuthOverlay').style.display = 'none';
-        checkPassengerAuth();
-      } catch (err) {
-        alert('Hubo un error al conectar con el servidor. Inténtalo de nuevo.');
-        console.error('Auth error:', err);
-      } finally {
-        if (!checkBlockState()) {
+          localStorage.setItem('calmovil_cliente_nombre', n);
+          localStorage.setItem('calmovil_cliente_cedula', c);
+          localStorage.setItem('calmovil_cliente_telefono', t);
+          localStorage.setItem('calmovil_cliente_email', email);
+          
+          window.location.reload();
+        } catch (err) {
+          alert('Error al registrar: ' + (err.message || 'Inténtalo de nuevo.'));
+          btn.disabled = false;
+          btn.textContent = 'Registrarme y Entrar';
+        }
+      } else {
+        // MODO LOGIN
+        btn.disabled = true;
+        btn.textContent = 'Validando...';
+
+        try {
+          const { data, error } = await supabase
+            .from('clientes')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .single();
+
+          if (error || !data) {
+            let attempts = (parseInt(sessionStorage.getItem('passenger_attempts') || '0')) + 1;
+            sessionStorage.setItem('passenger_attempts', attempts);
+            
+            if (attempts >= PASSENGER_MAX_ATTEMPTS) {
+              const until = Date.now() + PASSENGER_LOCK_MS;
+              sessionStorage.setItem('passenger_block_until', until);
+              checkBlockState();
+            } else {
+              alert('Correo o clave incorrectos.');
+            }
             btn.disabled = false;
-            btn.textContent = originalText;
+            btn.textContent = 'Ingresar';
+            return;
+          }
+
+          localStorage.setItem('calmovil_cliente_nombre', data.nombre);
+          localStorage.setItem('calmovil_cliente_cedula', data.cedula);
+          localStorage.setItem('calmovil_cliente_telefono', data.telefono);
+          localStorage.setItem('calmovil_cliente_email', data.email);
+          
+          window.location.reload();
+        } catch (err) {
+          alert('Error al ingresar: ' + err.message);
+          btn.disabled = false;
+          btn.textContent = 'Ingresar';
         }
       }
     });
