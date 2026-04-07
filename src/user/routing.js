@@ -4,6 +4,7 @@
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
+import { sanitizeHTML } from '../utils/security.js';
 
 // ── Tarifas Moto ───────────────────────────────────────────────────────────
 const BASE_FARE    = 2500;
@@ -38,16 +39,18 @@ const iconEnd   = pinIcon('#FF6B00', 'B');
 // ── Marcadores ─────────────────────────────────────────────────────────────
 export function placeMarker(type, lat, lng, name, state, map) {
   const ll = L.latLng(lat, lng);
+  const cleanName = sanitizeHTML(name, 100);
+
   if (type === 'start') {
     if (state.startMarker) map.removeLayer(state.startMarker);
     state.startLatLng = ll;
     state.startMarker = L.marker(ll, { icon: iconStart }).addTo(map)
-      .bindPopup(`<b>🟢 Inicio</b><br>${name}`);
+      .bindPopup(`<b>🟢 Inicio</b><br>${cleanName}`);
   } else {
     if (state.endMarker) map.removeLayer(state.endMarker);
     state.endLatLng = ll;
     state.endMarker = L.marker(ll, { icon: iconEnd }).addTo(map)
-      .bindPopup(`<b>🟠 Destino</b><br>${name}`);
+      .bindPopup(`<b>🟠 Destino</b><br>${cleanName}`);
   }
   map.panTo(ll);
   checkRoute(state, map);

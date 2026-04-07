@@ -10,6 +10,7 @@ import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.j
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening } from './ride.js';
 import { supabase } from '../config/supabase.js';
+import { sanitizeHTML } from '../utils/security.js';
 
 // ── Shared State ──
 const state = {
@@ -46,8 +47,8 @@ function checkPassengerAuth() {
     // Fill the sidebar widget
     if (profileWidget) {
         profileWidget.style.display = 'flex';
-        document.getElementById('displayClientName').textContent = nombre;
-        document.getElementById('displayClientPhone').textContent = telefono;
+        document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
+        document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
     }
   }
 }
@@ -82,9 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('savePassengerAuthBtn');
   if (btn) {
     btn.addEventListener('click', async () => {
-      const n = document.getElementById('authNombre').value;
-      const c = document.getElementById('authCedula').value;
-      const t = document.getElementById('authTelefono').value;
+      const n = sanitizeHTML(document.getElementById('authNombre').value);
+      const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
+      const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
       const terms = document.getElementById('authTerms').checked;
 
       if (!n || !c || !t) return alert('Por favor llena todos los campos obligatorios (*) para continuar.');

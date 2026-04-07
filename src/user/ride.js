@@ -5,23 +5,12 @@ import { supabase } from '../config/supabase.js';
 import { showStatus } from './ui.js';
 import { clearPoint } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
+import { sanitizeHTML } from '../utils/security.js';
 
 let driverMarker = null; // Guardará el ícono en vivo de la moto
 let rideChannel  = null; // Referencia al canal de Supabase
 
-/**
- * Sanitiza un string eliminando caracteres HTML/SQL peligrosos.
- * @param {string} str
- * @param {number} maxLen - Longitud máxima permitida
- * @returns {string}
- */
-function sanitizeInput(str, maxLen = 100) {
-  if (!str) return '';
-  return String(str)
-    .replace(/[<>"'`;\\]/g, '') // eliminar caracteres peligrosos
-    .trim()
-    .slice(0, maxLen);
-}
+// local sanitizeInput removed in favor of centralized security.js
 
 
 /**
@@ -32,8 +21,8 @@ function sanitizeInput(str, maxLen = 100) {
 export async function acceptRide(state, map) {
   if (!state.startLatLng || !state.endLatLng) return;
 
-  const originName = sanitizeInput(document.getElementById('startInput').value || 'Punto de Inicio', 120);
-  const destName = sanitizeInput(document.getElementById('endInput').value || 'Destino', 120);
+  const originName = sanitizeHTML(document.getElementById('startInput').value || 'Punto de Inicio', 120);
+  const destName = sanitizeHTML(document.getElementById('endInput').value || 'Destino', 120);
   const priceStr = document.getElementById('priceValue').textContent.replace(/[^0-9]/g, '');
   const price = parseInt(priceStr, 10);
   const distText = document.getElementById('routeDistance').textContent + ' km';
@@ -44,9 +33,9 @@ export async function acceptRide(state, map) {
 
   try {
     // Sanitizar datos del cliente antes de enviar
-    const cNombre = sanitizeInput(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
-    const cCedula = sanitizeInput(localStorage.getItem('calmovil_cliente_cedula') || '', 12);
-    const cTelefono = sanitizeInput(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
+    const cNombre = sanitizeHTML(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
+    const cCedula = sanitizeHTML(localStorage.getItem('calmovil_cliente_cedula') || '', 12);
+    const cTelefono = sanitizeHTML(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
 
     // Validar que el precio sea un número válido
     if (isNaN(price) || price <= 0) {
