@@ -8,7 +8,7 @@ import { createMap, LA_CALERA } from '../utils/map.js';
 import { toggleSheet, setMode, showStatus, isSheetMinimized } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
-import { acceptRide, cancelRide } from './ride.js';
+import { acceptRide, cancelRide, stopListening } from './ride.js';
 import { supabase } from '../config/supabase.js';
 
 // ── Shared State ──
@@ -259,6 +259,9 @@ document.querySelectorAll('.star').forEach(star => {
 document.getElementById('submitRatingBtn').addEventListener('click', async () => {
     if(selectedRating === 0) { alert("Por favor selecciona una calificación"); return; }
     
+    // Detener cualquier escucha residual antes de procesar
+    stopListening(state);
+
     document.getElementById('ratingOverlay').innerHTML = `
         <div class="rating-card">
             <div style="font-size: 50px; margin-bottom: 15px;">🌟</div>

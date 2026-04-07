@@ -7,6 +7,7 @@ import { clearPoint } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
 
 let driverMarker = null; // Guardará el ícono en vivo de la moto
+let rideChannel  = null; // Referencia al canal de Supabase
 
 /**
  * Sanitiza un string eliminando caracteres HTML/SQL peligrosos.
@@ -107,8 +108,9 @@ function listenForDriver(rideId, state, map) {
   console.log('📡 Iniciando radar para viaje:', rideId);
 
   // Strategy 1: Real-time WebSocket
-  supabase
-    .channel('ride-watch-' + rideId)
+  rideChannel = supabase.channel('ride-watch-' + rideId);
+  
+  rideChannel
     .on(
       'postgres_changes',
       {
@@ -311,11 +313,30 @@ function showSearchingRecovery(state) {
  * @param {object} state - Shared app state.
  */
 function showRatingScreen(state) {
+  stopListening(state);
+  document.getElementById('ratingOverlay').style.display = 'flex';
+}
+
+/**
+ * Stops all listeners (polling and websocket) and cleans up the map.
+ * @param {object} state 
+ */
+export function stopListening(state) {
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
-  document.getElementById('ratingOverlay').style.display = 'flex';
+  
+  if (rideChannel) {
+    supabase.removeChannel(rideChannel);
+    rideChannel = null;
+  }
+
+  if (driverMarker) {
+    // No removemos el marcador si queremos que el pasajero lo vea al final? 
+    // Por ahora lo quitamos para limpiar memoria.
+    console.log('[MovilCal] Limpiando marcador de conductor.');
+  }
 }
 
 /**
@@ -324,6 +345,7 @@ function showRatingScreen(state) {
  * @param {L.Map} map - Leaflet map instance.
  */
 export async function cancelRide(state, map) {
+  stopListening(state);
   if (state.currentRideId) {
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
   }
