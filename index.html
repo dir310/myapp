@@ -121,7 +121,10 @@
 <!-- Overlay de Calificación removido -->
 <!-- Overlay de Registro de Pasajero -->
 <div id="passengerAuthOverlay" class="rating-overlay" style="display: none; z-index: 9999;">
-    <div class="rating-card" style="text-align: left; padding: 25px;">
+    <div class="rating-card" style="text-align: left; padding: 25px; position:relative;">
+        <div id="authBackBtn" style="display:none; position:absolute; top:15px; left:15px; color:#FF6B00; font-size:13px; font-weight:800; cursor:pointer; align-items:center; gap:5px;">
+            <span>⬅</span> Atrás
+        </div>
         <div style="font-size: 40px; margin-bottom: 10px; text-align:center;">👋</div>
         <div id="authForm">
             <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>

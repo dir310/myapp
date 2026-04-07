@@ -65,18 +65,22 @@ function setAuthMode(mode) {
   const cedulaLabel = document.getElementById('authCedula').previousElementSibling;
   const nombreLabel = document.getElementById('authNombre').previousElementSibling;
 
+  const backBtn = document.getElementById('authBackBtn');
+
   if (mode === 'register') {
     btn.textContent = 'Registrarme y Entrar';
     switchBtn.textContent = '¡Ya tengo cuenta!';
     switchText.textContent = '¿Ya eres usuario?';
     nombreGroup.style.display = 'block';
     if(nombreLabel) nombreLabel.style.display = 'block';
+    if(backBtn) backBtn.style.display = 'flex';
   } else {
     btn.textContent = 'Ingresar';
     switchBtn.textContent = '¡Registrarme!';
     switchText.textContent = '¿No tienes cuenta?';
-    // For login, we can still ask for everything or just phone/cedula. 
-    // To keep it simple and ensure "registration" feel, let's just keep all fields but change text.
+    nombreGroup.style.display = 'none';
+    if(nombreLabel) nombreLabel.style.display = 'none';
+    if(backBtn) backBtn.style.display = 'none';
   }
 }
 
@@ -192,6 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const isLogin = document.getElementById('savePassengerAuthBtn').textContent === 'Ingresar';
       setAuthMode(isLogin ? 'register' : 'login');
+    });
+  }
+
+  const backBtn = document.getElementById('authBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      setAuthMode('login');
     });
   }
 
