@@ -157,6 +157,31 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', async () => {
       if (checkBlockState()) return;
 
+      // ── Modo Edición: solo actualiza nombre y teléfono ──
+      if (btn.textContent === 'Guardar Cambios') {
+        const n = sanitizeHTML(document.getElementById('authNombre').value);
+        const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
+        const storedEmail = localStorage.getItem('calmovil_cliente_email');
+        if (!n || !t) return alert('Por favor llena nombre y teléfono.');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+        try {
+          const { error } = await supabase
+            .from('clientes')
+            .update({ nombre: n, telefono: t })
+            .eq('email', storedEmail);
+          if (error) throw error;
+          localStorage.setItem('calmovil_cliente_nombre', n);
+          localStorage.setItem('calmovil_cliente_telefono', t);
+          window.location.reload();
+        } catch (err) {
+          alert('Error al guardar: ' + (err.message || 'Inténtalo de nuevo.'));
+          btn.disabled = false;
+          btn.textContent = 'Guardar Cambios';
+        }
+        return;
+      }
+
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
       const isRegister = btn.textContent.includes('Registrar');
@@ -271,12 +296,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const editBtn = document.getElementById('editPassengerBtn');
   if (editBtn) {
       editBtn.addEventListener('click', () => {
+          // Pre-llenar solo nombre y teléfono
           document.getElementById('authNombre').value = localStorage.getItem('calmovil_cliente_nombre') || '';
-          document.getElementById('authCedula').value = localStorage.getItem('calmovil_cliente_cedula') || '';
           document.getElementById('authTelefono').value = localStorage.getItem('calmovil_cliente_telefono') || '';
-          document.getElementById('authTerms').checked = true; // They accepted it before
+
+          // Mostrar el overlay
           document.getElementById('passengerAuthOverlay').style.display = 'flex';
-          
+
+          // Ocultar campos que no aplican en edición
+          ['groupEmail', 'groupPassword', 'groupCedula', 'passengerCaptchaContainer'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+          // Ocultar términos
+          const termsLabel = document.getElementById('authTerms')?.closest('label');
+          if (termsLabel) termsLabel.style.display = 'none';
+          // Ocultar enlace "¿No tienes cuenta? / Registrarme aquí"
+          const switchDiv = document.getElementById('authSwitchBtn')?.closest('div');
+          if (switchDiv) switchDiv.style.display = 'none';
+          // Ocultar botón Atrás
+          const backBtn = document.getElementById('authBackBtn');
+          if (backBtn) backBtn.style.display = 'none';
+
+          // Mostrar solo nombre y teléfono
+          ['groupNombre', 'groupTelefono'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+          });
+
           const saveBtn = document.getElementById('savePassengerAuthBtn');
           if (saveBtn) saveBtn.textContent = 'Guardar Cambios';
       });

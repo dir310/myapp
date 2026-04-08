@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <title>MovilCal | Viajes rápidos y seguros</title>
-    <meta name="description" content="Planifica tu ruta con MovilCal en La Calera, Cundinamarca. Mapa satelital interactivo con navegación por Waze.">
+    <meta name="description"
+        content="Planifica tu ruta con MovilCal en La Calera, Cundinamarca. Mapa satelital interactivo con navegación por Waze.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/styles/common.css">
     <link rel="stylesheet" href="/src/styles/user.css">
@@ -17,178 +19,229 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MovilCal">
 </head>
+
 <body>
 
-<!-- ── Map ── -->
-<div id="map"></div>
+    <!-- ── Map ── -->
+    <div id="map"></div>
 
-<!-- ── Top Bar ── -->
-<div class="topbar">
-    <div class="topbar-brand" id="openSidebarLink">
-        <div class="brand-dot">🗺️</div>
-        <div>
-            <div class="brand-name">Movil<span>Cal</span></div>
-            <div class="brand-sub">La Calera, Cundinamarca</div>
+    <!-- ── Top Bar ── -->
+    <div class="topbar">
+        <div class="topbar-brand" id="openSidebarLink">
+            <div class="brand-dot">🗺️</div>
+            <div>
+                <div class="brand-name">Movil<span>Cal</span></div>
+                <div class="brand-sub">La Calera, Cundinamarca</div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- ── Route Info Pill ── -->
-<div class="route-pill" id="routePill">
-    <div class="pill-stat">
-        <span>📏</span><span class="pill-val" id="routeDistance">-</span><span class="pill-lbl">km</span>
+    <!-- ── Route Info Pill ── -->
+    <div class="route-pill" id="routePill">
+        <div class="pill-stat">
+            <span>📏</span><span class="pill-val" id="routeDistance">-</span><span class="pill-lbl">km</span>
+        </div>
+        <div class="pill-sep"></div>
+        <div class="pill-stat">
+            <span>⏱️</span><span class="pill-val" id="routeTime">-</span><span class="pill-lbl">min</span>
+        </div>
     </div>
-    <div class="pill-sep"></div>
-    <div class="pill-stat">
-        <span>⏱️</span><span class="pill-val" id="routeTime">-</span><span class="pill-lbl">min</span>
+
+    <!-- ── Sidebar ── -->
+    <div class="sidebar" id="sidebar">
+        <div class="sheet-header" id="sidebarHeader" title="Cerrar / Abrir">
+            <span class="sheet-handle"></span>
+            <div class="sheet-title-mini">Menú Principal</div>
+        </div>
+
+        <div class="sheet-content">
+            <!-- Passenger Profile Header -->
+            <div id="passengerProfileDisplay"
+                style="display:none; background:rgba(255,255,255,.05); border-radius:8px; padding:10px 15px; margin-bottom:15px; align-items:center; justify-content:space-between; cursor:pointer;"
+                title="Haz clic para editar">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="font-size:24px;">👤</div>
+                    <div>
+                        <div id="displayClientName"
+                            style="color:#fff; font-weight:bold; font-size:14px; text-transform:capitalize;">-</div>
+                        <div id="displayClientPhone" style="font-size:11px; color:rgba(255,255,255,.5);">-</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <button id="editPassengerBtn"
+                        style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:8px; color:#FF6B00; font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">✏️
+                        Editar</button>
+                    <button id="logoutPassengerBtn"
+                        style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:rgba(255,255,255,.7); font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">Salir</button>
+                </div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="modeSearchBtn">🔍 Buscar lugar</button>
+                <button class="mode-btn" id="modeClickBtn">📍 Tocar mapa</button>
+                <button class="mode-btn reset-btn" id="resetPointsBtn" title="Reiniciar puntos">🔄 Reiniciar</button>
+            </div>
+
+            <!-- Route Inputs -->
+            <div class="route-row">
+                <div class="route-dots">
+                    <div class="dot-a"></div>
+                    <div class="dot-line"></div>
+                    <div class="dot-b"></div>
+                </div>
+                <div class="inputs-col">
+                    <div class="input-wrapper">
+                        <input type="text" id="startInput" class="route-input" placeholder="¿Dónde estás?"
+                            autocomplete="off">
+                        <button class="clear-btn">✕</button>
+                        <div class="suggestions" id="startSuggestions"></div>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="text" id="endInput" class="route-input" placeholder="¿A dónde vas?"
+                            autocomplete="off">
+                        <button class="clear-btn">✕</button>
+                        <div class="suggestions" id="endSuggestions"></div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
+
+            <!-- Initial Actions -->
+            <div id="mainActions" class="actions">
+                <button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%"
+                    disabled>📍 Selecciona los puntos del viaje</button>
+            </div>
+
+            <!-- Price Section (hidden initially) -->
+            <div id="priceSection" style="display:none;">
+                <div class="price-box">
+                    <div class="price-title">Tarifa Estimada (Moto)</div>
+                    <div class="price-value" id="priceValue">$0</div>
+                </div>
+                <div class="actions">
+                    <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); flex:0.4;"
+                        id="cancelRideBtn">Cancelar</button>
+                    <button class="btn btn-primary" id="acceptRideBtn">🏍️ Pedir Viaje</button>
+                </div>
+            </div>
+
+            <div class="status-bar" id="statusBar"></div>
+        </div>
     </div>
-</div>
 
-<!-- ── Sidebar ── -->
-<div class="sidebar" id="sidebar">
-    <div class="sheet-header" id="sidebarHeader" title="Cerrar / Abrir">
-        <span class="sheet-handle"></span>
-        <div class="sheet-title-mini">Menú Principal</div>
+    <!-- Overlay de Calificación removido -->
+    <!-- Overlay de Registro de Pasajero -->
+    <div id="passengerAuthOverlay" class="rating-overlay" style="display: none; z-index: 9999;">
+        <div class="rating-card" style="text-align: left; padding: 25px; position:relative;">
+            <div id="authBackBtn"
+                style="display:none; position:absolute; top:15px; left:15px; color:#FF6B00; font-size:13px; font-weight:800; cursor:pointer; align-items:center; gap:5px;">
+                <span>⬅</span> Atrás
+            </div>
+            <div style="font-size: 40px; margin-bottom: 10px; text-align:center;">👋</div>
+            <div id="authForm">
+                <div id="groupEmail">
+                    <label
+                        style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Correo
+                        Electrónico *</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="email" id="authEmail" class="route-input"
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
+                            placeholder="ejemplo@correo.com" autocomplete="email">
+                    </div>
+                </div>
+
+                <div id="groupPassword">
+                    <label
+                        style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Contraseña
+                        *</label>
+                    <div class="password-wrapper" style="margin-bottom: 15px; position:relative;">
+                        <input type="password" id="authPassword" class="route-input"
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
+                            placeholder="••••••••">
+                        <span class="password-toggle" onclick="togglePassword('authPassword', this)"
+                            style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; opacity:0.6; filter:grayscale(1);">👁️</span>
+                    </div>
+                </div>
+
+                <div id="groupNombre">
+                    <label
+                        style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre
+                        y Apellido *</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="authNombre" class="route-input"
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
+                            placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
+                    </div>
+                </div>
+
+                <div id="groupCedula">
+                    <label
+                        style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número
+                        de Cédula *</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="number" id="authCedula" class="route-input"
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
+                            placeholder="Ej. 1000222333" min="100000" max="9999999999"
+                            oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
+                    </div>
+                </div>
+
+                <div id="groupTelefono">
+                    <label
+                        style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono
+                        (Celular) *</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="tel" id="authTelefono" class="route-input"
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
+                            placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}"
+                            inputmode="numeric">
+                    </div>
+                </div>
+
+                <!-- Captcha Matemático Pasajero -->
+                <div id="passengerCaptchaContainer"
+                    style="background:rgba(255,255,255,.05); border-radius:8px; padding:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,.1);">
+                    <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">
+                        Seguridad: ¿Cuánto es esta suma?</p>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <span id="passengerCaptchaQuestion"
+                            style="font-weight:bold; font-size:16px; flex:1; text-align:right; color:#FF6B00;"></span>
+                        <input type="number" id="passengerCaptcha" class="route-input" placeholder="?"
+                            style="flex:1; margin-bottom:0; padding:10px; background:rgba(255,107,0,0.1); border-color:rgba(255,107,0,0.3); text-align:center;">
+                    </div>
+                </div>
+
+                <div id="passengerAuthError"
+                    style="color:#ff3b3b; font-size:11px; text-align:center; margin-bottom:10px; min-height:14px; font-weight:600;">
+                </div>
+
+                <button class="btn btn-primary"
+                    style="width: 100%; font-size: 16px; padding: 14px; margin-bottom: 12px;"
+                    id="savePassengerAuthBtn">Ingresar</button>
+                <div style="text-align:center;">
+                    <p style="color:rgba(255,255,255,.4); font-size:12px; margin-bottom:4px;" id="authSwitchText">¿No
+                        tienes cuenta?</p>
+                    <a href="#" id="authSwitchBtn"
+                        style="color:#FF6B00; font-size:14px; font-weight:800; text-decoration:none;">¡Registrarme
+                        aquí!</a>
+                </div>
+            </div>
+            <label
+                style="display:flex; align-items:flex-start; margin-top:20px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
+                <input type="checkbox" id="authTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
+                <span>Al continuar, aceptas que MovilCal actúa únicamente como intermediario tecnológico para facilitar
+                    el contacto con conductores independientes. MovilCal no asume responsabilidad patrimonial ni legal
+                    por el servicio prestado.</span>
+            </label>
+        </div>
     </div>
-    
-    <div class="sheet-content">
-        <!-- Passenger Profile Header -->
-        <div id="passengerProfileDisplay" style="display:none; background:rgba(255,255,255,.05); border-radius:8px; padding:10px 15px; margin-bottom:15px; align-items:center; justify-content:space-between; cursor:pointer;" title="Haz clic para editar">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div style="font-size:24px;">👤</div>
-                <div>
-                    <div id="displayClientName" style="color:#fff; font-weight:bold; font-size:14px; text-transform:capitalize;">-</div>
-                    <div id="displayClientPhone" style="font-size:11px; color:rgba(255,255,255,.5);">-</div>
-                </div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:5px;">
-                <button id="editPassengerBtn" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:8px; color:#FF6B00; font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">✏️ Editar</button>
-                <button id="logoutPassengerBtn" style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:rgba(255,255,255,.7); font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">Salir</button>
-            </div>
-        </div>
 
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-            <button class="mode-btn active" id="modeSearchBtn">🔍 Buscar lugar</button>
-            <button class="mode-btn" id="modeClickBtn">📍 Tocar mapa</button>
-            <button class="mode-btn reset-btn" id="resetPointsBtn" title="Reiniciar puntos">🔄 Reiniciar</button>
-        </div>
-
-        <!-- Route Inputs -->
-        <div class="route-row">
-            <div class="route-dots">
-                <div class="dot-a"></div>
-                <div class="dot-line"></div>
-                <div class="dot-b"></div>
-            </div>
-            <div class="inputs-col">
-                <div class="input-wrapper">
-                    <input type="text" id="startInput" class="route-input" placeholder="¿Dónde estás?" autocomplete="off">
-                    <button class="clear-btn">✕</button>
-                    <div class="suggestions" id="startSuggestions"></div>
-                </div>
-                <div class="input-wrapper">
-                    <input type="text" id="endInput" class="route-input" placeholder="¿A dónde vas?" autocomplete="off">
-                    <button class="clear-btn">✕</button>
-                    <div class="suggestions" id="endSuggestions"></div>
-                </div>
-            </div>
-        </div>
-
-        <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
-
-        <!-- Initial Actions -->
-        <div id="mainActions" class="actions">
-            <button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%" disabled>📍 Selecciona los puntos del viaje</button>
-        </div>
-
-        <!-- Price Section (hidden initially) -->
-        <div id="priceSection" style="display:none;">
-            <div class="price-box">
-                <div class="price-title">Tarifa Estimada (Moto)</div>
-                <div class="price-value" id="priceValue">$0</div>
-            </div>
-            <div class="actions">
-                <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); flex:0.4;" id="cancelRideBtn">Cancelar</button>
-                <button class="btn btn-primary" id="acceptRideBtn">🏍️ Pedir Viaje</button>
-            </div>
-        </div>
-
-        <div class="status-bar" id="statusBar"></div>
-    </div>
-</div>
-
-<!-- Overlay de Calificación removido -->
-<!-- Overlay de Registro de Pasajero -->
-<div id="passengerAuthOverlay" class="rating-overlay" style="display: none; z-index: 9999;">
-    <div class="rating-card" style="text-align: left; padding: 25px; position:relative;">
-        <div id="authBackBtn" style="display:none; position:absolute; top:15px; left:15px; color:#FF6B00; font-size:13px; font-weight:800; cursor:pointer; align-items:center; gap:5px;">
-            <span>⬅</span> Atrás
-        </div>
-        <div style="font-size: 40px; margin-bottom: 10px; text-align:center;">👋</div>
-        <div id="authForm">
-            <div id="groupEmail">
-                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Correo Electrónico *</label>
-                <div style="margin-bottom: 15px;">
-                    <input type="email" id="authEmail" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="ejemplo@correo.com" autocomplete="email">
-                </div>
-            </div>
-
-            <div id="groupPassword">
-                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Contraseña *</label>
-                <div class="password-wrapper" style="margin-bottom: 15px; position:relative;">
-                    <input type="password" id="authPassword" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="••••••••">
-                    <span class="password-toggle" onclick="togglePassword('authPassword', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; opacity:0.6; filter:grayscale(1);">👁️</span>
-                </div>
-            </div>
-
-            <div id="groupNombre">
-                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Nombre y Apellido *</label>
-                <div style="margin-bottom: 15px;">
-                    <input type="text" id="authNombre" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. Juan Pérez" maxlength="60" autocomplete="name">
-                </div>
-            </div>
-            
-            <div id="groupCedula">
-                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Número de Cédula *</label>
-                <div style="margin-bottom: 15px;">
-                    <input type="number" id="authCedula" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 1000222333" min="100000" max="9999999999" oninput="if(this.value.length>12) this.value=this.value.slice(0,12)">
-                </div>
-            </div>
-            
-            <div id="groupTelefono">
-                <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Teléfono (Celular) *</label>
-                <div style="margin-bottom: 15px;">
-                    <input type="tel" id="authTelefono" class="route-input" style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}" inputmode="numeric">
-                </div>
-            </div>
-
-            <!-- Captcha Matemático Pasajero -->
-            <div id="passengerCaptchaContainer" style="background:rgba(255,255,255,.05); border-radius:8px; padding:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,.1);">
-                <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">Seguridad: ¿Cuánto es esta suma?</p>
-                <div style="display:flex; gap:12px; align-items:center;">
-                    <span id="passengerCaptchaQuestion" style="font-weight:bold; font-size:16px; flex:1; text-align:right; color:#FF6B00;"></span>
-                    <input type="number" id="passengerCaptcha" class="route-input" placeholder="?" style="flex:1; margin-bottom:0; padding:10px; background:rgba(255,107,0,0.1); border-color:rgba(255,107,0,0.3); text-align:center;">
-                </div>
-            </div>
-
-            <div id="passengerAuthError" style="color:#ff3b3b; font-size:11px; text-align:center; margin-bottom:10px; min-height:14px; font-weight:600;"></div>
-
-            <button class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 14px; margin-bottom: 12px;" id="savePassengerAuthBtn">Ingresar</button>
-            <div style="text-align:center;">
-                <p style="color:rgba(255,255,255,.4); font-size:12px; margin-bottom:4px;" id="authSwitchText">¿No tienes cuenta?</p>
-                <a href="#" id="authSwitchBtn" style="color:#FF6B00; font-size:14px; font-weight:800; text-decoration:none;">¡Registrarme aquí!</a>
-            </div>
-        </div>
-        <label style="display:flex; align-items:flex-start; margin-top:20px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
-            <input type="checkbox" id="authTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
-            <span>Al continuar, aceptas que MovilCal actúa únicamente como intermediario tecnológico para facilitar el contacto con conductores independientes. MovilCal no asume responsabilidad patrimonial ni legal por el servicio prestado.</span>
-        </label>
-    </div>
-</div>
-
-<script type="module" src="/src/user/main.js"></script>
-<!-- Sonido de notificación -->
-<audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <script type="module" src="/src/user/main.js"></script>
+    <!-- Sonido de notificación -->
+    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+        preload="auto"></audio>
 </body>
+
 </html>
