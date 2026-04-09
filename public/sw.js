@@ -1,4 +1,4 @@
-const CACHE_NAME = 'la-calera-v12';
+const CACHE_NAME = 'zippy-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
