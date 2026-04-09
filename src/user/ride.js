@@ -252,8 +252,13 @@ async function showDriverAssigned(driverId, state) {
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px 12px; margin-bottom:10px;">
         <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px;">Datos del Conductor:</span>
         <span style="color:#fff; font-size:18px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
-        <div style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid rgba(255,107,0,.3); display:inline-block; padding:5px 10px; border-radius:8px; margin-top:8px; font-weight:bold; font-size:13px;">
-            ${driverDetails}
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;">
+          <div style="background:rgba(255,107,0,.1); color:#FF6B00; border:1px solid rgba(255,107,0,.2); padding:6px 10px; border-radius:8px; font-weight:bold; font-size:13px; flex-shrink: 1;">
+              ${driverDetails}
+          </div>
+          <a href="tel:${driver.telefono}" style="background:#30D158; color:#fff; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:900; font-size:11px; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(48,209,88,0.3); white-space:nowrap;">
+            📞 LLAMAR
+          </a>
         </div>
       </div>
       <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor arranque, verás el radar en tiempo real.</p>
