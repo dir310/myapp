@@ -1,7 +1,7 @@
 {
-  "name": "La Calera - Servicio de Transporte",
-  "short_name": "La Calera",
-  "description": "Pide tu viaje en La Calera, Cundinamarca.",
+  "name": "ZIPPY - Transporte",
+  "short_name": "ZIPPY",
+  "description": "Pide tu viaje rápido y seguro con ZIPPY.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
