@@ -14,7 +14,7 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   const map = L.map(elementId, { 
     zoomControl: false,
     minZoom: 10,
-    maxZoom: 21 // upscale seguro — tiles nativos llegan a 17, de ahí escalan
+    maxZoom: 19 // tope seguro para evitar cuadros blancos
   }).setView(center, zoom);
 
   // Satellite imagery
@@ -23,7 +23,7 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
     { 
       attribution: 'Tiles © Esri', 
       maxNativeZoom: 18, 
-      maxZoom: 21,
+      maxZoom: 19,
       detectRetina: true 
     }
   ).addTo(map);
@@ -33,7 +33,7 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     { 
       maxNativeZoom: 18, 
-      maxZoom: 21, 
+      maxZoom: 19, 
       opacity: 0.85,
       detectRetina: true
     }
