@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,154 +8,192 @@
     <link rel="stylesheet" href="/src/styles/common.css">
     <link rel="stylesheet" href="/src/styles/conductor.css">
     <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest-conductor.json">
     <meta name="theme-color" content="#FF6B00">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Conductor">
 </head>
+
 <body>
 
-<div class="header" style="justify-content: space-between;">
-    <div class="title">Panel Conductor</div>
-    <button id="profileBtn" class="btn" style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤 Mi Perfil</button>
-</div>
+    <div class="header" style="justify-content: space-between;">
+        <div class="title">Panel Conductor</div>
+        <button id="profileBtn" class="btn"
+            style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤
+            Mi Perfil</button>
+    </div>
 
-<!-- Auth Modal -->
-<div id="authModal" class="modal-overlay">
-    <div class="modal-content auth-container">
-        <h2 style="margin-bottom:20px; color:#FF6B00;">Acceso Conductor</h2>
-        
-        <div id="loginForm" class="auth-form active">
-            <input type="email" id="loginEmail" class="driver-name" placeholder="Correo electrónico">
-            <div class="password-wrapper">
-                <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
-                <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-content auth-container">
+            <h2 style="margin-bottom:20px; color:#FF6B00;">Acceso Conductor</h2>
+
+            <div id="loginForm" class="auth-form active">
+                <input type="email" id="loginEmail" class="driver-name" placeholder="Correo electrónico">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
+                    <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
+                </div>
+
+                <!-- Captcha Matemático para Login -->
+                <div id="loginCaptchaContainer"
+                    style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
+                    <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">
+                        Seguridad: Resuelve la suma</p>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span id="loginCaptchaQuestion"
+                            style="font-weight:bold; font-size:14px; flex:1; text-align:right;"></span>
+                        <input type="number" id="loginCaptcha" class="driver-name" placeholder="?"
+                            style="flex:1; margin-bottom:0; padding:8px;">
+                    </div>
+                </div>
+
+                <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
+                <div style="text-align:center; margin-top:12px;">
+                    <a href="#" id="forgotPasswordLink"
+                        style="color:rgba(255,255,255,.4); font-size:12px; text-decoration:none;">¿Olvidaste tu
+                        contraseña o correo?</a>
+                </div>
+                <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
+                    ¿No tienes cuenta? <a href="#" id="showRegister" style="color:#FF6B00;">Regístrate aquí</a>
+                </p>
             </div>
 
-            <!-- Captcha Matemático para Login -->
-            <div id="loginCaptchaContainer" style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
-                <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">Seguridad: Resuelve la suma</p>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <span id="loginCaptchaQuestion" style="font-weight:bold; font-size:14px; flex:1; text-align:right;"></span>
-                    <input type="number" id="loginCaptcha" class="driver-name" placeholder="?" style="flex:1; margin-bottom:0; padding:8px;">
+            <div id="registerForm" class="auth-form" style="display:none;">
+                <input type="text" id="regNombre" class="driver-name" placeholder="Nombre completo">
+                <input type="email" id="regEmail" class="driver-name" placeholder="Correo electrónico">
+                <div class="password-wrapper">
+                    <input type="password" id="regPassword" class="driver-name" placeholder="Contraseña">
+                    <span class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</span>
+                </div>
+                <input type="text" id="regTelefono" class="driver-name" placeholder="Número de celular">
+                <input type="text" id="regPlaca" class="driver-name" placeholder="Placa de la moto (ej: ABC-123)">
+
+                <!-- Captcha Matemático -->
+                <div
+                    style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
+                    <p style="font-size:12px; text-align:center; margin-bottom:8px;">Por seguridad, responde esto:</p>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span id="captchaQuestion"
+                            style="font-weight:bold; font-size:16px; flex:1; text-align:right;"></span>
+                        <input type="number" id="regCaptcha" class="driver-name" placeholder="Respuesta"
+                            style="flex:1; margin-bottom:0;">
+                    </div>
+                </div>
+
+                <button id="registerBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Crear
+                    Cuenta</button>
+                <label
+                    style="display:flex; align-items:flex-start; margin-top:20px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
+                    <input type="checkbox" id="regTerms"
+                        style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
+                    <span>Al registrarme, declaro que usaré esta herramienta bajo mi propio riesgo. MovilCal es
+                        únicamente un puente tecnológico de conexión, no una empresa de transporte ni empleador, y no
+                        asume responsabilidad patrimonial ni legal por inconvenientes, siniestros o la veracidad de los
+                        viajes.</span>
+                </label>
+
+                <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
+                    ¿Ya tienes cuenta? <a href="#" id="showLogin" style="color:#FF6B00;">Inicia sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Sidebar -->
+    <div id="profileSidebar" class="profile-sidebar">
+        <div class="profile-header">
+            <button id="closeProfileBtn"
+                style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">✕</button>
+            <h2 style="margin:0;">Mi Perfil</h2>
+        </div>
+
+        <div style="text-align:center; margin-top:20px;">
+            <div id="profilePicContainer"
+                style="width:100px; height:100px; border-radius:50%; background:#222; margin:0 auto; overflow:hidden; border:2px solid #FF6B00;">
+                <img id="profilePic" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                <div id="profilePicAvatar"
+                    style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px;">
+                    👤</div>
+            </div>
+            <h3 id="profileName" style="margin:10px 0 5px 0;">Cargando...</h3>
+            <p id="profilePlaca" style="color:#FF6B00; font-weight:800; font-size:14px; margin:0;">...</p>
+            <p id="profileTelefono" style="color:rgba(255,255,255,.5); font-size:12px; margin-top:5px;">...</p>
+            <button id="editProfileBtn"
+                style="background:none; border:1px solid rgba(255,255,255,.2); color:white; padding:5px 15px; border-radius:15px; font-size:11px; margin-top:10px; cursor:pointer;">✏️
+                Cambiar Datos</button>
+
+            <div id="editProfileForm"
+                style="display:none; margin-top:15px; text-align:left; background:rgba(0,0,0,.3); padding:15px; border-radius:12px;">
+                <input type="text" id="editNombre" class="driver-name" placeholder="Nombre completo"
+                    style="padding:10px; font-size:13px; margin-bottom:8px;">
+                <input type="text" id="editPlaca" class="driver-name" placeholder="Placa de Moto"
+                    style="padding:10px; font-size:13px; margin-bottom:8px;">
+                <input type="text" id="editTelefono" class="driver-name" placeholder="Celular"
+                    style="padding:10px; font-size:13px; margin-bottom:8px;">
+                <div style="display:flex; gap:10px;">
+                    <button id="saveProfileBtn" class="btn btn-accept"
+                        style="flex:1; padding:8px; font-size:12px;">Guardar</button>
+                    <button id="cancelEditBtn" class="btn"
+                        style="flex:1; padding:8px; font-size:12px; background:rgba(255,255,255,.1);">Cancelar</button>
                 </div>
             </div>
-
-            <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
-            <div style="text-align:center; margin-top:12px;">
-                <a href="#" id="forgotPasswordLink" style="color:rgba(255,255,255,.4); font-size:12px; text-decoration:none;">¿Olvidaste tu contraseña o correo?</a>
-            </div>
-            <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
-                ¿No tienes cuenta? <a href="#" id="showRegister" style="color:#FF6B00;">Regístrate aquí</a>
-            </p>
         </div>
 
-        <div id="registerForm" class="auth-form" style="display:none;">
-            <input type="text" id="regNombre" class="driver-name" placeholder="Nombre completo">
-            <input type="email" id="regEmail" class="driver-name" placeholder="Correo electrónico">
-            <div class="password-wrapper">
-                <input type="password" id="regPassword" class="driver-name" placeholder="Contraseña">
-                <span class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</span>
+        <div class="stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:25px;">
+            <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; text-align:center;">
+                <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">
+                    Viajes Completados</div>
+                <div id="statTrips" style="font-size:24px; font-weight:bold; color:#fff;">0</div>
             </div>
-            <input type="text" id="regTelefono" class="driver-name" placeholder="Número de celular">
-            <input type="text" id="regPlaca" class="driver-name" placeholder="Placa de la moto (ej: ABC-123)">
-            
-            <!-- Captcha Matemático -->
-            <div style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
-                <p style="font-size:12px; text-align:center; margin-bottom:8px;">Por seguridad, responde esto:</p>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <span id="captchaQuestion" style="font-weight:bold; font-size:16px; flex:1; text-align:right;"></span>
-                    <input type="number" id="regCaptcha" class="driver-name" placeholder="Respuesta" style="flex:1; margin-bottom:0;">
-                </div>
-            </div>
-
-            <button id="registerBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Crear Cuenta</button>
-            <label style="display:flex; align-items:flex-start; margin-top:20px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
-                <input type="checkbox" id="regTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
-                <span>Al registrarme, declaro que usaré esta herramienta bajo mi propio riesgo. MovilCal es únicamente un puente tecnológico de conexión, no una empresa de transporte ni empleador, y no asume responsabilidad patrimonial ni legal por inconvenientes, siniestros o la veracidad de los viajes.</span>
-            </label>
-            
-            <p style="text-align:center; font-size:12px; margin-top:15px; color:rgba(255,255,255,.5);">
-                ¿Ya tienes cuenta? <a href="#" id="showLogin" style="color:#FF6B00;">Inicia sesión</a>
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- Profile Sidebar -->
-<div id="profileSidebar" class="profile-sidebar">
-    <div class="profile-header">
-        <button id="closeProfileBtn" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">✕</button>
-        <h2 style="margin:0;">Mi Perfil</h2>
-    </div>
-    
-    <div style="text-align:center; margin-top:20px;">
-        <div id="profilePicContainer" style="width:100px; height:100px; border-radius:50%; background:#222; margin:0 auto; overflow:hidden; border:2px solid #FF6B00;">
-            <img id="profilePic" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
-            <div id="profilePicAvatar" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:40px;">👤</div>
-        </div>
-        <h3 id="profileName" style="margin:10px 0 5px 0;">Cargando...</h3>
-        <p id="profilePlaca" style="color:#FF6B00; font-weight:800; font-size:14px; margin:0;">...</p>
-        <p id="profileTelefono" style="color:rgba(255,255,255,.5); font-size:12px; margin-top:5px;">...</p>
-        <button id="editProfileBtn" style="background:none; border:1px solid rgba(255,255,255,.2); color:white; padding:5px 15px; border-radius:15px; font-size:11px; margin-top:10px; cursor:pointer;">✏️ Cambiar Datos</button>
-        
-        <div id="editProfileForm" style="display:none; margin-top:15px; text-align:left; background:rgba(0,0,0,.3); padding:15px; border-radius:12px;">
-            <input type="text" id="editNombre" class="driver-name" placeholder="Nombre completo" style="padding:10px; font-size:13px; margin-bottom:8px;">
-            <input type="text" id="editPlaca" class="driver-name" placeholder="Placa de Moto" style="padding:10px; font-size:13px; margin-bottom:8px;">
-            <input type="text" id="editTelefono" class="driver-name" placeholder="Celular" style="padding:10px; font-size:13px; margin-bottom:8px;">
-            <div style="display:flex; gap:10px;">
-                <button id="saveProfileBtn" class="btn btn-accept" style="flex:1; padding:8px; font-size:12px;">Guardar</button>
-                <button id="cancelEditBtn" class="btn" style="flex:1; padding:8px; font-size:12px; background:rgba(255,255,255,.1);">Cancelar</button>
+            <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; text-align:center;">
+                <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">
+                    Ganancias Estimadas</div>
+                <div id="statEarnings" style="font-size:18px; font-weight:bold; color:#30D158;">$0</div>
             </div>
         </div>
-    </div>
 
-    <div class="stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:25px;">
-        <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; text-align:center;">
-            <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">Viajes Completados</div>
-            <div id="statTrips" style="font-size:24px; font-weight:bold; color:#fff;">0</div>
+        <div style="margin-top:30px;">
+            <h4 style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:10px;">Últimos
+                Viajes</h4>
+            <div id="historyList"
+                style="display:flex; flex-direction:column; gap:10px; max-height:200px; overflow-y:auto; padding-right:5px;">
+                <p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes aún.</p>
+            </div>
         </div>
-        <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; text-align:center;">
-            <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">Ganancias Estimadas</div>
-            <div id="statEarnings" style="font-size:18px; font-weight:bold; color:#30D158;">$0</div>
+
+        <button id="logoutBtn" class="btn btn-reject"
+            style="width:100%; margin-top:30px; background:transparent; border:1px solid #FF3B30;">Cerrar
+            Sesión</button>
+    </div>
+
+    <div class="status-container">
+        <button id="radarBtn" class="radar-toggle radar-off">
+            <div class="status-dot"></div>
+            <span id="radarText">ACTIVAR RADAR (SONIDO)</span>
+        </button>
+    </div>
+
+    <div id="newRideBanner" class="new-ride-banner">¡NUEVO VIAJE DISPONIBLE! 🚕</div>
+
+    <!-- Wrap the main app in a container that can be hidden initially -->
+    <div id="mainAppContent" style="display:none;">
+
+        <div
+            style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8); display: flex; align-items:center; gap:8px;">
+            <span>📡</span> Viajes en curso
         </div>
-    </div>
-
-    <div style="margin-top:30px;">
-        <h4 style="margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:10px;">Últimos Viajes</h4>
-        <div id="historyList" style="display:flex; flex-direction:column; gap:10px; max-height:200px; overflow-y:auto; padding-right:5px;">
-            <p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes aún.</p>
+        <div id="viajesList">
+            <div class="empty-state">
+                <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
+                Cargando radar...
+            </div>
         </div>
-    </div>
+    </div> <!-- End mainAppContent -->
 
-    <button id="logoutBtn" class="btn btn-reject" style="width:100%; margin-top:30px; background:transparent; border:1px solid #FF3B30;">Cerrar Sesión</button>
-</div>
-
-<div class="status-container">
-    <button id="radarBtn" class="radar-toggle radar-off">
-        <div class="status-dot"></div>
-        <span id="radarText">ACTIVAR RADAR (SONIDO)</span>
-    </button>
-</div>
-
-<div id="newRideBanner" class="new-ride-banner">¡NUEVO VIAJE DISPONIBLE! 🚕</div>
-
-<!-- Wrap the main app in a container that can be hidden initially -->
-<div id="mainAppContent" style="display:none;">
-
-<div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8); display: flex; align-items:center; gap:8px;">
-    <span>📡</span> Viajes en curso
-</div>
-<div id="viajesList">
-    <div class="empty-state">
-        <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
-        Cargando radar...
-    </div>
-</div>
-</div> <!-- End mainAppContent -->
-
-<script type="module" src="/src/conductor/main.js"></script>
+    <script type="module" src="/src/conductor/main.js"></script>
 </body>
+
 </html>
