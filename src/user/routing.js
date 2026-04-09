@@ -136,12 +136,7 @@ export function checkRoute(state, map) {
       const route  = data.routes[0];
       const distKm = (route.distance / 1000).toFixed(1);
       const mins   = Math.round(route.duration / 60) || 1;
-
-      if (distEl) distEl.textContent = distKm;
-      if (timeEl) timeEl.textContent = mins;
-      showPrice(distKm, mins);
-
-      // Coordenadas para la vía real
+      // Solo mostramos la ruta, la tarifa y distancia ya se fijaron arriba
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
       renderRouteOnMap(curvyCoords, state, map); 
       console.log('[MovilCal] Ruta visualizada sobre la vía.');
