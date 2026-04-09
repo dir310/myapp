@@ -20,13 +20,23 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   // Satellite imagery
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri', maxNativeZoom: 17, maxZoom: 21 }
+    { 
+      attribution: 'Tiles © Esri', 
+      maxNativeZoom: 18, 
+      maxZoom: 21,
+      detectRetina: true 
+    }
   ).addTo(map);
 
   // Labels overlay
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    { maxNativeZoom: 17, maxZoom: 21, opacity: 0.85 }
+    { 
+      maxNativeZoom: 18, 
+      maxZoom: 21, 
+      opacity: 0.85,
+      detectRetina: true
+    }
   ).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
