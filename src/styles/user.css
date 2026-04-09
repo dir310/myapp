@@ -63,7 +63,7 @@ body {
   padding: 14px 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   background: transparent;
   pointer-events: none;
 }
