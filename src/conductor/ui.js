@@ -202,9 +202,20 @@ export function renderViajes(viajes, handlers) {
         scrollWheelZoom: false,
         doubleClickZoom: false,
         boxZoom: false
-    }).setView(s, 14);
+    });
+    
+    miniMap.fitBounds(L.polyline([s, e]).getBounds(), { padding: [20, 20] });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxNativeZoom: 17,
+        maxZoom: 18
+    }).addTo(miniMap);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxNativeZoom: 17,
+        maxZoom: 18,
+        opacity: 0.7
+    }).addTo(miniMap);
     
     L.marker(s, { icon: pinIcon('#30D158', 'A') }).addTo(miniMap);
     L.marker(e, { icon: pinIcon('#FF6B00', 'B') }).addTo(miniMap);

@@ -321,5 +321,5 @@ body {
 }
 
 .mini-map-container .leaflet-tile-pane {
-  filter: brightness(0.6) contrast(1.2);
+  /* Filtro eliminado para ver satélite natural */
 }
