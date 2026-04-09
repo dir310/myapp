@@ -8,7 +8,7 @@ import { createMap, LA_CALERA } from '../utils/map.js';
 import { toggleSheet, setMode, showStatus, isSheetMinimized } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
-import { acceptRide, cancelRide, stopListening } from './ride.js';
+import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
 
@@ -438,3 +438,6 @@ setupSuggestionDismiss();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
 }
+
+// ── Restaurar viaje activo si existe ──
+restoreActiveRide(state, map);

@@ -3,9 +3,11 @@
  */
 import { supabase } from '../config/supabase.js';
 import { showStatus } from './ui.js';
-import { clearPoint } from './routing.js';
+import { clearPoint, placeMarker, checkRoute } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
+
+const STORAGE_KEY = 'calmovil_current_ride_id';
 
 let driverMarker = null; // Guardará el ícono en vivo de la moto
 let rideChannel  = null; // Referencia al canal de Supabase
@@ -68,6 +70,7 @@ export async function acceptRide(state, map) {
 
     if (error) throw error;
     state.currentRideId = data[0].id;
+    localStorage.setItem(STORAGE_KEY, state.currentRideId);
 
     // Show searching UI
     document.getElementById('priceSection').innerHTML = `
@@ -100,7 +103,7 @@ export async function acceptRide(state, map) {
  * @param {string} rideId - Ride UUID.
  * @param {object} state - Shared app state.
  */
-function listenForDriver(rideId, state, map) {
+export function listenForDriver(rideId, state, map) {
   console.log('📡 Iniciando radar para viaje:', rideId);
 
   // Strategy 1: Real-time WebSocket
@@ -330,6 +333,7 @@ function showSearchingRecovery(state) {
  */
 function showRatingScreen(state) {
   stopListening(state);
+  localStorage.removeItem(STORAGE_KEY);
   alert('🏁 ¡Viaje Finalizado! Gracias por usar MovilCal.');
   location.reload();
 }
@@ -364,7 +368,77 @@ export function stopListening(state) {
 export async function cancelRide(state, map) {
   stopListening(state);
   if (state.currentRideId) {
+    localStorage.removeItem(STORAGE_KEY);
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
   }
   location.reload();
+}
+
+/**
+ * Restores an active ride after page refresh.
+ */
+export async function restoreActiveRide(state, map) {
+  const savedId = localStorage.getItem(STORAGE_KEY);
+  if (!savedId) return;
+
+  console.log('🔄 Detectado viaje activo persistente:', savedId);
+  
+  try {
+    const { data, error } = await supabase
+      .from('viajes')
+      .select('*')
+      .eq('id', savedId)
+      .single();
+
+    if (error || !data) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+
+    // Solo restaurar si el viaje no ha terminado
+    if (['cancelado', 'finalizado'].includes(data.estado)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+
+    // 1. Restaurar Estado Base
+    state.currentRideId = data.id;
+    state.lastKnownEstado = data.estado;
+
+    // 2. Restaurar Mapa (Marcadores y Ruta)
+    placeMarker('start', data.origen_lat, data.origen_lng, data.origen_nombre, state, map);
+    placeMarker('end', data.destino_lat, data.destino_lng, data.destino_nombre, state, map);
+    
+    // Forzamos el dibujado de la ruta y cálculo de precio en UI
+    checkRoute(state, map);
+
+    // 3. Restaurar UI de Búsqueda / Conductor
+    if (data.estado === 'buscando') {
+        document.getElementById('priceSection').innerHTML = `
+          <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
+            <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
+            <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
+            <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
+            <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${data.tarifa.toLocaleString('es-CO')}</div>
+          </div>
+          <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
+        `;
+        document.getElementById('cancelSearchBtn').addEventListener('click', () => cancelRide(state, map));
+        document.getElementById('priceSection').style.display = 'block';
+    } else if (data.estado === 'aceptado') {
+        // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
+        await showDriverAssigned(data.conductor_id, state);
+        document.getElementById('priceSection').style.display = 'block';
+    } else if (data.estado === 'en_progreso') {
+        showTripStarted(state);
+        document.getElementById('priceSection').style.display = 'block';
+    }
+
+    // 4. Reconectar radares
+    listenForDriver(state.currentRideId, state, map);
+
+  } catch (err) {
+    console.error('Error al restaurar viaje:', err);
+    localStorage.removeItem(STORAGE_KEY);
+  }
 }
