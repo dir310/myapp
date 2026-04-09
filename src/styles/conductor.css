@@ -306,3 +306,20 @@ body {
   color: #ff6b00;
 }
 
+
+/* -- Mini Route Preview -- */
+.mini-map-container {
+  width: 100%;
+  height: 160px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.mini-map-container .leaflet-tile-pane {
+  filter: brightness(0.6) contrast(1.2);
+}

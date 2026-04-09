@@ -3,6 +3,10 @@
  */
 
 import { getCurrentProfile } from './auth.js';
+import L from 'leaflet';
+import { pinIcon } from '../utils/map.js';
+
+let cardMaps = new Map(); // Store mini-map instances by ride ID
 
 let radarEnabled = false;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -103,6 +107,7 @@ export function renderViajes(viajes, handlers) {
         actions = `
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
+            <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger</button>
             <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
@@ -111,6 +116,7 @@ export function renderViajes(viajes, handlers) {
         actions = `
           <div style="text-align:center; padding: 10px 0;">
             <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
+            <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino</button>
             <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
@@ -176,6 +182,46 @@ export function renderViajes(viajes, handlers) {
     btn.addEventListener('click', () =>
       window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
     );
+  });
+
+  // ── Inicializar Mini Mapas para viajes activos ──
+  container.querySelectorAll('.mini-map-container').forEach((el) => {
+    const rideId = el.id.replace('mini-map-', '');
+    const s = [parseFloat(el.dataset.latS), parseFloat(el.dataset.lngS)];
+    const e = [parseFloat(el.dataset.latE), parseFloat(el.dataset.lngE)];
+    
+    // Limpiar si ya existe para evitar errores de Leaflet
+    if (cardMaps.has(rideId)) {
+        cardMaps.get(rideId).remove();
+    }
+
+    const miniMap = L.map(el, { 
+        zoomControl: false, 
+        attributionControl: false,
+        dragging: false, 
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false
+    }).setView(s, 14);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
+    
+    L.marker(s, { icon: pinIcon('#30D158', 'A') }).addTo(miniMap);
+    L.marker(e, { icon: pinIcon('#FF6B00', 'B') }).addTo(miniMap);
+
+    // Dibujar Ruta OSRM
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${s[1]},${s[0]};${e[1]},${e[0]}?overview=full&geometries=geojson`;
+    fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 'Ok' && data.routes?.length) {
+                const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                L.polyline(coords, { color: '#FF6B00', weight: 4, opacity: 0.8 }).addTo(miniMap);
+                miniMap.fitBounds(L.polyline(coords).getBounds(), { padding: [10, 10] });
+            }
+        }).catch(err => console.error('MiniMap route error:', err));
+
+    cardMaps.set(rideId, miniMap);
   });
 }
 
