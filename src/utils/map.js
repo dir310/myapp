@@ -14,7 +14,7 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   const map = L.map(elementId, { 
     zoomControl: false,
     minZoom: 10,
-    maxZoom: 19 // tope seguro para evitar cuadros blancos
+    maxZoom: 18 // Tope real para evitar cuadros de "Map data not available"
   }).setView(center, zoom);
 
   // Satellite imagery
@@ -22,9 +22,8 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     { 
       attribution: 'Tiles © Esri', 
-      maxNativeZoom: 18, 
-      maxZoom: 19,
-      detectRetina: true 
+      maxNativeZoom: 17, 
+      maxZoom: 18 
     }
   ).addTo(map);
 
@@ -32,10 +31,9 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
   L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     { 
-      maxNativeZoom: 18, 
-      maxZoom: 19, 
-      opacity: 0.85,
-      detectRetina: true
+      maxNativeZoom: 17, 
+      maxZoom: 18, 
+      opacity: 0.85 
     }
   ).addTo(map);
 
