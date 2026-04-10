@@ -342,6 +342,24 @@ document.addEventListener('DOMContentLoaded', () => {
           }
       });
   }
+
+  // ── Modal Acerca de ZIPPY ──
+  const openAboutBtn = document.getElementById('openAboutBtn');
+  const aboutZippyOverlay = document.getElementById('aboutZippyOverlay');
+  const closeAboutBtn = document.getElementById('closeAboutBtn');
+
+  if (openAboutBtn) {
+    openAboutBtn.addEventListener('click', () => {
+      if (aboutZippyOverlay) aboutZippyOverlay.style.display = 'flex';
+      // Mover el zIindex de leaflet si es necesario para evitar solapamientos visuales extraños
+    });
+  }
+
+  if (closeAboutBtn) {
+    closeAboutBtn.addEventListener('click', () => {
+      if (aboutZippyOverlay) aboutZippyOverlay.style.display = 'none';
+    });
+  }
 });
 // ── Initialize Map ──
 const map = createMap('map', LA_CALERA, 13);
