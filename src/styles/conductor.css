@@ -323,3 +323,43 @@ body {
 .mini-map-container .leaflet-tile-pane {
   /* Filtro eliminado para ver satélite natural */
 }
+
+/* ── Floating Emergency Button ── */
+.fab-emergency {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 55px;
+  height: 55px;
+  background: linear-gradient(135deg, #ff3b30, #ff2d55);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.5);
+  z-index: 10000;
+  animation: fab-pulse 2s infinite;
+  transition: transform 0.2s;
+}
+
+.fab-emergency:active {
+  transform: scale(0.9);
+}
+
+.fab-emergency .fab-icon {
+  animation: fab-shake 0.5s infinite alternate ease-in-out;
+}
+
+@keyframes fab-pulse {
+  0% { transform: scale(1); box-shadow: 0 8px 20px rgba(255, 59, 48, 0.5); }
+  50% { transform: scale(1.1); box-shadow: 0 12px 30px rgba(255, 59, 48, 0.8); }
+  100% { transform: scale(1); box-shadow: 0 8px 20px rgba(255, 59, 48, 0.5); }
+}
+
+@keyframes fab-shake {
+  0% { transform: rotate(-15deg); }
+  100% { transform: rotate(15deg); }
+}
