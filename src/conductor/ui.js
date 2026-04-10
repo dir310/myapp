@@ -142,6 +142,7 @@ export function renderViajes(viajes, handlers) {
         <div style="font-size: 13px;">
             <span style="display:block; font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase;">Pasajero</span>
             <b>${cNombre}</b>
+            <div id="badge-trips-${v.id}" style="font-size:10px; color:rgba(255,255,255,.3); margin-top:2px; font-weight:bold;">Buscando Perfil...</div>
         </div>
         ${cTelefono ? `<a href="tel:${cTelefono}" class="btn" style="padding: 5px 12px; font-size: 11px; background:#30D158; text-decoration:none;">📞 Llamar</a>` : ''}
       </div>
@@ -154,6 +155,31 @@ export function renderViajes(viajes, handlers) {
   `;
     })
     .join('');
+
+  // ── Fetch and display passenger trip counts ──
+  filteredViajes.forEach(v => {
+    if (v.cliente_telefono && (v.estado === 'buscando' || v.estado === 'aceptado')) {
+      import('../config/supabase.js').then(({ supabase }) => {
+        supabase.from('viajes').select('id', { count: 'exact', head: true })
+          .eq('cliente_telefono', v.cliente_telefono)
+          .eq('estado', 'finalizado')
+          .then(({ count, error }) => {
+            if (!error && count !== null) {
+              const badgeEl = document.getElementById(`badge-trips-${v.id}`);
+              if (badgeEl) {
+                if (count === 0) {
+                   badgeEl.innerHTML = `🟢 Nuevo/a Pasajero`;
+                   badgeEl.style.color = '#30D158';
+                } else {
+                   badgeEl.innerHTML = `🏆 Frecuente (🎯 ${count} Viajes)`;
+                   badgeEl.style.color = '#FFB347';
+                }
+              }
+            }
+          });
+      });
+    }
+  });
 
   // Attach event listeners via delegation
   container.querySelectorAll('[data-action="reject"]').forEach((btn) => {

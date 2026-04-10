@@ -50,6 +50,31 @@ function checkPassengerAuth() {
         const telefono = localStorage.getItem('calmovil_cliente_telefono') || '-';
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
+
+        // Fetch Total Trips count
+        supabase
+          .from('viajes')
+          .select('id', { count: 'exact', head: true })
+          .eq('cliente_telefono', telefono)
+          .eq('estado', 'finalizado')
+          .then(({ count, error }) => {
+            if (!error && count !== null) {
+              let countEl = document.getElementById('displayClientTrips');
+              if (countEl) {
+                countEl.innerHTML = `🎯 <b>${count}</b> Viajes Totales`;
+                countEl.style.display = 'block';
+              } else {
+                 const phoneEl = document.getElementById('displayClientPhone');
+                 if (phoneEl) {
+                   const span = document.createElement('span');
+                   span.id = 'displayClientTrips';
+                   span.innerHTML = `🎯 <b>${count}</b> Viajes Totales`;
+                   span.style.cssText = 'display:block; margin-top:5px; font-size:11px; color:#30D158; text-transform:uppercase; font-weight:bold; background:rgba(48,209,88,.1); padding:2px 6px; border-radius:4px; max-width:fit-content; border:1px solid rgba(48,209,88,.2);';
+                   phoneEl.parentNode.appendChild(span);
+                 }
+              }
+            }
+          });
     }
   }
 }
