@@ -29,6 +29,7 @@ function playNotificationSound() {
  */
 export async function acceptRide(state, map) {
   if (!state.startLatLng || !state.endLatLng) return;
+  state.driverArrived = false;
 
   const originName = sanitizeHTML(document.getElementById('startInput').value || 'Punto de Inicio', 120);
   const destName = sanitizeHTML(document.getElementById('endInput').value || 'Destino', 120);
@@ -98,6 +99,26 @@ export async function acceptRide(state, map) {
   }
 }
 
+function updateETA(lat, lng, state) {
+  const etaText = document.getElementById('etaText');
+  if (!etaText || !state.startLatLng || state.driverArrived) return;
+
+  const conductorPos = L.latLng(lat, lng);
+  const distMeters = state.startLatLng.distanceTo(conductorPos);
+  
+  if (distMeters <= 50) {
+    state.driverArrived = true;
+    etaText.innerHTML = '🚕 ¡Tu conductor ha llegado!';
+    etaText.style.color = '#fff';
+    etaText.style.background = '#30D158'; // Verde success
+    etaText.style.boxShadow = '0 4px 12px rgba(48,209,88,0.3)';
+  } else {
+    // 400 m/min es aprox 24 km/h en ciudad
+    const mins = Math.max(1, Math.ceil(distMeters / 400));
+    etaText.innerHTML = `🚕 Llegando en aprox. ${mins} min...`;
+  }
+}
+
 /**
  * Listen for a driver accepting the ride (dual strategy: WebSocket + polling).
  * @param {string} rideId - Ride UUID.
@@ -164,6 +185,7 @@ export function listenForDriver(rideId, state, map) {
             // Animar el movimiento suavemente (2 segundos de duración)
             animateMarker(driverMarker, [lat, lng], 2000);
           }
+          updateETA(lat, lng, state);
         }
       }
     )
@@ -209,6 +231,7 @@ export function listenForDriver(rideId, state, map) {
         } else {
           animateMarker(driverMarker, [lat, lng], 2000);
         }
+        updateETA(lat, lng, state);
       }
     }
   }, 5000);
@@ -261,7 +284,7 @@ async function showDriverAssigned(driverId, state) {
           </a>
         </div>
       </div>
-      <p style="color:rgba(255,255,255,.6); font-size:12px;">En cuanto el conductor arranque, verás el radar en tiempo real.</p>
+      <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 10px 0; background:rgba(255,255,255,.05); padding:8px; border-radius:8px;">Calculando llegada...</p>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
