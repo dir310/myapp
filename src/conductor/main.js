@@ -18,3 +18,20 @@ initAuth();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
 }
+
+// ── Modal Acerca de ZIPPY (Conductor) ──
+const openDriverAboutBtn = document.getElementById('openDriverAboutBtn');
+const driverAboutOverlay = document.getElementById('driverAboutOverlay');
+const closeDriverAboutBtn = document.getElementById('closeDriverAboutBtn');
+
+if (openDriverAboutBtn) {
+  openDriverAboutBtn.addEventListener('click', () => {
+    if (driverAboutOverlay) driverAboutOverlay.style.display = 'flex';
+  });
+}
+
+if (closeDriverAboutBtn) {
+  closeDriverAboutBtn.addEventListener('click', () => {
+    if (driverAboutOverlay) driverAboutOverlay.style.display = 'none';
+  });
+}

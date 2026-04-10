@@ -164,8 +164,12 @@
             </div>
         </div>
 
+        <button id="openDriverAboutBtn" class="btn" style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:rgba(255,255,255,.6); font-size:12px; padding:12px; width:100%; margin-top:30px; margin-bottom: 10px; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
+            ℹ️ Acerca de ZIPPY
+        </button>
+
         <button id="logoutBtn" class="btn btn-reject"
-            style="width:100%; margin-top:30px; background:transparent; border:1px solid #FF3B30;">Cerrar
+            style="width:100%; background:transparent; border:1px solid #FF3B30;">Cerrar
             Sesión</button>
     </div>
 
@@ -197,6 +201,22 @@
     <a href="tel:3223482399" class="fab-emergency" title="Emergencia">
         <span class="fab-icon">🚨</span>
     </a>
+
+    <!-- Overlay Acerca de ZIPPY (Conductor) -->
+    <div id="driverAboutOverlay" class="modal-overlay" style="display: none; z-index: 10000; padding:20px;">
+        <div class="auth-container" style="text-align: center; padding: 30px; position:relative; background:#1c1c1e;">
+            <button id="closeDriverAboutBtn" style="position:absolute; top:15px; right:15px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer; padding:5px;">✕</button>
+            
+            <img src="https://i.imgur.com/YLqlfOy.jpeg" alt="ZIPPY logo" style="max-width:70px; height:auto; margin:0 auto 15px auto; display:block; border-radius:12px;" />
+            <h2 style="color:#FF6B00; margin:0 0 5px 0; font-size:22px; font-weight:800; letter-spacing:0.5px;">Acerca de ZIPPY</h2>
+            
+            <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,.1); margin-top:20px;">
+                <p style="font-size:12px; color:rgba(255,255,255,.7); line-height:1.6; margin:0; text-align:left;">
+                    <strong style="color:rgba(255,255,255,.9);">Aviso Legal:</strong> ZIPPY actúa únicamente como intermediario tecnológico para facilitar conexión. No somos una empresa de transporte ni asumimos responsabilidad patrimonial ni legal por el servicio prestado.
+                </p>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/src/conductor/main.js"></script>
 </body>
