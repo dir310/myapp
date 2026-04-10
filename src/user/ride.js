@@ -147,11 +147,9 @@ export function listenForDriver(rideId, state, map) {
           console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
           state.lastKnownEstado = payload.new.estado;
           
-          if (payload.new.estado === 'aceptado') {
-            playNotificationSound();
+          if (payload.new.estado === 'aceptado' || payload.new.estado === 'en_progreso') {
+            if (payload.new.estado === 'aceptado') playNotificationSound();
             showDriverAssigned(payload.new.conductor_id, state);
-          } else if (payload.new.estado === 'en_progreso') {
-            showTripStarted(state);
           } else if (payload.new.estado === 'finalizado') {
             showRatingScreen(state);
             if (driverMarker && map) {
@@ -204,11 +202,9 @@ export function listenForDriver(rideId, state, map) {
       // 1. Actualizar Estado si cambió
       if (data.estado !== state.lastKnownEstado) {
         state.lastKnownEstado = data.estado;
-        if (data.estado === 'aceptado') {
-          playNotificationSound();
+        if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
+          if (data.estado === 'aceptado') playNotificationSound();
           showDriverAssigned(data.conductor_id, state);
-        } else if (data.estado === 'en_progreso') {
-          showTripStarted(state);
         } else if (data.estado === 'finalizado') {
           showRatingScreen(state);
         } else if (data.estado === 'cancelado') {
@@ -453,12 +449,9 @@ export async function restoreActiveRide(state, map) {
         `;
         document.getElementById('cancelSearchBtn').addEventListener('click', () => cancelRide(state, map));
         document.getElementById('priceSection').style.display = 'block';
-    } else if (data.estado === 'aceptado') {
+    } else if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
         // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
         await showDriverAssigned(data.conductor_id, state);
-        document.getElementById('priceSection').style.display = 'block';
-    } else if (data.estado === 'en_progreso') {
-        showTripStarted(state);
         document.getElementById('priceSection').style.display = 'block';
     }
 
