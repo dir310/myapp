@@ -616,3 +616,56 @@ body {
     box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4);
   }
 }
+/* ── Emergency Button ── */
+.btn-emergency {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #ff3b30, #ff2d55) !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  padding: 15px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 20px;
+  box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
+  animation: pulse-emergency 2s infinite ease-in-out;
+  transition: transform 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-emergency:active {
+  transform: scale(0.96);
+}
+
+.emergency-icon {
+  font-size: 20px;
+  animation: shake 0.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-emergency {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px rgba(255, 59, 48, 0.6);
+    background: linear-gradient(135deg, #ff453a, #ff375f) !important;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
+  }
+}
+
+@keyframes shake {
+  0% { transform: rotate(-10deg); }
+  100% { transform: rotate(10deg); }
+}
