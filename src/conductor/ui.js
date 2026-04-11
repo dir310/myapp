@@ -14,7 +14,18 @@ const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2
 /**
  * Toggle the radar (sound alerts) on/off.
  */
-export function toggleRadar() {
+export function toggleRadar(isAutoClick = false) {
+  // Check if it's a manual click by checking event type or our explicit flag
+  const isManual = isAutoClick instanceof Event || isAutoClick === undefined;
+
+  if (isManual) {
+    if (radarEnabled) {
+      sessionStorage.setItem('radar_manually_off', 'true');
+    } else {
+      sessionStorage.setItem('radar_manually_off', 'false');
+    }
+  }
+
   radarEnabled = !radarEnabled;
   const btn = document.getElementById('radarBtn');
   const txt = document.getElementById('radarText');
@@ -27,22 +38,28 @@ export function toggleRadar() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => console.log('✅ Permiso de GPS concedido por el conductor.'),
-        (err) => alert('⚠️ IMPORTANTE: Necesitas permitir el acceso a tu ubicación GPS para que los clientes puedan ver en el mapa por dónde vienes recogidos. Revisa los permisos de tu navegador.')
+        (err) => console.log('⚠️ Permiso GPS revisado o denegado.')
       );
-    } else {
-      alert('Tu dispositivo no soporta GPS.');
     }
 
     // Touch sound to unlock browser audio policy
     alertSound.play().then(() => {
       alertSound.pause();
       alertSound.currentTime = 0;
-    }).catch((e) => console.log('Audio unlock failed:', e));
+    }).catch((e) => console.log('Audio unlock deferred until interaction'));
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
   }
 }
+
+export function initRadar() {
+  const manuallyOff = sessionStorage.getItem('radar_manually_off') === 'true';
+  if (!manuallyOff && !radarEnabled) {
+    toggleRadar(true);
+  }
+}
+
 
 /**
  * Returns whether radar sound is enabled.

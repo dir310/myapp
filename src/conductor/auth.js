@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
+import { initRadar } from './ui.js';
 
 let currentUser = null;
 let currentProfile = null;
@@ -173,6 +174,7 @@ async function handleSession(session) {
     // Iniciar carga de viajes y eventos realtime
     loadViajes();
     setupRealtimeChannel();
+    initRadar();
   } else {
     currentUser = null;
     currentProfile = null;
