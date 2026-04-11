@@ -32,7 +32,7 @@ body {
 .leaflet-control-zoom {
   border: none !important;
   margin-left: 360px !important;
-  margin-bottom: 30px !important;
+  margin-bottom: 95px !important;
   transition: margin-left 0.4s;
 }
 
@@ -254,7 +254,8 @@ body {
 }
 
 .reset-btn {
-  flex: 0.8 !important; /* Slightly smaller than the mode buttons */
+  flex: 0.8 !important;
+  /* Slightly smaller than the mode buttons */
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.5) !important;
@@ -299,13 +300,11 @@ body {
   width: 2px;
   flex: 1;
   min-height: 14px;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.25) 0,
-    rgba(255, 255, 255, 0.25) 4px,
-    transparent 4px,
-    transparent 8px
-  );
+  background: repeating-linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.25) 0,
+      rgba(255, 255, 255, 0.25) 4px,
+      transparent 4px,
+      transparent 8px);
 }
 
 .dot-b {
@@ -543,15 +542,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 20px; /* Mas espacio para deslizar */
+  padding: 80px 20px;
+  /* Mas espacio para deslizar */
   text-align: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.rating-overlay > * {
+.rating-overlay>* {
   flex-shrink: 0;
-  margin: auto 0; /* Centrado inteligente que permite el scroll */
+  margin: auto 0;
+  /* Centrado inteligente que permite el scroll */
 }
 
 .rating-card {
@@ -607,15 +608,18 @@ body {
     transform: scale(1);
     box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4);
   }
+
   50% {
     transform: scale(1.05);
     box-shadow: 0 12px 35px rgba(255, 107, 0, 0.6);
   }
+
   100% {
     transform: scale(1);
     box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4);
   }
 }
+
 /* ── Emergency Button ── */
 .btn-emergency {
   display: flex !important;
@@ -654,11 +658,13 @@ body {
     transform: scale(1);
     box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
   }
+
   50% {
     transform: scale(1.02);
     box-shadow: 0 15px 35px rgba(255, 59, 48, 0.6);
     background: linear-gradient(135deg, #ff453a, #ff375f) !important;
   }
+
   100% {
     transform: scale(1);
     box-shadow: 0 10px 25px rgba(255, 59, 48, 0.4);
@@ -666,6 +672,11 @@ body {
 }
 
 @keyframes shake {
-  0% { transform: rotate(-10deg); }
-  100% { transform: rotate(10deg); }
+  0% {
+    transform: rotate(-10deg);
+  }
+
+  100% {
+    transform: rotate(10deg);
+  }
 }
