@@ -88,7 +88,7 @@ body {
 }
 
 .brand-name {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 1px;
   color: #fff;
@@ -101,7 +101,7 @@ body {
 }
 
 .brand-sub {
-  font-size: 11px;
+  font-size: 9.5px;
   color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
