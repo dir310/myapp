@@ -407,6 +407,10 @@ document.getElementById('modeClickBtn').addEventListener('click', () => setMode(
 
 // Reset points button
 document.getElementById('resetPointsBtn').addEventListener('click', () => {
+  if (state.currentRideId) {
+    alert('⚠️ No puedes reiniciar el mapa mientras tienes un viaje en progreso.');
+    return;
+  }
   boundClearPoint('start');
   boundClearPoint('end');
   state.nextClick = 'start';
