@@ -277,8 +277,8 @@ export function listenForDriver(rideId, state, map) {
 }
 
 /**
- * Show the driver assigned UI.
- * @param {string} name - Driver name/identifier.
+ * Show the driver assigned UI with Interleaved Carousel (Sliding Windows).
+ * @param {string} driverId - Driver UUID.
  * @param {object} state - Shared app state.
  */
 async function showDriverAssigned(driverId, state) {
@@ -286,14 +286,19 @@ async function showDriverAssigned(driverId, state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
+  
+  // Limpiar carrusel previo si existe
+  if (state.carouselInterval) {
+    clearInterval(state.carouselInterval);
+    state.carouselInterval = null;
+  }
 
-// Vista de carga inicial muy rápida
-  import('./ui.js').then(({ showStatus }) => showStatus('', false));
+  // Vista de carga inicial rápida
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor Asignado!</h3>
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:12px; margin-bottom:10px;">
-        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Buscando datos del conductor...</span>
+        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase;">Conectando...</span>
       </div>
     </div>
   `;
@@ -301,8 +306,7 @@ async function showDriverAssigned(driverId, state) {
   // Fetch datos reales a base de datos
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca, color').eq('id', driverId).single();
 
-  // Fetch rating promedio del conductor desde la tabla viajes
-  // Usamos un query más robusto para asegurar que traiga los datos
+  // Fetch rating promedio
   const { data: ratingData } = await supabase
     .from('viajes')
     .select('calificacion')
@@ -318,63 +322,98 @@ async function showDriverAssigned(driverId, state) {
     }
   }
 
-  let driverName = 'Conductor asignado';
-  let driverDetails = {
-    placa: '---',
-    vehiculo: 'Vehículo',
-    telefono: ''
+  const driverName = driver ? driver.nombre : 'Conductor asignado';
+  const driverDetails = {
+    placa: driver?.placa || '---',
+    vehiculo: `${driver?.marca || ''} ${driver?.color || ''}`.trim() || 'Moto',
+    telefono: driver?.telefono || ''
   };
 
-  if (driver) {
-    driverName = driver.nombre;
-    driverDetails = {
-      placa: driver.placa || '---',
-      vehiculo: `${driver.marca || ''} ${driver.color || ''}`.trim() || 'Moto',
-      telefono: driver.telefono || ''
-    };
-  }
+  // Frases de Seguridad y Motivación
+  const phrases = [
+    { icon: '🚩', text: 'Verifica la placa antes de subir', sub: 'Seguridad Ante Todo' },
+    { icon: '✨', text: '¡Hoy será un gran día!', sub: 'Motivación Zippy' },
+    { icon: '🛡️', text: 'Usa el casco bien abrochado', sub: 'Seguridad Ante Todo' },
+    { icon: '🚀', text: '¡Vas por tus sueños!', sub: 'Motivación Zippy' },
+    { icon: '🧤', text: 'Sujétate bien durante el viaje', sub: 'Seguridad Ante Todo' },
+    { icon: '💪', text: '¡Eres imparable!', sub: 'Motivación Zippy' }
+  ];
 
-  document.getElementById('priceSection').innerHTML = `
-    <div style="text-align:center; padding: 10px 0;">
-      <h3 style="color:#30D158; margin-bottom:8px; font-weight:800; font-size:18px;">¡Conductor en camino!</h3>
-      
-      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; margin-bottom:12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-        <!-- Encabezado: Nombre y Estrellas -->
-        <div style="margin-bottom:15px;">
-          <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Tu Conductor</span>
+  // Generar HTML de la Ficha del Conductor (Ventana Base)
+  // Nota: Mantenemos el estilo de bloques que el usuario mostró en su imagen
+  const conductorWindowHTML = `
+    <div class="zippy-window">
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:180px; box-sizing:border-box;">
+        <div style="margin-bottom:12px;">
+          <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
           <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
-          <span style="color:#FFD700; font-size:14px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
+          <span style="color:#FFD700; font-size:13px; font-weight:700; display:block;">${driverRating}</span>
         </div>
-
-        <!-- Cuerpo: Vehículo y Contacto -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;">
-          <!-- Bloque Vehículo -->
-          <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:10px; border-radius:12px; text-align:left;">
-            <div style="margin-bottom:8px;">
-              <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Moto</span>
-              <span style="color:#fff; font-size:12px; font-weight:600; display:block;">${driverDetails.vehiculo}</span>
-            </div>
-            <div>
-              <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
-              <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block;">${driverDetails.placa}</span>
-            </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 85px;">
+          <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:10px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
+             <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:2px;">Moto</span>
+             <span style="color:#fff; font-size:11px; font-weight:600; display:block; margin-bottom:5px;">${driverDetails.vehiculo}</span>
+             <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
+             <span style="color:#FF6B00; font-size:15px; font-weight:900; display:block;">${driverDetails.placa}</span>
           </div>
-
-          <!-- Bloque Llamada -->
-          <a href="tel:${driverDetails.telefono}" style="background:#30D158; text-decoration:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 15px rgba(48,209,88,0.3); transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+          <a href="tel:${driverDetails.telefono}" style="background:#30D158; text-decoration:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 15px rgba(48,209,88,0.3);">
             <span style="font-size:24px;">📞</span>
             <span style="color:#fff; font-size:12px; font-weight:900; text-transform:uppercase;">Llamar</span>
           </a>
         </div>
       </div>
-
-      <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 10px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px; border: 1px solid rgba(255,255,255,0.05);">Calculando llegada...</p>
-      
-      <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; margin-top:10px; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
 
-  document.getElementById('cancelRideBtnAction').addEventListener('click', () => cancelRide(state, null));
+  // Crear Track Intercalado: Conductor -> Frase -> Conductor -> Frase...
+  let trackHTML = '';
+  phrases.forEach(p => {
+    trackHTML += conductorWindowHTML;
+    trackHTML += `
+      <div class="zippy-window">
+        <div class="zippy-phrase-card">
+          <div class="zippy-phrase-icon">${p.icon}</div>
+          <div class="zippy-phrase-text">${p.text}</div>
+          <div class="zippy-phrase-sub">${p.sub}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Renderizar Estructura completa
+  document.getElementById('priceSection').innerHTML = `
+    <div style="text-align:center; padding: 5px 0;">
+      <h3 style="color:#30D158; margin-bottom:8px; font-weight:800; font-size:16px;">¡Conductor en camino!</h3>
+      
+      <div class="zippy-viewport">
+        <div class="zippy-track" id="zippyTrack">
+          ${trackHTML}
+        </div>
+      </div>
+
+      <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 12px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px;">Calculando llegada...</p>
+      
+      <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
+    </div>
+  `;
+
+  // Control del Carrusel (Slide Left)
+  const track = document.getElementById('zippyTrack');
+  const slideCount = phrases.length * 2;
+  let currentIndex = 0;
+
+  state.carouselInterval = setInterval(() => {
+    currentIndex = (currentIndex + 1) % slideCount;
+    if (track) {
+      track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    }
+  }, 6000); // 6 segundos de exposición por ventana
+
+  // Botón Cancelar (Reload por seguridad solicitada)
+  document.getElementById('cancelRideBtnAction').addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  });
 }
 
 /**
