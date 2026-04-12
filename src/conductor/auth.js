@@ -151,6 +151,7 @@ async function handleSession(session) {
 
     currentProfile = profile;
     authModal.style.display = 'none';
+    document.querySelector('.fab-whatsapp').style.display = 'none'; // Ocultar en app
 
     // Check if new fields are missing (profile incomplete)
     if (!profile.nombre || !profile.placa || !profile.marca || !profile.color) {
@@ -165,6 +166,7 @@ async function handleSession(session) {
     document.getElementById('completeProfileModal').style.display = 'none';
     mainAppContent.style.display = 'none';
     profileBtn.style.display = 'none';
+    document.querySelector('.fab-whatsapp').style.display = 'flex'; // Mostrar en login
   }
 }
 

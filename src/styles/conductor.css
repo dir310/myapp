@@ -327,8 +327,8 @@ body {
 /* ── Floating Emergency Button ── */
 .fab-emergency {
   position: fixed;
-  bottom: 95px;
-  right: 25px;
+  bottom: 30px;
+  left: 25px;
   width: 55px;
   height: 55px;
   background: linear-gradient(135deg, #ff3b30, #ff2d55);
@@ -367,11 +367,11 @@ body {
 /* ── Floating WhatsApp Button ── */
 .fab-whatsapp {
   position: fixed;
-  bottom: 165px; /* Above emergency button which is at 95px */
-  right: 25px;
-  background: #25D366; /* WhatsApp Green */
+  bottom: 100px; /* Encima del botón de emergencia */
+  left: 25px;
+  background: #25D366;
   border-radius: 30px;
-  display: flex;
+  display: none; /* Oculto por defecto, solo visible en login */
   align-items: center;
   justify-content: center;
   padding: 10px 18px;
