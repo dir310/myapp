@@ -327,8 +327,20 @@ function showClientRatingModal(viajeId, clienteNombre) {
     if (!selectedRating) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
-    await supabase.from('viajes').update({ calificacion_cliente: selectedRating }).eq('id', viajeId);
-    document.body.removeChild(overlay);
+    
+    const { error } = await supabase
+      .from('viajes')
+      .update({ calificacion_cliente: selectedRating })
+      .eq('id', viajeId);
+
+    if (error) {
+      console.error('Error al calificar cliente:', error);
+      alert('No se pudo guardar la calificación del cliente: ' + (error.message || 'Error de permisos'));
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Reintentar Calificar';
+    } else {
+      document.body.removeChild(overlay);
+    }
   });
 
   overlay.querySelector('#skipClientRatingBtn').addEventListener('click', () => {

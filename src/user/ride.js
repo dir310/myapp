@@ -466,13 +466,31 @@ function showRatingScreen(state) {
     if (!selectedRating) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
+    
     if (rideId) {
-      await supabase.from('viajes').update({ calificacion: selectedRating }).eq('id', rideId);
+      const { error } = await supabase
+        .from('viajes')
+        .update({ calificacion: selectedRating })
+        .eq('id', rideId);
+      
+      if (error) {
+        console.error('Error al guardar calificación:', error);
+        alert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'));
+        // No recargamos si falló para que el usuario pueda intentar de nuevo o avisar
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Reintentar Enviar';
+        return;
+      }
     }
+    
+    localStorage.removeItem(STORAGE_KEY);
     location.reload();
   });
 
-  document.getElementById('skipRatingUserBtn').addEventListener('click', () => location.reload());
+  document.getElementById('skipRatingUserBtn').addEventListener('click', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  });
 }
 
 /**
@@ -533,7 +551,7 @@ export async function restoreActiveRide(state, map) {
     }
 
     // Solo restaurar si el viaje no ha terminado
-    if (['cancelado', 'finalizado'].includes(data.estado)) {
+    if (data.estado === 'cancelado' || (data.estado === 'finalizado' && data.calificacion)) {
       localStorage.removeItem(STORAGE_KEY);
       return;
     }
@@ -565,6 +583,9 @@ export async function restoreActiveRide(state, map) {
     } else if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
       // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
       await showDriverAssigned(data.conductor_id, state);
+      document.getElementById('priceSection').style.display = 'block';
+    } else if (data.estado === 'finalizado') {
+      showRatingScreen(state);
       document.getElementById('priceSection').style.display = 'block';
     }
 
