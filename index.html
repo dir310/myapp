@@ -271,6 +271,33 @@
         </div>
     </div>
 
+    <!-- Banner iOS Instalar -->
+    <div id="iosBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99999; background:linear-gradient(135deg,#1c1c1e,#2c2c2e); border-top:2px solid #FF6B00; padding:18px 20px 28px 20px; box-shadow:0 -4px 30px rgba(0,0,0,.6); animation:slideUpBanner .3s ease;">
+        <style>@keyframes slideUpBanner{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+        <button onclick="document.getElementById('iosBanner').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <img src="https://i.imgur.com/YLqlfOy.jpeg" style="width:40px;height:40px;border-radius:10px;" alt="ZIPPY">
+            <div>
+                <div style="color:#fff;font-weight:800;font-size:15px;">Instala ZIPPY en tu iPhone</div>
+                <div style="color:rgba(255,255,255,.5);font-size:12px;">Accede rápido desde tu pantalla de inicio</div>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+                <span style="font-size:20px;">1️⃣</span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca el ícono <strong style="color:#FF6B00;">compartir ↑</strong> en Safari (barra inferior)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+                <span style="font-size:20px;">2️⃣</span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Selecciona <strong style="color:#FF6B00;">"Añadir a pantalla de inicio"</strong></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+                <span style="font-size:20px;">3️⃣</span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca <strong style="color:#FF6B00;">"Añadir"</strong> y listo ✅</span>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/src/user/main.js"></script>
 
     <!-- PWA Install Prompt -->
@@ -288,7 +315,12 @@
                     _pwaPrompt.prompt();
                     _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
                 } else {
-                    alert('Para instalar:\n\nAndroid: Abre en Chrome → menú (⋮) → "Instalar app"\n\niPhone: Abre en Safari → botón compartir (↑) → "Añadir a pantalla de inicio"');
+                    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    if (isIOS) {
+                        document.getElementById('iosBanner').style.display = 'block';
+                    } else {
+                        alert('Para instalar:\nAndroid: Abre en Chrome → menú (⋮) → "Instalar app"');
+                    }
                 }
             }
         });
