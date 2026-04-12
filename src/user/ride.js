@@ -255,14 +255,15 @@ async function showDriverAssigned(driverId, state) {
   `;
 
   // Fetch datos reales a base de datos
-  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono').eq('id', driverId).single();
+  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca, color').eq('id', driverId).single();
   
   let driverName = 'Conducto Anónimo';
   let driverDetails = 'Sin más datos';
   
   if (driver) {
     driverName = driver.nombre;
-    driverDetails = `🏍️ ${driver.placa} &nbsp;|&nbsp; 📞 ${driver.telefono}`;
+    const vehiculo = [driver.marca, driver.color].filter(Boolean).join(' - ');
+    driverDetails = `🏍️ ${driver.placa}${vehiculo ? ' | ' + vehiculo : ''} &nbsp;|&nbsp; 📞 ${driver.telefono}`;
   }
 
   document.getElementById('priceSection').innerHTML = `
