@@ -110,6 +110,19 @@ export function setupRealtimeChannel() {
           // Visual + audio alert
           showNewRideBanner();
           playAlert();
+
+          // Notificación del Sistema (Background / locked screen)
+          if (document.visibilityState === 'hidden' && "Notification" in window && Notification.permission === "granted") {
+            const n = new Notification("🚕 ¡Nueva Solicitud ZIPPY!", {
+                body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
+                icon: '/icons/icon-192x192.png', // O alguna imagen de la app
+                tag: 'nuevo-viaje'
+            });
+            n.onclick = () => {
+                window.focus();
+                n.close();
+            };
+          }
         }
       }
     )

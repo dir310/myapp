@@ -35,12 +35,18 @@ export function toggleRadar(isAutoClick = false) {
     btn.className = 'radar-toggle radar-on';
     txt.innerText = 'RADAR ENCENDIDO';
     
-    // Forzar petición de permisos GPS explícitamente 
+    // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => console.log('✅ Permiso de GPS concedido por el conductor.'),
         (err) => console.log('⚠️ Permiso GPS revisado o denegado.')
       );
+    }
+
+    if ("Notification" in window) {
+      Notification.requestPermission().then(permission => {
+        console.log(`✅ Permiso de notificaciones: ${permission}`);
+      });
     }
 
     // Touch sound to unlock browser audio policy
