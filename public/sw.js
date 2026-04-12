@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zippy-v5';
+const CACHE_NAME = 'zippy-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
@@ -9,12 +9,6 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-
-  // NO CACHEAR MANIFIESTOS ni archivos de identificación
-  if (url.pathname.endsWith('.json')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
 
   event.respondWith(
     fetch(event.request)
