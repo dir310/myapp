@@ -363,3 +363,38 @@ body {
   0% { transform: rotate(-15deg); }
   100% { transform: rotate(15deg); }
 }
+
+/* ── Floating WhatsApp Button ── */
+.fab-whatsapp {
+  position: fixed;
+  bottom: 165px; /* Above emergency button which is at 95px */
+  right: 25px;
+  background: #25D366; /* WhatsApp Green */
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  color: white;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+  z-index: 10000;
+  transition: transform 0.2s, box-shadow 0.2s;
+  gap: 8px;
+}
+
+.fab-whatsapp:active {
+  transform: scale(0.95);
+}
+
+.fab-whatsapp img {
+  width: 24px;
+  height: 24px;
+}
+
+.fab-whatsapp span {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+}
+
