@@ -259,46 +259,75 @@ async function showDriverAssigned(driverId, state) {
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca, color').eq('id', driverId).single();
 
   // Fetch rating promedio del conductor desde la tabla viajes
+  // Usamos un query más robusto para asegurar que traiga los datos
   const { data: ratingData } = await supabase
     .from('viajes')
     .select('calificacion')
     .eq('conductor_id', driverId)
-    .not('calificacion', 'is', null)
-    .gt('calificacion', 0);
+    .not('calificacion', 'is', null);
   
-  let driverRating = 'Sin reseñas';
+  let driverRating = 'Sin reseñas aún';
   if (ratingData && ratingData.length > 0) {
-    const avg = ratingData.reduce((acc, v) => acc + v.calificacion, 0) / ratingData.length;
-    driverRating = `${avg.toFixed(1)} ⭐ (${ratingData.length})`;
+    const validRatings = ratingData.filter(v => v.calificacion > 0);
+    if (validRatings.length > 0) {
+      const avg = validRatings.reduce((acc, v) => acc + v.calificacion, 0) / validRatings.length;
+      driverRating = `${avg.toFixed(1)} ⭐ (${validRatings.length} viajes)`;
+    }
   }
 
-  let driverName = 'Conducto Anónimo';
-  let driverDetails = 'Sin más datos';
+  let driverName = 'Conductor asignado';
+  let driverDetails = {
+    placa: '---',
+    vehiculo: 'Vehículo',
+    telefono: ''
+  };
 
   if (driver) {
     driverName = driver.nombre;
-    const vehiculo = [driver.marca, driver.color].filter(Boolean).join(' - ');
-    driverDetails = `🏍️ ${driver.placa}${vehiculo ? ' | ' + vehiculo : ''} &nbsp;|&nbsp; 📞 ${driver.telefono}`;
+    driverDetails = {
+      placa: driver.placa || '---',
+      vehiculo: `${driver.marca || ''} ${driver.color || ''}`.trim() || 'Moto',
+      telefono: driver.telefono || ''
+    };
   }
 
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
-      <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor en camino!</h3>
-      <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px 12px; margin-bottom:10px;">
-        <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px;">Datos del Conductor:</span>
-        <span style="color:#fff; font-size:18px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
-        <span style="color:#FF6B00; font-size:14px; font-weight:bold; display:block; margin-bottom:8px;">${driverRating}</span>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;">
-          <div style="background:rgba(255,107,0,.1); color:#FF6B00; border:1px solid rgba(255,107,0,.2); padding:6px 10px; border-radius:8px; font-weight:bold; font-size:13px; flex-shrink: 1;">
-              ${driverDetails}
+      <h3 style="color:#30D158; margin-bottom:8px; font-weight:800; font-size:18px;">¡Conductor en camino!</h3>
+      
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; margin-bottom:12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <!-- Encabezado: Nombre y Estrellas -->
+        <div style="margin-bottom:15px;">
+          <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Tu Conductor</span>
+          <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
+          <span style="color:#FFD700; font-size:14px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
+        </div>
+
+        <!-- Cuerpo: Vehículo y Contacto -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;">
+          <!-- Bloque Vehículo -->
+          <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:10px; border-radius:12px; text-align:left;">
+            <div style="margin-bottom:8px;">
+              <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Moto</span>
+              <span style="color:#fff; font-size:12px; font-weight:600; display:block;">${driverDetails.vehiculo}</span>
+            </div>
+            <div>
+              <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
+              <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block;">${driverDetails.placa}</span>
+            </div>
           </div>
-          <a href="tel:${driver.telefono}" style="background:#30D158; color:#fff; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:900; font-size:11px; display:flex; align-items:center; gap:4px; box-shadow:0 4px 12px rgba(48,209,88,0.3); white-space:nowrap;">
-            📞 LLAMAR
+
+          <!-- Bloque Llamada -->
+          <a href="tel:${driverDetails.telefono}" style="background:#30D158; text-decoration:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 15px rgba(48,209,88,0.3); transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+            <span style="font-size:24px;">📞</span>
+            <span style="color:#fff; font-size:12px; font-weight:900; text-transform:uppercase;">Llamar</span>
           </a>
         </div>
       </div>
-      <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 10px 0; background:rgba(255,255,255,.05); padding:8px; border-radius:8px;">Calculando llegada...</p>
-      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelRideBtnAction">Cancelar Servicio</button>
+
+      <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 10px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px; border: 1px solid rgba(255,255,255,0.05);">Calculando llegada...</p>
+      
+      <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; margin-top:10px; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
 
