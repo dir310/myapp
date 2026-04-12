@@ -750,11 +750,14 @@ body {
   flex-shrink: 0;
   padding: 0;
   box-sizing: border-box;
+  display: flex;
+  justify-content: center;
 }
 
 /* Motivation Slide Style */
 .zippy-phrase-card {
-  height: 155px;
+  width: 92%;
+  height: 145px;
   display: flex;
   flex-direction: column;
   align-items: center;
