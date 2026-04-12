@@ -2,16 +2,16 @@
   "name": "ZIPPY Pasajero",
   "short_name": "ZIPPY Pasajero",
   "description": "Pide tu viaje rápido y seguro con ZIPPY.",
-  "id": "zippy-pwa-pasajero-v4",
+  "id": "zippy-pwa-pasajero-v5",
   "start_url": "./index.html",
-  "scope": "./",
+  "scope": "./index.html",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#FF6B00",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icons/icon-192x192.png?v=4",
+      "src": "icons/icon-192x192.png?v=5",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
