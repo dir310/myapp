@@ -58,6 +58,7 @@ window.togglePassword = function(inputId, iconElement) {
 
 function setupUIEvents() {
   document.getElementById('loginBtn').onclick = handleLogin;
+  document.getElementById('saveCompleteProfileBtn').onclick = handleSaveProfileSetup;
   
   // Profile Sidebar toggles
   profileBtn.onclick = openProfile;
@@ -75,6 +76,8 @@ function setupUIEvents() {
     if(currentProfile) {
       document.getElementById('editNombre').value = currentProfile.nombre || '';
       document.getElementById('editPlaca').value = currentProfile.placa || '';
+      document.getElementById('editMarca').value = currentProfile.marca || '';
+      document.getElementById('editColor').value = currentProfile.color || '';
       document.getElementById('editTelefono').value = currentProfile.telefono || '';
     }
   };
@@ -88,16 +91,18 @@ function setupUIEvents() {
     const btn = document.getElementById('saveProfileBtn');
     const newNombre = document.getElementById('editNombre').value;
     const newPlaca = document.getElementById('editPlaca').value;
+    const newMarca = document.getElementById('editMarca').value;
+    const newColor = document.getElementById('editColor').value;
     const newTelefono = document.getElementById('editTelefono').value;
 
-    if (!newNombre || !newPlaca || !newTelefono) return alert('Llena todos los campos');
+    if (!newNombre || !newPlaca || !newTelefono || !newMarca || !newColor) return alert('Llena todos los campos');
 
     btn.textContent = '...';
     btn.disabled = true;
 
     const { error } = await supabase
       .from('conductores')
-      .update({ nombre: newNombre, placa: newPlaca, telefono: newTelefono })
+      .update({ nombre: newNombre, placa: newPlaca, telefono: newTelefono, marca: newMarca, color: newColor })
       .eq('id', currentUser.id);
 
     btn.textContent = 'Guardar';
@@ -106,15 +111,15 @@ function setupUIEvents() {
     if (error) {
       alert('Error updating: ' + error.message);
     } else {
-      // Modificar localmente para reflejar el cambio inmediato
       currentProfile.nombre = newNombre;
       currentProfile.placa = newPlaca;
+      currentProfile.marca = newMarca;
+      currentProfile.color = newColor;
       currentProfile.telefono = newTelefono;
       
-      // Esconder form y recargar visual
       document.getElementById('editProfileForm').style.display = 'none';
       document.getElementById('editProfileBtn').style.display = 'inline-block';
-      openProfile(); // Re-render text fields
+      openProfile();
     }
   };
 }
@@ -145,34 +150,75 @@ async function handleSession(session) {
     }
 
     currentProfile = profile;
-    
-    // Configurar UI para usuario logueado
     authModal.style.display = 'none';
-    mainAppContent.style.display = 'block';
-    profileBtn.style.display = 'block';
     
-    // Iniciar carga de viajes y eventos realtime
-    loadViajes();
-    setupRealtimeChannel();
-    initRadar();
+    // Check if new fields are missing (profile incomplete)
+    if (!profile.nombre || !profile.placa || !profile.marca || !profile.color) {
+      document.getElementById('completeProfileModal').style.display = 'flex';
+    } else {
+      proceedToApp();
+    }
   } else {
     currentUser = null;
     currentProfile = null;
     authModal.style.display = 'flex';
+    document.getElementById('completeProfileModal').style.display = 'none';
     mainAppContent.style.display = 'none';
     profileBtn.style.display = 'none';
   }
 }
 
+function proceedToApp() {
+  document.getElementById('completeProfileModal').style.display = 'none';
+  mainAppContent.style.display = 'block';
+  profileBtn.style.display = 'block';
+  loadViajes();
+  setupRealtimeChannel();
+  initRadar();
+}
+
+async function handleSaveProfileSetup() {
+  const nombre = document.getElementById('setupNombre').value.trim();
+  const placa = document.getElementById('setupPlaca').value.trim();
+  const marca = document.getElementById('setupMarca').value.trim();
+  const color = document.getElementById('setupColor').value.trim();
+  
+  if (!nombre || !placa || !marca || !color) {
+      return alert("Por favor completa todos los datos para poder trabajar.");
+  }
+  
+  const btn = document.getElementById('saveCompleteProfileBtn');
+  btn.textContent = "Guardando...";
+  btn.disabled = true;
+  
+  const { error } = await supabase.from('conductores').update({
+      nombre, placa, marca, color
+  }).eq('id', currentUser.id);
+  
+  if (error) {
+      alert("Hubo un error al guardar: " + error.message);
+      btn.textContent = "Guardar y Empezar a Trabajar";
+      btn.disabled = false;
+      return;
+  }
+  
+  currentProfile.nombre = nombre;
+  currentProfile.placa = placa;
+  currentProfile.marca = marca;
+  currentProfile.color = color;
+  
+  proceedToApp();
+}
+
 async function handleLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const telefono = document.getElementById('loginTelefono').value.trim();
   const password = document.getElementById('loginPassword').value;
   const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
   const termsElement = document.getElementById('loginTerms');
   const terms = termsElement ? termsElement.checked : true; // Fallback just in case
   const btn = document.getElementById('loginBtn');
 
-  if (!email || !password) return alert('Por favor llena todos los campos.');
+  if (!telefono || !password) return alert('Por favor ingresa tu número y PIN.');
   
   if (!terms) return alert('Debes aceptar las condiciones de uso (riesgo) marcando la casilla para poder ingresar.');
   
@@ -197,7 +243,7 @@ async function handleLogin() {
   const { data, error } = await supabase
     .from('conductores')
     .select('*')
-    .eq('email', email)
+    .eq('telefono', telefono)
     .eq('password', password)
     .single();
 
@@ -228,7 +274,7 @@ async function handleLogin() {
       
       alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS/1000)} segundos.`);
     } else {
-      alert(`Correo o clave incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
+      alert(`Teléfono o PIN incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
       btn.textContent = 'Ingresar';
       btn.disabled = false;
     }
@@ -255,6 +301,11 @@ async function openProfile() {
   if (currentProfile) {
     document.getElementById('profileName').textContent = currentProfile.nombre;
     document.getElementById('profilePlaca').textContent = `Placa: ${currentProfile.placa}`;
+    
+    const marca = currentProfile.marca || 'N/A';
+    const color = currentProfile.color || 'N/A';
+    document.getElementById('profileVehiculo').textContent = `${marca} - ${color}`;
+    
     document.getElementById('profileTelefono').textContent = `Cel: ${currentProfile.telefono}`;
     
     if (currentProfile.foto_url) {

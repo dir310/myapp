@@ -31,9 +31,9 @@
             <h2 style="margin-bottom:20px; color:#FF6B00;">Acceso Conductor</h2>
 
             <div id="loginForm" class="auth-form active">
-                <input type="email" id="loginEmail" class="driver-name" placeholder="Correo electrónico">
+                <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular">
                 <div class="password-wrapper">
-                    <input type="password" id="loginPassword" class="driver-name" placeholder="Contraseña">
+                    <input type="password" id="loginPassword" class="driver-name" placeholder="PIN de conductor">
                     <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
                 </div>
 
@@ -70,6 +70,23 @@
         </div>
     </div>
 
+    <!-- Complete Profile Modal -->
+    <div id="completeProfileModal" class="modal-overlay" style="display:none; z-index:9998; background:rgba(0,0,0,0.95);">
+        <div class="modal-content auth-container">
+            <h2 style="margin-bottom:10px; color:#FF6B00; text-align:center;">Completa tu Perfil</h2>
+            <p style="text-align:center; color:rgba(255,255,255,.6); font-size:12px; margin-bottom:20px;">Por seguridad y confianza para los pasajeros, debes completar estos datos. Solo se piden una vez.</p>
+
+            <div class="auth-form active">
+                <input type="text" id="setupNombre" class="driver-name" placeholder="Nombre y Apellidos">
+                <input type="text" id="setupPlaca" class="driver-name" placeholder="Placa de la Moto (ej: ABC-12D)" oninput="this.value = this.value.toUpperCase()">
+                <input type="text" id="setupMarca" class="driver-name" placeholder="Marca de la Moto (ej: Bajaj)">
+                <input type="text" id="setupColor" class="driver-name" placeholder="Color del Vehículo (ej: Negro)">
+                
+                <button id="saveCompleteProfileBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Guardar y Empezar a Trabajar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Profile Sidebar -->
     <div id="profileSidebar" class="profile-sidebar">
         <div class="profile-header">
@@ -88,6 +105,7 @@
             </div>
             <h3 id="profileName" style="margin:10px 0 5px 0;">Cargando...</h3>
             <p id="profilePlaca" style="color:#FF6B00; font-weight:800; font-size:14px; margin:0;">...</p>
+            <p id="profileVehiculo" style="color:rgba(255,255,255,.7); font-size:12px; margin-top:2px;">...</p>
             <p id="profileTelefono" style="color:rgba(255,255,255,.5); font-size:12px; margin-top:5px;">...</p>
             <button id="editProfileBtn"
                 style="background:none; border:1px solid rgba(255,255,255,.2); color:white; padding:5px 15px; border-radius:15px; font-size:11px; margin-top:10px; cursor:pointer;">✏️
@@ -97,9 +115,13 @@
                 style="display:none; margin-top:15px; text-align:left; background:rgba(0,0,0,.3); padding:15px; border-radius:12px;">
                 <input type="text" id="editNombre" class="driver-name" placeholder="Nombre completo"
                     style="padding:10px; font-size:13px; margin-bottom:8px;">
-                <input type="text" id="editPlaca" class="driver-name" placeholder="Placa de Moto"
+                <input type="text" id="editPlaca" class="driver-name" placeholder="Placa de Moto" oninput="this.value = this.value.toUpperCase()"
                     style="padding:10px; font-size:13px; margin-bottom:8px;">
-                <input type="text" id="editTelefono" class="driver-name" placeholder="Celular"
+                <input type="text" id="editMarca" class="driver-name" placeholder="Marca de Moto"
+                    style="padding:10px; font-size:13px; margin-bottom:8px;">
+                <input type="text" id="editColor" class="driver-name" placeholder="Color del Vehículo"
+                    style="padding:10px; font-size:13px; margin-bottom:8px;">
+                <input type="tel" id="editTelefono" class="driver-name" placeholder="Celular"
                     style="padding:10px; font-size:13px; margin-bottom:8px;">
                 <div style="display:flex; gap:10px;">
                     <button id="saveProfileBtn" class="btn btn-accept"
