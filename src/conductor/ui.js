@@ -125,7 +125,7 @@ export function renderViajes(viajes, handlers) {
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
-            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate-blocked">🧭 Navegar a Recoger</button>
             <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
@@ -222,9 +222,15 @@ export function renderViajes(viajes, handlers) {
     btn.addEventListener('click', () => handlers.onCancelActive(btn.dataset.id));
   });
 
-    container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
+  container.querySelectorAll('[data-action="navigate"]').forEach((btn) => {
     btn.addEventListener('click', () =>
       window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank')
+    );
+  });
+
+  container.querySelectorAll('[data-action="navigate-blocked"]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      alert('⚠️ Debes presionar INICIAR VIAJE primero antes de poder navegar.')
     );
   });
 
