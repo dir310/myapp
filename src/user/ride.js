@@ -91,11 +91,11 @@ export async function acceptRide(state, map) {
     state.currentRideId = data[0].id;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
 
-    // Show searching UI with Lottie Animation
+    // Show searching UI with native CSS Radar
     document.getElementById('priceSection').innerHTML = `
       <div id="searchingContainer" style="text-align:center; padding: 20px 0;">
-        <div style="width: 120px; height: 120px; margin: 0 auto -10px auto;">
-          <lottie-player src="https://lottie.host/8df04e22-cc05-47e1-954f-ca6a43875ec8/Z180GZJ0S0.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+        <div class="premium-radar">
+          <div class="radar-moto-icon">🏍️</div>
         </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
         <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
@@ -425,11 +425,11 @@ function showSearchingRecovery(state) {
   // Show notification
   alert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.');
 
-  // Revert UI to searching mode with Lottie
+  // Revert UI to searching mode with native CSS Radar
   document.getElementById('priceSection').innerHTML = `
       <div id="searchingContainer" style="text-align:center; padding: 20px 0;">
-        <div style="width: 120px; height: 120px; margin: 0 auto -10px auto;">
-          <lottie-player src="https://lottie.host/8df04e22-cc05-47e1-954f-ca6a43875ec8/Z180GZJ0S0.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+        <div class="premium-radar">
+          <div class="radar-moto-icon">🏍️</div>
         </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Re-buscando conductor...</h3>
         <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos nuevamente. No cierres esta ventana.</p>
