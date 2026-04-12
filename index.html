@@ -230,13 +230,17 @@
                 <button class="btn btn-primary"
                     style="width: 100%; font-size: 16px; padding: 14px; margin-bottom: 12px;"
                     id="savePassengerAuthBtn">Ingresar</button>
-                <!-- Botón Instalar App PWA -->
-                <button id="pwaInstallBtn"
-                    style="display:block; width:100%; font-size:14px; padding:12px; margin-bottom:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
-                    onmouseover="this.style.background='rgba(255,107,0,0.22)'"
-                    onmouseout="this.style.background='rgba(255,107,0,0.12)'">
-                    📲 Instalar App
-                </button>
+                <!-- Botones Duales de Instalación -->
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                    <button id="pwaInstallBtn"
+                        style="width:100%; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;">
+                        📲 Instalar APP Pasajeros
+                    </button>
+                    <button onclick="window.location.href='/conductor.html'"
+                        style="width:100%; font-size:14px; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:rgba(255,255,255,0.7); font-weight:700; cursor:pointer; transition:all .2s;">
+                        🚕 Instalar APP Conductores
+                    </button>
+                </div>
                 <div style="text-align:center;">
                     <p style="color:rgba(255,255,255,.4); font-size:12px; margin-bottom:4px;" id="authSwitchText">¿No
                         tienes cuenta?</p>
@@ -316,19 +320,6 @@
             _pwaPrompt = e;
         });
 
-        function isPWA() {
-            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-        }
-
-        function updateInstallButton() {
-            var btn = document.getElementById('pwaInstallBtn');
-            if (btn && isPWA()) {
-                btn.innerHTML = '🔄 Actualizar App';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', updateInstallButton);
-
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'pwaInstallBtn') {
                 if (_pwaPrompt) {
@@ -338,23 +329,8 @@
                 } else if (_isIOS) {
                     // iOS: banner con instrucciones
                     document.getElementById('iosBanner').style.display = 'block';
-                } else if (isPWA()) {
-                    // Si ya es PWA, forzar actualización
-                    var btn = e.target;
-                    btn.disabled = true;
-                    btn.innerHTML = '⏳ Actualizando...';
-                    
-                    if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.getRegistration().then(function(reg) {
-                            if (reg) reg.update();
-                            setTimeout(function() {
-                                window.location.reload(true);
-                            }, 1000);
-                        });
-                    } else {
-                        window.location.reload(true);
-                    }
                 } else {
+                    // Ya instalada
                     alert('✅ ZIPPY ya está instalada en tu dispositivo.');
                 }
             }

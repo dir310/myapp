@@ -1,8 +1,8 @@
 {
-  "name": "ZIPPY Pasajero",
-  "short_name": "ZIPPY",
-  "description": "Pide tu viaje rápido y seguro con ZIPPY.",
-  "id": "com.zippy.passenger",
+  "name": "ZIPPY Conductores",
+  "short_name": "ZIPPY Cond",
+  "description": "Panel de control para conductores ZIPPY.",
+  "id": "com.zippy.conductor",
   "scope": "./",
   "display": "standalone",
   "background_color": "#111111",

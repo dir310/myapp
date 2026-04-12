@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/src/styles/common.css">
     <link rel="stylesheet" href="/src/styles/conductor.css">
     <!-- PWA -->
-    <link rel="manifest" href="manifest-conductor.json">
+    <link rel="manifest" href="/conductor/manifest.json">
     <meta name="theme-color" content="#FF6B00">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -61,13 +61,17 @@
                 </label>
 
                 <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
-                <!-- Botón Instalar App PWA -->
-                <button id="pwaInstallBtnDriver"
-                    style="display:block; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
-                    onmouseover="this.style.background='rgba(255,107,0,0.22)'"
-                    onmouseout="this.style.background='rgba(255,107,0,0.12)'">
-                    📲 Instalar App
-                </button>
+                <!-- Botones Duales de Instalación -->
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                    <button id="pwaInstallBtnDriver"
+                        style="width:100%; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;">
+                        📲 Instalar APP Conductores
+                    </button>
+                    <button onclick="window.location.href='/'"
+                        style="width:100%; font-size:14px; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:rgba(255,255,255,0.7); font-weight:700; cursor:pointer; transition:all .2s;">
+                        🚕 Instalar APP Pasajeros
+                    </button>
+                </div>
                 <div style="text-align:center; margin-top:12px;">
                     <a href="https://wa.me/573107935858" target="_blank"
                         style="color:rgba(255,255,255,.4); font-size:12px; text-decoration:underline;">¿Olvidaste tu PIN? Contáctanos</a>
@@ -270,19 +274,6 @@
             _pwaPromptDriver = e;
         });
 
-        function isPWADriver() {
-            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-        }
-
-        function updateInstallButtonDriver() {
-            var btn = document.getElementById('pwaInstallBtnDriver');
-            if (btn && isPWADriver()) {
-                btn.innerHTML = '🔄 Actualizar App';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', updateInstallButtonDriver);
-
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'pwaInstallBtnDriver') {
                 if (_pwaPromptDriver) {
@@ -292,23 +283,8 @@
                 } else if (_isIOSDriver) {
                     // iOS: banner con instrucciones
                     document.getElementById('iosBannerDriver').style.display = 'block';
-                } else if (isPWADriver()) {
-                    // Si ya es PWA, forzar actualización
-                    var btn = e.target;
-                    btn.disabled = true;
-                    btn.innerHTML = '⏳ Actualizando...';
-                    
-                    if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.getRegistration().then(function(reg) {
-                            if (reg) reg.update();
-                            setTimeout(function() {
-                                window.location.reload(true);
-                            }, 1000);
-                        });
-                    } else {
-                        window.location.reload(true);
-                    }
                 } else {
+                    // Ya instalada
                     alert('✅ ZIPPY ya está instalada en tu dispositivo.');
                 }
             }
