@@ -10,6 +10,13 @@ import { loadViajes, setupRealtimeChannel } from './realtime.js';
 // ── Event Listeners ──
 document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 
+// Refrescar viajes instantáneamente al volver de Waze u otras apps
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        loadViajes();
+    }
+});
+
 // ── Initialize ──
 import { initAuth } from './auth.js';
 initAuth();
