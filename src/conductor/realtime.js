@@ -258,9 +258,66 @@ async function startViaje(id) {
  */
 async function finishViaje(id) {
   if (confirm('¿Estás seguro de finalizar el viaje?')) {
-    misViajesFinalizados.push(id); // Registrar para recibir calificación luego
+    misViajesFinalizados.push(id);
+    const viaje = activeViajes.find(v => v.id === id);
+    const clienteNombre = viaje ? (viaje.cliente_nombre || 'Pasajero') : 'Pasajero';
     await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
-    stopGPS(); // Apagar GPS
+    stopGPS();
     loadViajes();
+    showClientRatingModal(id, clienteNombre);
   }
+}
+
+function showClientRatingModal(viajeId, clienteNombre) {
+  const overlay = document.createElement('div');
+  overlay.id = 'clientRatingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1c1c1e;border-radius:20px;padding:30px;max-width:340px;width:100%;text-align:center;border:1px solid rgba(255,107,0,.3);">
+      <div style="font-size:40px;margin-bottom:10px;">⭐</div>
+      <h3 style="color:#FF6B00;margin-bottom:5px;font-weight:800;">Califica al Pasajero</h3>
+      <p style="color:rgba(255,255,255,.6);font-size:13px;margin-bottom:20px;">${clienteNombre}</p>
+      <div id="clientStarRating" style="display:flex;justify-content:center;gap:10px;font-size:38px;cursor:pointer;margin-bottom:10px;">
+        <span data-star="1" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="2" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="3" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="4" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="5" style="filter:grayscale(1) opacity(.4);">⭐</span>
+      </div>
+      <div id="clientRatingLabel" style="color:#FF6B00;font-weight:bold;font-size:13px;min-height:20px;margin-bottom:15px;"></div>
+      <button id="submitClientRatingBtn" style="width:100%;background:#FF6B00;color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:800;cursor:pointer;opacity:.5;" disabled>Calificar Pasajero</button>
+      <button id="skipClientRatingBtn" style="display:block;width:100%;background:none;border:none;color:rgba(255,255,255,.4);font-size:12px;margin-top:12px;cursor:pointer;padding:8px;">Omitir</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  let selectedRating = 0;
+  const stars = overlay.querySelectorAll('#clientStarRating span');
+  const submitBtn = overlay.querySelector('#submitClientRatingBtn');
+  const label = overlay.querySelector('#clientRatingLabel');
+  const texts = ['', 'Muy malo 😞', 'Malo 😕', 'Regular 😐', 'Bueno 😊', 'Excelente 🤩'];
+
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.dataset.star);
+      stars.forEach((s, i) => {
+        s.style.filter = i < selectedRating ? 'none' : 'grayscale(1) opacity(.4)';
+      });
+      label.textContent = texts[selectedRating];
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    });
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    if (!selectedRating) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+    await supabase.from('viajes').update({ calificacion_cliente: selectedRating }).eq('id', viajeId);
+    document.body.removeChild(overlay);
+  });
+
+  overlay.querySelector('#skipClientRatingBtn').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
 }

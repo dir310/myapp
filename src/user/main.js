@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = 'Creando cuenta...';
 
         try {
-          const { error: dbError } = await supabase
+          const { data: insertedData, error: dbError } = await supabase
             .from('clientes')
             .insert([{
               nombre: n,
@@ -241,7 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
               telefono: t,
               email: email,
               password: password
-            }]);
+            }])
+            .select()
+            .single();
 
           if (dbError) throw dbError;
 
@@ -249,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('calmovil_cliente_cedula', c);
           localStorage.setItem('calmovil_cliente_telefono', t);
           localStorage.setItem('calmovil_cliente_email', email);
+          if (insertedData && insertedData.id) localStorage.setItem('calmovil_cliente_id', insertedData.id);
           
           window.location.reload();
         } catch (err) {
@@ -289,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('calmovil_cliente_cedula', data.cedula);
           localStorage.setItem('calmovil_cliente_telefono', data.telefono);
           localStorage.setItem('calmovil_cliente_email', data.email);
+          if (data.id) localStorage.setItem('calmovil_cliente_id', data.id);
           
           window.location.reload();
         } catch (err) {

@@ -354,6 +354,18 @@ async function openProfile() {
       const ganancias = viajesTerminados.reduce((acc, current) => acc + (current.tarifa || 0), 0);
       document.getElementById('statEarnings').textContent = `$${ganancias.toLocaleString('es-CO')}`;
 
+      // Promedio de calificación pública
+      const conCalif = viajesTerminados.filter(v => v.calificacion && v.calificacion > 0);
+      const ratingEl = document.getElementById('statRating');
+      if (ratingEl) {
+        if (conCalif.length > 0) {
+          const promedio = (conCalif.reduce((a, v) => a + v.calificacion, 0) / conCalif.length).toFixed(1);
+          ratingEl.textContent = `${promedio} ⭐ (${conCalif.length})`;
+        } else {
+          ratingEl.textContent = 'Sin reseñas aún';
+        }
+      }
+
       const historyList = document.getElementById('historyList');
       if (viajesTerminados.length === 0) {
         historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes finalizados aún.</p>';

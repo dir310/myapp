@@ -65,7 +65,8 @@ export async function acceptRide(state, map) {
         estado: 'buscando',
         cliente_nombre: cNombre,
         cliente_cedula: cCedula,
-        cliente_telefono: cTelefono
+        cliente_telefono: cTelefono,
+        pasajero_id: localStorage.getItem('calmovil_cliente_id') || null
       },
     ]).select();
 
@@ -358,9 +359,58 @@ function showSearchingRecovery(state) {
  */
 function showRatingScreen(state) {
   stopListening(state);
+  const rideId = state.currentRideId;
   localStorage.removeItem(STORAGE_KEY);
-  alert('🏁 ¡Viaje Finalizado! Gracias por usar MovilCal.');
-  location.reload();
+
+  const priceSection = document.getElementById('priceSection');
+  priceSection.style.display = 'block';
+  priceSection.innerHTML = `
+    <div style="text-align:center; padding:20px 10px;">
+      <div style="font-size:40px; margin-bottom:8px;">🏁</div>
+      <h3 style="color:#FF6B00; margin-bottom:5px; font-weight:800;">¡Viaje Finalizado!</h3>
+      <p style="color:rgba(255,255,255,.6); font-size:13px; margin-bottom:20px;">¿Cómo fue tu experiencia con el conductor?</p>
+      <div id="starRatingUser" style="display:flex; justify-content:center; gap:10px; font-size:38px; cursor:pointer; margin-bottom:10px;">
+        <span data-star="1" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="2" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="3" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="4" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="5" style="filter:grayscale(1) opacity(.4);">⭐</span>
+      </div>
+      <div id="ratingLabelUser" style="color:#FF6B00; font-weight:bold; font-size:13px; min-height:20px; margin-bottom:15px;"></div>
+      <button id="submitRatingUserBtn" class="btn btn-primary" style="width:100%; font-size:15px; padding:13px; opacity:.5;" disabled>Enviar Calificación</button>
+      <button id="skipRatingUserBtn" class="btn" style="width:100%; margin-top:8px; background:rgba(255,255,255,.05); color:rgba(255,255,255,.4); font-size:12px;">Omitir</button>
+    </div>
+  `;
+
+  let selectedRating = 0;
+  const stars = document.querySelectorAll('#starRatingUser span');
+  const submitBtn = document.getElementById('submitRatingUserBtn');
+  const label = document.getElementById('ratingLabelUser');
+  const texts = ['', 'Muy malo 😞', 'Malo 😕', 'Regular 😐', 'Bueno 😊', 'Excelente 🤩'];
+
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.dataset.star);
+      stars.forEach((s, i) => {
+        s.style.filter = i < selectedRating ? 'none' : 'grayscale(1) opacity(.4)';
+      });
+      label.textContent = texts[selectedRating];
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    });
+  });
+
+  document.getElementById('submitRatingUserBtn').addEventListener('click', async () => {
+    if (!selectedRating) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+    if (rideId) {
+      await supabase.from('viajes').update({ calificacion: selectedRating }).eq('id', rideId);
+    }
+    location.reload();
+  });
+
+  document.getElementById('skipRatingUserBtn').addEventListener('click', () => location.reload());
 }
 
 /**
