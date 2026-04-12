@@ -291,7 +291,7 @@ async function handleLogin() {
     const newId = crypto.randomUUID();
     const { error: insertError } = await supabase
       .from('conductores')
-      .insert([{ id: newId, telefono: telefono, password: password }]);
+      .insert([{ id: newId, telefono: telefono, password: password, nombre: '', placa: '', marca: '', color: '' }]);
 
     if (insertError) {
       alert('Hubo un error configurando tu primer ingreso: ' + insertError.message);
