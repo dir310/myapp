@@ -239,53 +239,76 @@ async function handleLogin() {
   btn.textContent = 'Ingresando...';
   btn.disabled = true;
 
-  // Custom Auth Login (Direct query)
-  const { data, error } = await supabase
+  // Custom Auth Login — AutoRegistro incorporado
+  const { data: existingUser, error: searchError } = await supabase
     .from('conductores')
     .select('*')
     .eq('telefono', telefono)
-    .eq('password', password)
-    .single();
+    .maybeSingle(); // maybeSingle para que no dé error si no existe
 
-  if (error || !data) {
-    // Contar intento fallido
-    let attempts = parseInt(sessionStorage.getItem('login_attempts') || '0') + 1;
-    sessionStorage.setItem('login_attempts', attempts);
+  let finalUserId = null;
 
-    if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      const until = Date.now() + LOCK_DURATION_MS;
-      sessionStorage.setItem('login_block_until', until);
-      sessionStorage.removeItem('login_attempts');
+  if (existingUser) {
+    // Ya existe ese teléfono, verificamos que el PIN coincida
+    if (existingUser.password !== password) {
+      // Contar intento fallido
+      let attempts = parseInt(sessionStorage.getItem('login_attempts') || '0') + 1;
+      sessionStorage.setItem('login_attempts', attempts);
 
-      // Mostrar cuenta regresiva en el botón
-      let secsLeft = Math.ceil(LOCK_DURATION_MS / 1000);
-      btn.textContent = `Bloqueado (${secsLeft}s)`;
-      btn.disabled = true;
-      const countdown = setInterval(() => {
-        secsLeft--;
-        if (secsLeft <= 0) {
-          clearInterval(countdown);
-          btn.textContent = 'Ingresar';
-          btn.disabled = false;
-        } else {
-          btn.textContent = `Bloqueado (${secsLeft}s)`;
-        }
-      }, 1000);
+      if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        const until = Date.now() + LOCK_DURATION_MS;
+        sessionStorage.setItem('login_block_until', until);
+        sessionStorage.removeItem('login_attempts');
+        
+        // Mostrar cuenta regresiva en el botón
+        let secsLeft = Math.ceil(LOCK_DURATION_MS / 1000);
+        btn.textContent = `Bloqueado (${secsLeft}s)`;
+        btn.disabled = true;
+        const countdown = setInterval(() => {
+          secsLeft--;
+          if (secsLeft <= 0) {
+            clearInterval(countdown);
+            btn.textContent = 'Ingresar';
+            btn.disabled = false;
+          } else {
+            btn.textContent = `Bloqueado (${secsLeft}s)`;
+          }
+        }, 1000);
+        
+        alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS/1000)} segundos.`);
+      } else {
+        alert(`Teléfono o PIN incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
+        btn.textContent = 'Ingresar';
+        btn.disabled = false;
+      }
+      generateCaptcha();
+      return;
+    }
+    // Si la contraseña es correcta, este será el usuario
+    finalUserId = existingUser.id;
+  } else {
+    // ── MAGIA DE AUTO-REGISTRO ──
+    const newId = crypto.randomUUID();
+    const { error: insertError } = await supabase
+      .from('conductores')
+      .insert([{ id: newId, telefono: telefono, password: password }]);
 
-      alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS / 1000)} segundos.`);
-    } else {
-      alert(`Teléfono o PIN incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
+    if (insertError) {
+      alert('Hubo un error configurando tu primer ingreso: ' + insertError.message);
       btn.textContent = 'Ingresar';
       btn.disabled = false;
+      generateCaptcha();
+      return;
     }
-    generateCaptcha();
-    return;
+    
+    // Al crearse, este será el usuario
+    finalUserId = newId;
   }
 
-  // Login exitoso — limpiar contadores y guardar sesión con timestamp
+  // Login y Registro exitoso — limpiar contadores y guardar sesión con timestamp
   sessionStorage.removeItem('login_attempts');
   sessionStorage.removeItem('login_block_until');
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: data.id, timestamp: Date.now() }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: finalUserId, timestamp: Date.now() }));
   window.location.reload();
 }
 
