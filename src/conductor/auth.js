@@ -343,7 +343,7 @@ async function openProfile() {
     // Cargar estadísticas
     const { data: viajesTerminados, error } = await supabase
       .from('viajes')
-      .select('tarifa, destino_nombre, origen_nombre')
+      .select('tarifa, destino_nombre, origen_nombre, calificacion')
       .eq('conductor_id', currentProfile.id)
       .eq('estado', 'finalizado')
       .order('created_at', { ascending: false });

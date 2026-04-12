@@ -10,7 +10,7 @@ import { sanitizeHTML } from '../utils/security.js';
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
 let driverMarker = null; // Guardará el ícono en vivo de la moto
-let rideChannel  = null; // Referencia al canal de Supabase
+let rideChannel = null; // Referencia al canal de Supabase
 
 // local sanitizeInput removed in favor of centralized security.js
 function playNotificationSound() {
@@ -106,7 +106,7 @@ function updateETA(lat, lng, state) {
 
   const conductorPos = L.latLng(lat, lng);
   const distMeters = state.startLatLng.distanceTo(conductorPos);
-  
+
   if (distMeters <= 50) {
     state.driverArrived = true;
     etaText.innerHTML = '🚕 ¡Tu conductor ha llegado!';
@@ -130,7 +130,7 @@ export function listenForDriver(rideId, state, map) {
 
   // Strategy 1: Real-time WebSocket
   rideChannel = supabase.channel('ride-watch-' + rideId);
-  
+
   rideChannel
     .on(
       'postgres_changes',
@@ -143,11 +143,11 @@ export function listenForDriver(rideId, state, map) {
       (payload) => {
         // Evitar redibujar la UI si el estado no ha cambiado realmente (útil para cuando sólo cambia el GPS)
         const estadoCambio = payload.new.estado !== state.lastKnownEstado;
-        
+
         if (estadoCambio) {
           console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
           state.lastKnownEstado = payload.new.estado;
-          
+
           if (payload.new.estado === 'aceptado' || payload.new.estado === 'en_progreso') {
             if (payload.new.estado === 'aceptado') playNotificationSound();
             showDriverAssigned(payload.new.conductor_id, state);
@@ -174,7 +174,7 @@ export function listenForDriver(rideId, state, map) {
         if (payload.new.conductor_lat && payload.new.conductor_lng && map) {
           const lat = payload.new.conductor_lat;
           const lng = payload.new.conductor_lng;
-          
+
           if (!driverMarker) {
             driverMarker = L.marker([lat, lng], {
               icon: motoIcon(),
@@ -219,7 +219,7 @@ export function listenForDriver(rideId, state, map) {
       if (data.conductor_lat && data.conductor_lng && map) {
         const lat = data.conductor_lat;
         const lng = data.conductor_lng;
-        
+
         if (!driverMarker) {
           driverMarker = L.marker([lat, lng], {
             icon: motoIcon(),
@@ -257,10 +257,24 @@ async function showDriverAssigned(driverId, state) {
 
   // Fetch datos reales a base de datos
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca, color').eq('id', driverId).single();
+
+  // Fetch rating promedio del conductor desde la tabla viajes
+  const { data: ratingData } = await supabase
+    .from('viajes')
+    .select('calificacion')
+    .eq('conductor_id', driverId)
+    .not('calificacion', 'is', null)
+    .gt('calificacion', 0);
   
+  let driverRating = 'Sin reseñas';
+  if (ratingData && ratingData.length > 0) {
+    const avg = ratingData.reduce((acc, v) => acc + v.calificacion, 0) / ratingData.length;
+    driverRating = `${avg.toFixed(1)} ⭐ (${ratingData.length})`;
+  }
+
   let driverName = 'Conducto Anónimo';
   let driverDetails = 'Sin más datos';
-  
+
   if (driver) {
     driverName = driver.nombre;
     const vehiculo = [driver.marca, driver.color].filter(Boolean).join(' - ');
@@ -273,6 +287,7 @@ async function showDriverAssigned(driverId, state) {
       <div style="background:rgba(255,255,255,.05); border:1.5px solid #30D158; border-radius:12px; padding:15px 12px; margin-bottom:10px;">
         <span style="color:rgba(255,255,255,.4); font-size:10px; display:block; text-transform:uppercase; letter-spacing:1px;">Datos del Conductor:</span>
         <span style="color:#fff; font-size:18px; font-weight:800; display:block; margin-top:4px;">${driverName}</span>
+        <span style="color:#FF6B00; font-size:14px; font-weight:bold; display:block; margin-bottom:8px;">${driverRating}</span>
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;">
           <div style="background:rgba(255,107,0,.1); color:#FF6B00; border:1px solid rgba(255,107,0,.2); padding:6px 10px; border-radius:8px; font-weight:bold; font-size:13px; flex-shrink: 1;">
               ${driverDetails}
@@ -313,7 +328,7 @@ function showTripStarted(state) {
 
   document.getElementById('cancelTripInProgressBtn').addEventListener('click', () => {
     if (confirm('¿Estás seguro de cancelar el viaje en curso?')) {
-        cancelRide(state, null);
+      cancelRide(state, null);
     }
   });
 }
@@ -334,10 +349,10 @@ function showSearchingRecovery(state) {
       }
     }, 5000);
   }
-  
+
   // Show notification
   alert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.');
-  
+
   // Revert UI to searching mode
   document.getElementById('priceSection').innerHTML = `
       <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
@@ -347,9 +362,9 @@ function showSearchingRecovery(state) {
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
   `;
-  
+
   document.getElementById('cancelSearchBtn').addEventListener('click', () => {
-      cancelRide(state, null);
+    cancelRide(state, null);
   });
 }
 
@@ -422,7 +437,7 @@ export function stopListening(state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
-  
+
   if (rideChannel) {
     supabase.removeChannel(rideChannel);
     rideChannel = null;
@@ -457,7 +472,7 @@ export async function restoreActiveRide(state, map) {
   if (!savedId) return;
 
   console.log('🔄 Detectado viaje activo persistente:', savedId);
-  
+
   try {
     const { data, error } = await supabase
       .from('viajes')
@@ -483,13 +498,13 @@ export async function restoreActiveRide(state, map) {
     // 2. Restaurar Mapa (Marcadores y Ruta)
     placeMarker('start', data.origen_lat, data.origen_lng, data.origen_nombre, state, map);
     placeMarker('end', data.destino_lat, data.destino_lng, data.destino_nombre, state, map);
-    
+
     // Forzamos el dibujado de la ruta y cálculo de precio en UI
     checkRoute(state, map);
 
     // 3. Restaurar UI de Búsqueda / Conductor
     if (data.estado === 'buscando') {
-        document.getElementById('priceSection').innerHTML = `
+      document.getElementById('priceSection').innerHTML = `
           <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
             <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
             <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
@@ -498,12 +513,12 @@ export async function restoreActiveRide(state, map) {
           </div>
           <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
         `;
-        document.getElementById('cancelSearchBtn').addEventListener('click', () => cancelRide(state, map));
-        document.getElementById('priceSection').style.display = 'block';
+      document.getElementById('cancelSearchBtn').addEventListener('click', () => cancelRide(state, map));
+      document.getElementById('priceSection').style.display = 'block';
     } else if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
-        // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
-        await showDriverAssigned(data.conductor_id, state);
-        document.getElementById('priceSection').style.display = 'block';
+      // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
+      await showDriverAssigned(data.conductor_id, state);
+      document.getElementById('priceSection').style.display = 'block';
     }
 
     // 4. Reconectar radares
