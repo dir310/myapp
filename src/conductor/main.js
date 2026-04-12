@@ -4,7 +4,7 @@
 import '../styles/common.css';
 import '../styles/conductor.css';
 
-import { toggleRadar } from './ui.js';
+import { toggleRadar, playAlert } from './ui.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 
 // ── Event Listeners ──
@@ -14,6 +14,7 @@ document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         loadViajes();
+        playAlert(); // Sonar alarma al volver si el radar está encendido
     }
 });
 

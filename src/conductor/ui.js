@@ -10,7 +10,31 @@ let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
 
 let radarEnabled = false;
+let wakeLock = null;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+/**
+ * Request screen wake lock to keep app alive in background/locked state.
+ */
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    console.log('✅ Wake Lock activado: La pantalla no se apagará.');
+    wakeLock.addEventListener('release', () => {
+      console.log('ℹ️ Wake Lock liberado.');
+    });
+  } catch (err) {
+    console.error(`❌ Error Wake Lock: ${err.name}, ${err.message}`);
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
 
 /**
  * Toggle the radar (sound alerts) on/off.
@@ -35,6 +59,8 @@ export function toggleRadar(isAutoClick = false) {
     btn.className = 'radar-toggle radar-on';
     txt.innerText = 'RADAR ENCENDIDO';
     
+    requestWakeLock(); // Activar bloqueo de pantalla
+
     // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -57,6 +83,7 @@ export function toggleRadar(isAutoClick = false) {
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
+    releaseWakeLock(); // Liberar bloqueo de pantalla
   }
 }
 

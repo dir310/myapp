@@ -118,8 +118,9 @@ export function setupRealtimeChannel() {
                 body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-192x192.png', // Ícono pequeño para la barra de estado
-                vibrate: [200, 100, 200, 100, 200], // Patrón de vibración fuerte
+                vibrate: [500, 110, 500, 110, 500, 110, 500], // Patrón tipo alarma (más agresivo)
                 tag: 'nuevo-viaje',
+                renotify: true, // Volver a vibrar y sonar si llega otro viaje
                 data: { url: '/' } // Datos para el clic
               });
             });
