@@ -349,16 +349,19 @@ async function showDriverAssigned(driverId, state) {
           <span style="color:#fff; font-size:18px; font-weight:800; display:block;">${driverName}</span>
           <span style="color:#FFD700; font-size:12px; font-weight:700; display:block;">${driverRating}</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 75px;">
-          <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:10px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
-             <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:2px;">Moto</span>
-             <span style="color:#fff; font-size:11px; font-weight:600; display:block; margin-bottom:5px;">${driverDetails.vehiculo}</span>
-             <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
-             <span style="color:#FF6B00; font-size:15px; font-weight:900; display:block;">${driverDetails.placa}</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 95%; margin: 0 auto;">
+          <!-- Bloque Vehículo -->
+          <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:8px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
+             <span style="color:rgba(255,107,0,.6); font-size:8px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:1px;">Moto</span>
+             <span style="color:#fff; font-size:10px; font-weight:600; display:block; margin-bottom:3px; line-height:1.1;">${driverDetails.vehiculo}</span>
+             <span style="color:rgba(255,107,0,.6); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
+             <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block;">${driverDetails.placa}</span>
           </div>
-          <a href="tel:${driverDetails.telefono}" style="background:#30D158; text-decoration:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 15px rgba(48,209,88,0.3);">
-            <span style="font-size:24px;">📞</span>
-            <span style="color:#fff; font-size:12px; font-weight:900; text-transform:uppercase;">Llamar</span>
+
+          <!-- Bloque Llamada -->
+          <a href="tel:${driverDetails.telefono}" style="background:#30D158; text-decoration:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; box-shadow:0 4px 15px rgba(48,209,88,0.25);">
+            <span style="font-size:20px;">📞</span>
+            <span style="color:#fff; font-size:10px; font-weight:900; text-transform:uppercase;">Llamar</span>
           </a>
         </div>
       </div>
