@@ -159,6 +159,9 @@ export function setupRealtimeChannel() {
       }
     )
     .subscribe();
+
+  // Polling de respaldo cada 10 segundos por si el WebSocket cae
+  setInterval(() => loadViajes(), 10000);
 }
 
 /**
