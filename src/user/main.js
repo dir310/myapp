@@ -368,6 +368,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
       logoutBtn.addEventListener('click', (e) => {
           e.stopPropagation(); // Evitar conflictos de clics
+
+          // Bloqueo si hay un viaje activo
+          if (state.currentRideId) {
+            alert('⚠️ No puedes cerrar sesión mientras tienes un viaje solicitado o en curso.');
+            return;
+          }
+
           if(confirm('¿Estás seguro de que quieres cerrar sesión?')) {
               // Limpieza total agresiva
               localStorage.clear(); 
