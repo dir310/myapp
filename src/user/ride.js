@@ -503,21 +503,49 @@ function showRatingScreen(state) {
       if (error) {
         console.error('Error al guardar calificación:', error);
         alert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'));
-        // No recargamos si falló para que el usuario pueda intentar de nuevo o avisar
         submitBtn.disabled = false;
         submitBtn.textContent = 'Reintentar Enviar';
         return;
       }
     }
     
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
+    // En lugar de reload, limpiamos suavemente
+    resetRideState(state, map);
   });
 
   document.getElementById('skipRatingUserBtn').addEventListener('click', () => {
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
+    resetRideState(state, map);
   });
+}
+
+/**
+ * Limpia el estado de la aplicación sin recargar la página (Evita LAG y parpadeos).
+ */
+function resetRideState(state, map) {
+  stopListening(state);
+  localStorage.removeItem(STORAGE_KEY);
+  
+  // Limpiar marcadores y rutas del mapa
+  clearPoint('start', state, map);
+  clearPoint('end', state, map);
+  
+  // Resetear variables de estado
+  state.currentRideId = null;
+  state.lastKnownEstado = null;
+  state.driverArrived = false;
+
+  // Restaurar el panel inferior a su estado inicial
+  const priceSection = document.getElementById('priceSection');
+  priceSection.style.display = 'none';
+
+  const mainActions = document.getElementById('mainActions');
+  if (mainActions) {
+    mainActions.style.display = 'flex';
+    mainActions.innerHTML = '<button class="btn" style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);width:100%" disabled>📍 Selecciona los puntos del viaje</button>';
+  }
+
+  showStatus('', false);
+  console.log('[MovilCal] Soft Reset completado sin recargar página.');
 }
 
 /**
@@ -548,12 +576,13 @@ export function stopListening(state) {
  * @param {L.Map} map - Leaflet map instance.
  */
 export async function cancelRide(state, map) {
-  stopListening(state);
   if (state.currentRideId) {
-    localStorage.removeItem(STORAGE_KEY);
-    await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
+    const rideIdToDelete = state.currentRideId;
+    resetRideState(state, map); // Limpieza inmediata UI
+    await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', rideIdToDelete);
+  } else {
+    resetRideState(state, map);
   }
-  location.reload();
 }
 
 /**
