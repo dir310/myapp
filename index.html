@@ -316,6 +316,19 @@
             _pwaPrompt = e;
         });
 
+        function isPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        }
+
+        function updateInstallButton() {
+            var btn = document.getElementById('pwaInstallBtn');
+            if (btn && isPWA()) {
+                btn.innerHTML = '🔄 Actualizar App';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateInstallButton);
+
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'pwaInstallBtn') {
                 if (_pwaPrompt) {
@@ -325,8 +338,23 @@
                 } else if (_isIOS) {
                     // iOS: banner con instrucciones
                     document.getElementById('iosBanner').style.display = 'block';
+                } else if (isPWA()) {
+                    // Si ya es PWA, forzar actualización
+                    var btn = e.target;
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳ Actualizando...';
+                    
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistration().then(function(reg) {
+                            if (reg) reg.update();
+                            setTimeout(function() {
+                                window.location.reload(true);
+                            }, 1000);
+                        });
+                    } else {
+                        window.location.reload(true);
+                    }
                 } else {
-                    // Ya instalada
                     alert('✅ ZIPPY ya está instalada en tu dispositivo.');
                 }
             }
