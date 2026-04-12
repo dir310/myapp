@@ -343,13 +343,13 @@ async function showDriverAssigned(driverId, state) {
   // Nota: Mantenemos el estilo de bloques que el usuario mostró en su imagen
   const conductorWindowHTML = `
     <div class="zippy-window">
-      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:180px; box-sizing:border-box;">
-        <div style="margin-bottom:12px;">
-          <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
-          <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
-          <span style="color:#FFD700; font-size:13px; font-weight:700; display:block;">${driverRating}</span>
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:155px; box-sizing:border-box;">
+        <div style="margin-bottom:8px;">
+          <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
+          <span style="color:#fff; font-size:18px; font-weight:800; display:block;">${driverName}</span>
+          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block;">${driverRating}</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 85px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 75px;">
           <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:10px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
              <span style="color:rgba(255,107,0,.6); font-size:9px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:2px;">Moto</span>
              <span style="color:#fff; font-size:11px; font-weight:600; display:block; margin-bottom:5px;">${driverDetails.vehiculo}</span>
