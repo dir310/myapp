@@ -43,7 +43,7 @@ export async function initAuth() {
 }
 
 // Lógica para mostrar/ocultar contraseña
-window.togglePassword = function(inputId, iconElement) {
+window.togglePassword = function (inputId, iconElement) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') {
     input.type = 'text';
@@ -59,7 +59,7 @@ window.togglePassword = function(inputId, iconElement) {
 function setupUIEvents() {
   document.getElementById('loginBtn').onclick = handleLogin;
   document.getElementById('saveCompleteProfileBtn').onclick = handleSaveProfileSetup;
-  
+
   // Profile Sidebar toggles
   profileBtn.onclick = openProfile;
   document.getElementById('closeProfileBtn').onclick = () => profileSidebar.classList.remove('open');
@@ -73,7 +73,7 @@ function setupUIEvents() {
   document.getElementById('editProfileBtn').onclick = () => {
     document.getElementById('editProfileForm').style.display = 'block';
     document.getElementById('editProfileBtn').style.display = 'none';
-    if(currentProfile) {
+    if (currentProfile) {
       document.getElementById('editNombre').value = currentProfile.nombre || '';
       document.getElementById('editPlaca').value = currentProfile.placa || '';
       document.getElementById('editMarca').value = currentProfile.marca || '';
@@ -116,7 +116,7 @@ function setupUIEvents() {
       currentProfile.marca = newMarca;
       currentProfile.color = newColor;
       currentProfile.telefono = newTelefono;
-      
+
       document.getElementById('editProfileForm').style.display = 'none';
       document.getElementById('editProfileBtn').style.display = 'inline-block';
       openProfile();
@@ -130,20 +130,20 @@ function generateCaptcha() {
   const l2 = Math.floor(Math.random() * 9) + 1;
   captchaAnswerLogin = l1 + l2;
   const loginQ = document.getElementById('loginCaptchaQuestion');
-  if(loginQ) loginQ.textContent = `¿${l1} + ${l2}? =`;
+  if (loginQ) loginQ.textContent = `¿${l1} + ${l2}? =`;
 }
 
 async function handleSession(session) {
   if (session && session.user) {
     currentUser = session.user;
-    
+
     // Cargar perfil completo
     const { data: profile, error: profileError } = await supabase
       .from('conductores')
       .select('*')
       .eq('id', currentUser.id)
       .single();
-      
+
     if (profileError || !profile) {
       console.error('Error cargando perfil:', profileError);
       return handleSession(null); // Si no hay perfil, forzar login de nuevo
@@ -151,7 +151,7 @@ async function handleSession(session) {
 
     currentProfile = profile;
     authModal.style.display = 'none';
-    
+
     // Check if new fields are missing (profile incomplete)
     if (!profile.nombre || !profile.placa || !profile.marca || !profile.color) {
       document.getElementById('completeProfileModal').style.display = 'flex';
@@ -182,31 +182,31 @@ async function handleSaveProfileSetup() {
   const placa = document.getElementById('setupPlaca').value.trim();
   const marca = document.getElementById('setupMarca').value.trim();
   const color = document.getElementById('setupColor').value.trim();
-  
+
   if (!nombre || !placa || !marca || !color) {
-      return alert("Por favor completa todos los datos para poder trabajar.");
+    return alert("Por favor completa todos los datos para poder trabajar.");
   }
-  
+
   const btn = document.getElementById('saveCompleteProfileBtn');
   btn.textContent = "Guardando...";
   btn.disabled = true;
-  
+
   const { error } = await supabase.from('conductores').update({
-      nombre, placa, marca, color
+    nombre, placa, marca, color
   }).eq('id', currentUser.id);
-  
+
   if (error) {
-      alert("Hubo un error al guardar: " + error.message);
-      btn.textContent = "Guardar y Empezar a Trabajar";
-      btn.disabled = false;
-      return;
+    alert("Hubo un error al guardar: " + error.message);
+    btn.textContent = "Guardar y Empezar a Trabajar";
+    btn.disabled = false;
+    return;
   }
-  
+
   currentProfile.nombre = nombre;
   currentProfile.placa = placa;
   currentProfile.marca = marca;
   currentProfile.color = color;
-  
+
   proceedToApp();
 }
 
@@ -219,9 +219,9 @@ async function handleLogin() {
   const btn = document.getElementById('loginBtn');
 
   if (!telefono || !password) return alert('Por favor ingresa tu número y PIN.');
-  
+
   if (!terms) return alert('Debes aceptar las condiciones de uso (riesgo) marcando la casilla para poder ingresar.');
-  
+
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
     alert('La respuesta a la suma de seguridad es incorrecta.');
     generateCaptcha();
@@ -256,7 +256,7 @@ async function handleLogin() {
       const until = Date.now() + LOCK_DURATION_MS;
       sessionStorage.setItem('login_block_until', until);
       sessionStorage.removeItem('login_attempts');
-      
+
       // Mostrar cuenta regresiva en el botón
       let secsLeft = Math.ceil(LOCK_DURATION_MS / 1000);
       btn.textContent = `Bloqueado (${secsLeft}s)`;
@@ -271,8 +271,8 @@ async function handleLogin() {
           btn.textContent = `Bloqueado (${secsLeft}s)`;
         }
       }, 1000);
-      
-      alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS/1000)} segundos.`);
+
+      alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS / 1000)} segundos.`);
     } else {
       alert(`Teléfono o PIN incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
       btn.textContent = 'Ingresar';
@@ -297,24 +297,24 @@ export function getCurrentProfile() {
 // Lógica de visualización del Perfil
 async function openProfile() {
   profileSidebar.classList.add('open');
-  
+
   if (currentProfile) {
     document.getElementById('profileName').textContent = currentProfile.nombre;
     document.getElementById('profilePlaca').textContent = `Placa: ${currentProfile.placa}`;
-    
+
     const marca = currentProfile.marca || 'N/A';
     const color = currentProfile.color || 'N/A';
     document.getElementById('profileVehiculo').textContent = `${marca} - ${color}`;
-    
+
     document.getElementById('profileTelefono').textContent = `Cel: ${currentProfile.telefono}`;
-    
+
     if (currentProfile.foto_url) {
       const imgEl = document.getElementById('profilePic');
       imgEl.src = currentProfile.foto_url;
       imgEl.style.display = 'block';
       document.getElementById('profilePicAvatar').style.display = 'none';
     }
-    
+
     // Cargar estadísticas
     const { data: viajesTerminados, error } = await supabase
       .from('viajes')
@@ -322,13 +322,13 @@ async function openProfile() {
       .eq('conductor_id', currentProfile.id)
       .eq('estado', 'finalizado')
       .order('created_at', { ascending: false });
-      
+
     if (!error && viajesTerminados) {
       document.getElementById('statTrips').textContent = viajesTerminados.length;
-      
+
       const ganancias = viajesTerminados.reduce((acc, current) => acc + (current.tarifa || 0), 0);
       document.getElementById('statEarnings').textContent = `$${ganancias.toLocaleString('es-CO')}`;
-      
+
       const historyList = document.getElementById('historyList');
       if (viajesTerminados.length === 0) {
         historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes finalizados aún.</p>';
