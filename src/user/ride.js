@@ -286,7 +286,7 @@ async function showDriverAssigned(driverId, state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
-  
+
   // Limpiar carrusel previo si existe
   if (state.carouselInterval) {
     clearInterval(state.carouselInterval);
@@ -312,7 +312,7 @@ async function showDriverAssigned(driverId, state) {
     .select('calificacion')
     .eq('conductor_id', driverId)
     .not('calificacion', 'is', null);
-  
+
   let driverRating = 'Sin reseñas aún';
   if (ratingData && ratingData.length > 0) {
     const validRatings = ratingData.filter(v => v.calificacion > 0);
@@ -412,10 +412,9 @@ async function showDriverAssigned(driverId, state) {
     }
   }, 6000); // 6 segundos de exposición por ventana
 
-  // Botón Cancelar (Reload por seguridad solicitada)
+  // Botón Cancelar (Vinculado a la base de datos para notificar al conductor)
   document.getElementById('cancelRideBtnAction').addEventListener('click', () => {
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
+    cancelRide(state, null);
   });
 }
 
@@ -434,17 +433,10 @@ function showTripStarted(state) {
       <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
       <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
       <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
-        <span style="color:#FF6B00; font-weight:bold;">Estado:</span> En camino...
+        <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
       </div>
-      <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%;" id="cancelTripInProgressBtn">Cancelar Servicio</button>
     </div>
   `;
-
-  document.getElementById('cancelTripInProgressBtn').addEventListener('click', () => {
-    if (confirm('¿Estás seguro de cancelar el viaje en curso?')) {
-      cancelRide(state, null);
-    }
-  });
 }
 
 /**
@@ -535,13 +527,13 @@ function showRatingScreen(state) {
     if (!selectedRating) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
-    
+
     if (rideId) {
       const { error } = await supabase
         .from('viajes')
         .update({ calificacion: selectedRating })
         .eq('id', rideId);
-      
+
       if (error) {
         console.error('Error al guardar calificación:', error);
         alert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'));
@@ -551,7 +543,7 @@ function showRatingScreen(state) {
         return;
       }
     }
-    
+
     localStorage.removeItem(STORAGE_KEY);
     location.reload();
   });
