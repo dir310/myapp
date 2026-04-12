@@ -7,6 +7,7 @@ import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 
 let cardMaps = new Map(); // Store mini-map instances by ride ID
+let lastRenderedHTML = '';
 
 let radarEnabled = false;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -103,15 +104,19 @@ export function renderViajes(viajes, handlers) {
   });
 
   if (filteredViajes.length === 0) {
-    container.innerHTML = `
+    const emptyHTML = `
       <div class="empty-state">
         <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
         Buscando pasajeros<br>cerca de La Calera...
       </div>`;
+    if (lastRenderedHTML !== emptyHTML) {
+      container.innerHTML = emptyHTML;
+      lastRenderedHTML = emptyHTML;
+    }
     return;
   }
 
-  container.innerHTML = filteredViajes
+  const newHTML = filteredViajes
     .map((v) => {
       let actions = '';
       if (v.estado === 'buscando') {
@@ -173,6 +178,11 @@ export function renderViajes(viajes, handlers) {
   `;
     })
     .join('');
+
+  if (lastRenderedHTML === newHTML) return;
+  
+  container.innerHTML = newHTML;
+  lastRenderedHTML = newHTML;
 
   // ── Fetch and display passenger trip counts ──
   filteredViajes.forEach(v => {

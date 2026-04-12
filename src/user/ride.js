@@ -245,7 +245,8 @@ async function showDriverAssigned(driverId, state) {
     state.pollerInterval = null;
   }
 
-  // Vista de carga inicial muy rápida
+// Vista de carga inicial muy rápida
+  import('./ui.js').then(({ showStatus }) => showStatus('', false));
   document.getElementById('priceSection').innerHTML = `
     <div style="text-align:center; padding: 10px 0;">
       <h3 style="color:#30D158; margin-bottom:5px; font-weight:800;">¡Conductor Asignado!</h3>
