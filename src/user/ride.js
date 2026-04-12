@@ -52,23 +52,40 @@ export async function acceptRide(state, map) {
       throw new Error('Tarifa inválida. Por favor recalcula la ruta.');
     }
 
-    const { data, error } = await supabase.from('viajes').insert([
-      {
-        origen_nombre: originName,
-        origen_lat: state.startLatLng.lat,
-        origen_lng: state.startLatLng.lng,
-        destino_nombre: destName,
-        destino_lat: state.endLatLng.lat,
-        destino_lng: state.endLatLng.lng,
-        tarifa: price,
-        distancia_km: distText,
-        estado: 'buscando',
-        cliente_nombre: cNombre,
-        cliente_cedula: cCedula,
-        cliente_telefono: cTelefono,
-        pasajero_id: localStorage.getItem('calmovil_cliente_id') || null
-      },
-    ]).select();
+    const viajePayload = {
+      origen_nombre: originName,
+      origen_lat: state.startLatLng.lat,
+      origen_lng: state.startLatLng.lng,
+      destino_nombre: destName,
+      destino_lat: state.endLatLng.lat,
+      destino_lng: state.endLatLng.lng,
+      tarifa: price,
+      distancia_km: distText,
+      estado: 'buscando',
+      cliente_nombre: cNombre,
+      cliente_cedula: cCedula,
+      cliente_telefono: cTelefono,
+      pasajero_id: localStorage.getItem('calmovil_cliente_id') || null
+    };
+
+    let data, error;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 3;
+
+    while (attempts < MAX_ATTEMPTS) {
+      attempts++;
+      const res = await supabase.from('viajes').insert([viajePayload]).select();
+      data = res.data;
+      error = res.error;
+
+      if (!error) break; // Éxito: salimos del bucle
+
+      console.warn(`Intento ${attempts} fallido (Cold Start?). Reintentando...`, error);
+      if (attempts < MAX_ATTEMPTS) {
+        btn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Conectando...';
+        await new Promise(r => setTimeout(r, 1500 * attempts)); // Espera incremental
+      }
+    }
 
     if (error) throw error;
     state.currentRideId = data[0].id;
@@ -93,7 +110,7 @@ export async function acceptRide(state, map) {
     // Start listening for driver
     listenForDriver(state.currentRideId, state, map);
   } catch (err) {
-    showStatus('❌ Error al pedir viaje. Intenta de nuevo.', true);
+    showStatus('❌ Falló la conexión. Intenta pedir el viaje de nuevo.', true);
     btn.innerHTML = '🏍️ Pedir Viaje';
     btn.disabled = false;
     console.error(err);

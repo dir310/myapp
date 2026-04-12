@@ -492,3 +492,7 @@ if ('serviceWorker' in navigator) {
 
 // ── Restaurar viaje activo si existe ──
 restoreActiveRide(state, map);
+
+// ── Pre-warming Supabase (Cold Start Fix) ──
+// Lanza una pequeña consulta para despertar la DB mientras el usuario elige ruta.
+supabase.from('clientes').select('id').limit(1).then(() => console.log('⚡ DB Wake-up ping sent.'));
