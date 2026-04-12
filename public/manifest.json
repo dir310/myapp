@@ -2,7 +2,7 @@
   "name": "ZIPPY - Transporte",
   "short_name": "ZIPPY",
   "description": "Pide tu viaje rápido y seguro con ZIPPY.",
-  "id": "/index.html",
+  "id": "com.zippy.passenger",
   "start_url": "./index.html",
   "scope": "/index.html",
   "display": "standalone",

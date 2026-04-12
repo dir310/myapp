@@ -500,7 +500,7 @@ setupSuggestionDismiss();
 
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
+  navigator.serviceWorker.register('/sw.js', { scope: '/index.html' }).catch(console.log);
 }
 
 // ── Restaurar viaje activo si existe ──
