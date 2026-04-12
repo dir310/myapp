@@ -91,12 +91,14 @@ export async function acceptRide(state, map) {
     state.currentRideId = data[0].id;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
 
-    // Show searching UI
+    // Show searching UI with Lottie Animation
     document.getElementById('priceSection').innerHTML = `
-      <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
-        <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
+      <div id="searchingContainer" style="text-align:center; padding: 20px 0;">
+        <div style="width: 120px; height: 120px; margin: 0 auto -10px auto;">
+          <lottie-player src="https://lottie.host/8df04e22-cc05-47e1-954f-ca6a43875ec8/Z180GZJ0S0.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+        </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
-        <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
+        <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
         <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${price.toLocaleString('es-CO')}</div>
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
@@ -117,6 +119,7 @@ export async function acceptRide(state, map) {
   }
 }
 
+let lastETAFetch = 0;
 function updateETA(lat, lng, state) {
   const etaText = document.getElementById('etaText');
   if (!etaText || !state.startLatLng || state.driverArrived) return;
@@ -124,17 +127,39 @@ function updateETA(lat, lng, state) {
   const conductorPos = L.latLng(lat, lng);
   const distMeters = state.startLatLng.distanceTo(conductorPos);
 
-  if (distMeters <= 50) {
+  if (distMeters <= 60) {
     state.driverArrived = true;
-    etaText.innerHTML = '🚕 ¡Tu conductor ha llegado!';
+    etaText.innerHTML = '🏍️ ¡Tu conductor ha llegado!';
     etaText.style.color = '#fff';
-    etaText.style.background = '#30D158'; // Verde success
+    etaText.style.background = '#30D158';
     etaText.style.boxShadow = '0 4px 12px rgba(48,209,88,0.3)';
-  } else {
-    // 400 m/min es aprox 24 km/h en ciudad
-    const mins = Math.max(1, Math.ceil(distMeters / 400));
-    etaText.innerHTML = `🚕 Llegando en aprox. ${mins} min...`;
+    return;
   }
+
+  // Si ha pasado poco tiempo, no volvemos a llamar a la API (ahorro de cuota)
+  const now = Date.now();
+  if (now - lastETAFetch < 15000) return; // Máximo una consulta cada 15 seg
+  lastETAFetch = now;
+
+  // Calculo real por calles usando OSRM
+  const osrmUrl = `https://router.project-osrm.org/base/v1/driving/${lng},${lat};${state.startLatLng.lng},${state.startLatLng.lat}?overview=false`;
+  const secureUrl = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
+
+  fetch(secureUrl)
+    .then(r => r.json())
+    .then(data => {
+      if (data.code === 'Ok' && data.routes?.length > 0) {
+        const mins = Math.round(data.routes[0].duration / 60) || 1;
+        etaText.innerHTML = `🏍️ Llegando en aprox. ${mins} min...`;
+      } else {
+        throw new Error('Fallback logic needed');
+      }
+    })
+    .catch(() => {
+      // Fallback matemático si la API falla
+      const minsFallback = Math.max(1, Math.ceil(distMeters / 350));
+      etaText.innerHTML = `🏍️ Llegando en aprox. ${minsFallback} min...`;
+    });
 }
 
 /**
@@ -400,12 +425,14 @@ function showSearchingRecovery(state) {
   // Show notification
   alert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.');
 
-  // Revert UI to searching mode
+  // Revert UI to searching mode with Lottie
   document.getElementById('priceSection').innerHTML = `
-      <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
-        <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
+      <div id="searchingContainer" style="text-align:center; padding: 20px 0;">
+        <div style="width: 120px; height: 120px; margin: 0 auto -10px auto;">
+          <lottie-player src="https://lottie.host/8df04e22-cc05-47e1-954f-ca6a43875ec8/Z180GZJ0S0.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+        </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Re-buscando conductor...</h3>
-        <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos nuevamente. No cierres esta ventana.</p>
+        <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos nuevamente. No cierres esta ventana.</p>
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
   `;
