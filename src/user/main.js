@@ -325,6 +325,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const editBtn = document.getElementById('editPassengerBtn');
   if (editBtn) {
       editBtn.addEventListener('click', () => {
+          // Bloqueo si hay un viaje activo
+          if (state.currentRideId) {
+            alert('⚠️ No puedes editar tu perfil mientras tienes un viaje solicitado o en curso.');
+            return;
+          }
+
           // Pre-llenar solo nombre y teléfono
           document.getElementById('authNombre').value = localStorage.getItem('calmovil_cliente_nombre') || '';
           document.getElementById('authTelefono').value = localStorage.getItem('calmovil_cliente_telefono') || '';
