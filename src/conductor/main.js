@@ -12,10 +12,10 @@ document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 
 // Refrescar viajes instantáneamente al volver de Waze u otras apps
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        loadViajes();
-        playAlert(); // Sonar alarma al volver si el radar está encendido
-    }
+  if (document.visibilityState === 'visible') {
+    loadViajes();
+    playAlert(); // Sonar alarma al volver si el radar está encendido
+  }
 });
 
 // ── Initialize ──
@@ -24,55 +24,7 @@ initAuth();
 
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href)
-    .then(reg => {
-      console.log('✅ Service Worker registrado');
-      // Solo suscribir si el conductor entra y activa el radar
-      window.setupPushNotifications = async () => {
-        try {
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') return;
-
-          const publicKey = 'BOw0KEyevvCgbw7kVS9q6CsYcN2mdVWFccm8NyAnukk5KTztaUqgnPe5ubx4fD4D01mHoVnrU1WftqCZBhYxZ20';
-          const subscription = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey)
-          });
-
-          const { supabase } = await import('../config/supabase.js');
-          const { getCurrentProfile } = await import('./auth.js');
-          const profile = getCurrentProfile();
-
-          if (profile) {
-             const { error: upsertError } = await supabase.from('push_subscriptions').upsert({
-               conductor_id: profile.id,
-               subscription: subscription.toJSON() // Importante: USAR .toJSON() para capturar los datos
-             });
-             
-             if (upsertError) {
-               console.error('Error DB:', upsertError);
-               alert('❌ Error guardando permiso en base de datos: ' + upsertError.message);
-             } else {
-               console.log('✅ Suscripción Push guardada en DB');
-               alert('🔔 ¡Notificaciones Push Profesionales ACTIVADAS con éxito! Ya puedes bloquear el teléfono.');
-             }
-          }
-        } catch (err) {
-          console.error('❌ Error suscripción Push:', err);
-        }
-      };
-    })
-    .catch(console.log);
-}
-
-// Helper para VAPID
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-  return outputArray;
+  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
 }
 
 // ── Modal Acerca de ZIPPY (Conductor) ──

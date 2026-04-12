@@ -55,18 +55,13 @@ export function toggleRadar(isAutoClick = false) {
   const btn = document.getElementById('radarBtn');
   const txt = document.getElementById('radarText');
 
-  if (radarEnabled) {
-    btn.className = 'radar-toggle radar-on';
-    txt.innerText = 'RADAR ENCENDIDO';
-    
-    requestWakeLock(); // Activar bloqueo de pantalla
-    
-    // Llamar a la suscripción Push si está disponible
-    if (window.setupPushNotifications) {
-      window.setupPushNotifications();
-    }
-
-    // Forzar petición de permisos GPS y Notificaciones explícitamente 
+    if (radarEnabled) {
+      btn.className = 'radar-toggle radar-on';
+      txt.innerText = 'RADAR ENCENDIDO';
+      
+      requestWakeLock(); // Activar bloqueo de pantalla
+ 
+      // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => console.log('✅ Permiso de GPS concedido por el conductor.'),
