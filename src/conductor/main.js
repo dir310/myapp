@@ -24,7 +24,7 @@ initAuth();
 
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/conductor/sw.js', { scope: '/conductor/' }).catch(console.log);
+  navigator.serviceWorker.register('conductor/sw.js', { scope: './conductor/' }).catch(console.log);
 }
 
 // ── Modal Acerca de ZIPPY (Conductor) ──
