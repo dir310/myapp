@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zippy-v6';
+const CACHE_NAME = 'zippy-restaurado-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
