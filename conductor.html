@@ -63,7 +63,7 @@
                 <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
                 <!-- Botón Instalar App PWA -->
                 <button id="pwaInstallBtnDriver"
-                    style="display:none; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
+                    style="display:block; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
                     onmouseover="this.style.background='rgba(255,107,0,0.22)'"
                     onmouseout="this.style.background='rgba(255,107,0,0.12)'">
                     📲 Instalar App
@@ -254,18 +254,9 @@
         var _pwaPromptDriver = null;
         var _isIOSDriver = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        // En iOS mostrar boton siempre; en Android solo cuando Chrome este listo
-        if (_isIOSDriver) {
-            document.getElementById('pwaInstallBtnDriver').style.display = 'block';
-        }
-
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
             _pwaPromptDriver = e;
-            // En Android: mostrar boton solo cuando el prompt esta listo
-            if (!_isIOSDriver) {
-                document.getElementById('pwaInstallBtnDriver').style.display = 'block';
-            }
         });
 
         document.addEventListener('click', function(e) {
@@ -275,15 +266,18 @@
                     _pwaPromptDriver.prompt();
                     _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
                 } else if (_isIOSDriver) {
-                    // iOS: mostrar banner con instrucciones
+                    // iOS: banner con instrucciones
                     document.getElementById('iosBannerDriver').style.display = 'block';
+                } else {
+                    // Ya instalada
+                    alert('✅ ZIPPY ya está instalada en tu dispositivo.');
                 }
             }
         });
 
         window.addEventListener('appinstalled', function() {
             var btn = document.getElementById('pwaInstallBtnDriver');
-            if (btn) btn.style.display = 'none';
+            if (btn) btn.textContent = '✅ App Instalada';
         });
     </script>
 </body>
