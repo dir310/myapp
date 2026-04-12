@@ -57,20 +57,7 @@ window.togglePassword = function(inputId, iconElement) {
 };
 
 function setupUIEvents() {
-  document.getElementById('showRegister').onclick = (e) => {
-    e.preventDefault();
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'block';
-  };
-
-  document.getElementById('showLogin').onclick = (e) => {
-    e.preventDefault();
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-  };
-
   document.getElementById('loginBtn').onclick = handleLogin;
-  document.getElementById('registerBtn').onclick = handleRegister;
   
   // Profile Sidebar toggles
   profileBtn.onclick = openProfile;
@@ -133,13 +120,6 @@ function setupUIEvents() {
 }
 
 function generateCaptcha() {
-  // Captcha para Registro
-  const r1 = Math.floor(Math.random() * 9) + 1;
-  const r2 = Math.floor(Math.random() * 9) + 1;
-  captchaAnswerRegister = r1 + r2;
-  const regQ = document.getElementById('captchaQuestion');
-  if(regQ) regQ.textContent = `¿${r1} + ${r2}? =`;
-
   // Captcha para Login
   const l1 = Math.floor(Math.random() * 9) + 1;
   const l2 = Math.floor(Math.random() * 9) + 1;
@@ -188,9 +168,13 @@ async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
+  const termsElement = document.getElementById('loginTerms');
+  const terms = termsElement ? termsElement.checked : true; // Fallback just in case
   const btn = document.getElementById('loginBtn');
 
   if (!email || !password) return alert('Por favor llena todos los campos.');
+  
+  if (!terms) return alert('Debes aceptar las condiciones de uso (riesgo) marcando la casilla para poder ingresar.');
   
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
     alert('La respuesta a la suma de seguridad es incorrecta.');
@@ -259,66 +243,6 @@ async function handleLogin() {
   window.location.reload();
 }
 
-async function handleRegister() {
-  const nombre = document.getElementById('regNombre').value;
-  const email = document.getElementById('regEmail').value;
-  const password = document.getElementById('regPassword').value;
-  const telefono = document.getElementById('regTelefono').value;
-  const placa = document.getElementById('regPlaca').value;
-  const userCaptcha = parseInt(document.getElementById('regCaptcha').value);
-  const terms = document.getElementById('regTerms').checked;
-  const btn = document.getElementById('registerBtn');
-
-  if (!nombre || !email || !password || !telefono || !placa) {
-    return alert('Por favor llena todos los campos.');
-  }
-
-  if (!terms) {
-    return alert('Debes marcar la casilla aceptando los términos de responsabilidad para poder registrarte.');
-  }
-
-  if (userCaptcha !== captchaAnswerRegister) {
-    generateCaptcha();
-    return alert('La respuesta matemática es incorrecta.');
-  }
-
-  btn.textContent = 'Creando cuenta...';
-  btn.disabled = true;
-
-  // Custom Auth Register (Direct Insert bypassing Supabase Auth)
-  const userId = crypto.randomUUID();
-
-  const { error: dbError } = await supabase
-    .from('conductores')
-    .insert([{
-      id: userId,
-      nombre,
-      email,
-      password,
-      telefono,
-      placa
-    }]);
-
-  if (dbError) {
-    if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) {
-      alert('Error en registro: Ya existe una cuenta con este correo.');
-    } else {
-      alert('Error creando el perfil: ' + dbError.message);
-    }
-    return resetRegisterBtn(btn);
-  }
-
-  // Guardar en sesión local con timestamp y recargar
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: userId, timestamp: Date.now() }));
-  btn.textContent = '¡Éxito! Entrando...';
-  window.location.reload();
-}
-
-function resetRegisterBtn(btn) {
-  btn.textContent = 'Crear Cuenta';
-  btn.disabled = false;
-  generateCaptcha();
-}
 
 export function getCurrentProfile() {
   return currentProfile;
