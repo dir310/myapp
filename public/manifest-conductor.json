@@ -1,8 +1,8 @@
 {
-  "name": "ZIPPY - Conductores",
+  "name": "ZIPPY Conductor",
   "short_name": "ZIPPY Cond",
   "description": "Panel de control para conductores ZIPPY.",
-  "id": "/conductor.html",
+  "id": "zippy-conductor",
   "start_url": "./conductor.html",
   "scope": "./conductor.html",
   "display": "standalone",

@@ -1,8 +1,8 @@
 {
-  "name": "ZIPPY - Transporte",
+  "name": "ZIPPY Pasajero",
   "short_name": "ZIPPY",
   "description": "Pide tu viaje rápido y seguro con ZIPPY.",
-  "id": "/",
+  "id": "zippy-pasajero",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
