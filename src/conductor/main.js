@@ -44,11 +44,18 @@ if ('serviceWorker' in navigator) {
           const profile = getCurrentProfile();
 
           if (profile) {
-             await supabase.from('push_subscriptions').upsert({
+             const { error: upsertError } = await supabase.from('push_subscriptions').upsert({
                conductor_id: profile.id,
-               subscription: JSON.stringify(subscription)
+               subscription: subscription.toJSON() // Importante: USAR .toJSON() para capturar los datos
              });
-             console.log('✅ Suscripción Push guardada en DB');
+             
+             if (upsertError) {
+               console.error('Error DB:', upsertError);
+               alert('❌ Error guardando permiso en base de datos: ' + upsertError.message);
+             } else {
+               console.log('✅ Suscripción Push guardada en DB');
+               alert('🔔 ¡Notificaciones Push Profesionales ACTIVADAS con éxito! Ya puedes bloquear el teléfono.');
+             }
           }
         } catch (err) {
           console.error('❌ Error suscripción Push:', err);
