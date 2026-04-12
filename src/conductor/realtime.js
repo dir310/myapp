@@ -111,17 +111,18 @@ export function setupRealtimeChannel() {
           showNewRideBanner();
           playAlert();
 
-          // Notificación del Sistema (Background / locked screen)
-          if (document.visibilityState === 'hidden' && "Notification" in window && Notification.permission === "granted") {
-            const n = new Notification("🚕 ¡Nueva Solicitud ZIPPY!", {
+          // Notificación del Sistema (Background / locked screen) usando Service Worker (más fiable)
+          if (document.visibilityState === 'hidden' && Notification.permission === "granted") {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.showNotification("🚕 ¡Nueva Solicitud ZIPPY!", {
                 body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
-                icon: '/icons/icon-192x192.png', // O alguna imagen de la app
-                tag: 'nuevo-viaje'
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/icon-192x192.png', // Ícono pequeño para la barra de estado
+                vibrate: [200, 100, 200, 100, 200], // Patrón de vibración fuerte
+                tag: 'nuevo-viaje',
+                data: { url: '/' } // Datos para el clic
+              });
             });
-            n.onclick = () => {
-                window.focus();
-                n.close();
-            };
           }
         }
       }
