@@ -61,6 +61,13 @@
                 </label>
 
                 <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
+                <!-- Botón Instalar App PWA -->
+                <button id="pwaInstallBtnDriver"
+                    style="display:block; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
+                    onmouseover="this.style.background='rgba(255,107,0,0.22)'"
+                    onmouseout="this.style.background='rgba(255,107,0,0.12)'">
+                    📲 Instalar App
+                </button>
                 <div style="text-align:center; margin-top:12px;">
                     <a href="https://wa.me/573107935858" target="_blank"
                         style="color:rgba(255,255,255,.4); font-size:12px; text-decoration:underline;">¿Olvidaste tu PIN? Contáctanos</a>
@@ -214,6 +221,31 @@
     </div>
 
     <script type="module" src="/src/conductor/main.js"></script>
+
+    <!-- PWA Install Prompt -->
+    <script>
+        let _pwaPromptDriver = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            _pwaPromptDriver = e;
+            var btn = document.getElementById('pwaInstallBtnDriver');
+            if (btn) btn.style.display = 'block';
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'pwaInstallBtnDriver') {
+                if (_pwaPromptDriver) {
+                    _pwaPromptDriver.prompt();
+                    _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
+                } else {
+                    alert('Para instalar:\n\nAndroid: Abre en Chrome → menú (⋮) → "Instalar app"\n\niPhone: Abre en Safari → botón compartir (↑) → "Añadir a pantalla de inicio"');
+                }
+            }
+        });
+        window.addEventListener('appinstalled', function() {
+            var btn = document.getElementById('pwaInstallBtnDriver');
+            if (btn) btn.style.display = 'none';
+        });
+    </script>
 </body>
 
 </html>

@@ -230,6 +230,13 @@
                 <button class="btn btn-primary"
                     style="width: 100%; font-size: 16px; padding: 14px; margin-bottom: 12px;"
                     id="savePassengerAuthBtn">Ingresar</button>
+                <!-- Botón Instalar App PWA -->
+                <button id="pwaInstallBtn"
+                    style="display:block; width:100%; font-size:14px; padding:12px; margin-bottom:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
+                    onmouseover="this.style.background='rgba(255,107,0,0.22)'"
+                    onmouseout="this.style.background='rgba(255,107,0,0.12)'">
+                    📲 Instalar App
+                </button>
                 <div style="text-align:center;">
                     <p style="color:rgba(255,255,255,.4); font-size:12px; margin-bottom:4px;" id="authSwitchText">¿No
                         tienes cuenta?</p>
@@ -265,6 +272,31 @@
     </div>
 
     <script type="module" src="/src/user/main.js"></script>
+
+    <!-- PWA Install Prompt -->
+    <script>
+        let _pwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            _pwaPrompt = e;
+            var btn = document.getElementById('pwaInstallBtn');
+            if (btn) btn.style.display = 'block';
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'pwaInstallBtn') {
+                if (_pwaPrompt) {
+                    _pwaPrompt.prompt();
+                    _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+                } else {
+                    alert('Para instalar:\n\nAndroid: Abre en Chrome → menú (⋮) → "Instalar app"\n\niPhone: Abre en Safari → botón compartir (↑) → "Añadir a pantalla de inicio"');
+                }
+            }
+        });
+        window.addEventListener('appinstalled', function() {
+            var btn = document.getElementById('pwaInstallBtn');
+            if (btn) btn.style.display = 'none';
+        });
+    </script>
     <!-- Sonido de notificación -->
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
         preload="auto"></audio>
