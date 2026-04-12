@@ -63,7 +63,7 @@
                 <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
                 <!-- Botón Instalar App PWA -->
                 <button id="pwaInstallBtnDriver"
-                    style="display:block; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
+                    style="display:none; width:100%; margin-top:10px; font-size:14px; padding:12px; background:rgba(255,107,0,0.12); border:1px solid rgba(255,107,0,0.4); border-radius:12px; color:#FF6B00; font-weight:700; cursor:pointer; transition:all .2s;"
                     onmouseover="this.style.background='rgba(255,107,0,0.22)'"
                     onmouseout="this.style.background='rgba(255,107,0,0.12)'">
                     📲 Instalar App
@@ -251,28 +251,36 @@
 
     <!-- PWA Install Prompt -->
     <script>
-        let _pwaPromptDriver = null;
+        var _pwaPromptDriver = null;
+        var _isIOSDriver = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        // En iOS mostrar boton siempre; en Android solo cuando Chrome este listo
+        if (_isIOSDriver) {
+            document.getElementById('pwaInstallBtnDriver').style.display = 'block';
+        }
+
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
             _pwaPromptDriver = e;
-            var btn = document.getElementById('pwaInstallBtnDriver');
-            if (btn) btn.style.display = 'block';
+            // En Android: mostrar boton solo cuando el prompt esta listo
+            if (!_isIOSDriver) {
+                document.getElementById('pwaInstallBtnDriver').style.display = 'block';
+            }
         });
+
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'pwaInstallBtnDriver') {
                 if (_pwaPromptDriver) {
+                    // Android: instalacion directa
                     _pwaPromptDriver.prompt();
                     _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
-                } else {
-                    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                    if (isIOS) {
-                        document.getElementById('iosBannerDriver').style.display = 'block';
-                    } else {
-                        alert('Para instalar:\nAndroid: Abre en Chrome → menú (⋮) → "Instalar app"');
-                    }
+                } else if (_isIOSDriver) {
+                    // iOS: mostrar banner con instrucciones
+                    document.getElementById('iosBannerDriver').style.display = 'block';
                 }
             }
         });
+
         window.addEventListener('appinstalled', function() {
             var btn = document.getElementById('pwaInstallBtnDriver');
             if (btn) btn.style.display = 'none';
