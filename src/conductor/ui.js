@@ -60,6 +60,11 @@ export function toggleRadar(isAutoClick = false) {
     txt.innerText = 'RADAR ENCENDIDO';
     
     requestWakeLock(); // Activar bloqueo de pantalla
+    
+    // Llamar a la suscripción Push si está disponible
+    if (window.setupPushNotifications) {
+      window.setupPushNotifications();
+    }
 
     // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {

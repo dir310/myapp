@@ -24,7 +24,48 @@ initAuth();
 
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
+  navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href)
+    .then(reg => {
+      console.log('✅ Service Worker registrado');
+      // Solo suscribir si el conductor entra y activa el radar
+      window.setupPushNotifications = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') return;
+
+          const publicKey = 'BOw0KEyevvCgbw7kVS9q6CsYcN2mdVWFccm8NyAnukk5KTztaUqgnPe5ubx4fD4D01mHoVnrU1WftqCZBhYxZ20';
+          const subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey)
+          });
+
+          const { supabase } = await import('../config/supabase.js');
+          const { getCurrentProfile } = await import('./auth.js');
+          const profile = getCurrentProfile();
+
+          if (profile) {
+             await supabase.from('push_subscriptions').upsert({
+               conductor_id: profile.id,
+               subscription: JSON.stringify(subscription)
+             });
+             console.log('✅ Suscripción Push guardada en DB');
+          }
+        } catch (err) {
+          console.error('❌ Error suscripción Push:', err);
+        }
+      };
+    })
+    .catch(console.log);
+}
+
+// Helper para VAPID
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+  return outputArray;
 }
 
 // ── Modal Acerca de ZIPPY (Conductor) ──

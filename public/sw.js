@@ -41,3 +41,30 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Manejo de Notificaciones PUSH desde el Servidor
+self.addEventListener('push', (event) => {
+  let data = { title: 'ZIPPY', body: '¡Nuevo viaje disponible!' };
+  
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'ZIPPY', body: event.data.text() };
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    vibrate: [500, 110, 500, 110, 500, 110, 500],
+    data: { url: '/' },
+    tag: 'nuevo-viaje',
+    renotify: true
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
