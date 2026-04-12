@@ -135,6 +135,7 @@ export function renderViajes(viajes, handlers) {
             <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino</button>
+            <a href="https://waze.com/ul?ll=${v.destino_lat},${v.destino_lng}&navigate=yes" target="_blank" class="btn" style="display:block; width:100%; margin-bottom:10px; background:rgba(0,122,255,0.15); color:#007AFF; border:1.5px solid #007AFF; font-size:13px; font-weight:800; text-decoration:none; text-align:center; padding:12px 0; border-radius:12px; box-sizing:border-box;">🚖 Pasajero Recogido — Ir al Destino en Waze</a>
             <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
