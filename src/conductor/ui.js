@@ -75,11 +75,13 @@ export function toggleRadar(isAutoClick = false) {
       });
     }
 
-    // Touch sound to unlock browser audio policy
-    alertSound.play().then(() => {
-      alertSound.pause();
-      alertSound.currentTime = 0;
-    }).catch((e) => console.log('Audio unlock deferred until interaction'));
+    // Touch sound to unlock browser audio policy — ONLY if manual interaction
+    if (isManual) {
+      alertSound.play().then(() => {
+        alertSound.pause();
+        alertSound.currentTime = 0;
+      }).catch((e) => console.log('Audio unlock deferred until interaction'));
+    }
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
