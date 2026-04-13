@@ -14,7 +14,7 @@ const LOCK_DURATION_MS = 60 * 1000; // 60 segundos
 const STORAGE_KEY = 'calmovil_driver_session'; // Formato: { id, timestamp }
 
 // Elementos UI
-const authModal = document.getElementById('authModal');
+const authModal = document.getElementById('loginOverlay');
 const mainAppContent = document.getElementById('mainAppContent');
 const profileBtn = document.getElementById('profileBtn');
 const profileSidebar = document.getElementById('profileSidebar');
