@@ -75,7 +75,7 @@ export function toggleRadar(isAutoClick = false) {
       });
     }
 
-    // Touch sound to unlock browser audio policy — ONLY if manual interaction
+    // Touch sound to unlock browser audio policy — ONLY if manual interaction (avoids "beep" on entry)
     if (isManual) {
       alertSound.play().then(() => {
         alertSound.pause();
