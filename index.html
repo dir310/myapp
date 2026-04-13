@@ -231,7 +231,12 @@
                     style="width: 100%; font-size: 16px; padding: 14px; margin-bottom: 12px;"
                     id="savePassengerAuthBtn">Ingresar</button>
 
-                <div style="text-align:center;">
+                <!-- 📲 Premium PWA Install Section -->
+                <div id="pwaInstallWrapper" class="pwa-install-wrapper">
+                    <button id="pwaInstallBtn" class="btn-pwa-install">
+                        <span>📲</span> Instalar App Pasajero
+                    </button>
+                </div>
                     <p style="color:rgba(255,255,255,.4); font-size:12px; margin-bottom:4px;" id="authSwitchText">¿No
                         tienes cuenta?</p>
                     <a href="#" id="authSwitchBtn"
@@ -308,27 +313,29 @@
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
             _pwaPrompt = e;
+            // Show the premium install button
+            const wrapper = document.getElementById('pwaInstallWrapper');
+            if (wrapper) wrapper.style.display = 'block';
         });
 
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'pwaInstallBtn') {
-                if (_pwaPrompt) {
-                    // Android: instalacion directa
-                    _pwaPrompt.prompt();
-                    _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
-                } else if (_isIOS) {
-                    // iOS: banner con instrucciones
-                    document.getElementById('iosBanner').style.display = 'block';
-                } else {
-                    // Ya instalada
-                    alert('✅ ZIPPY ya está instalada en tu dispositivo.');
-                }
+        document.getElementById('pwaInstallBtn').addEventListener('click', function() {
+            if (_pwaPrompt) {
+                _pwaPrompt.prompt();
+                _pwaPrompt.userChoice.then(function(choice) {
+                    if (choice.outcome === 'accepted') {
+                        document.getElementById('pwaInstallWrapper').style.display = 'none';
+                    }
+                    _pwaPrompt = null;
+                });
+            } else if (_isIOS) {
+                // Future implementation for iOS instructions if needed
+                alert('Para instalar: Toca el botón "Compartir" y luego "Añadir a la pantalla de inicio".');
             }
         });
 
         window.addEventListener('appinstalled', function() {
-            var btn = document.getElementById('pwaInstallBtn');
-            if (btn) btn.textContent = '✅ App Instalada';
+            const wrapper = document.getElementById('pwaInstallWrapper');
+            if (wrapper) wrapper.style.display = 'none';
         });
     </script>
     <!-- Sonido de notificación -->

@@ -61,6 +61,13 @@
                 </label>
 
                 <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar</button>
+
+                <!-- 📲 Premium PWA Install Section -->
+                <div id="pwaInstallWrapperDriver" class="pwa-install-wrapper">
+                    <button id="pwaInstallBtnDriver" class="btn-pwa-install">
+                        <span>📲</span> Instalar App Conductor
+                    </button>
+                </div>
               </div>
                 <div style="text-align:center; margin-top:12px;">
                     <a href="https://wa.me/573107935858" target="_blank"
@@ -262,27 +269,28 @@
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
             _pwaPromptDriver = e;
+            // Show the premium install button for drivers
+            const wrapper = document.getElementById('pwaInstallWrapperDriver');
+            if (wrapper) wrapper.style.display = 'block';
         });
 
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'pwaInstallBtnDriver') {
-                if (_pwaPromptDriver) {
-                    // Android: instalacion directa
-                    _pwaPromptDriver.prompt();
-                    _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
-                } else if (_isIOSDriver) {
-                    // iOS: banner con instrucciones
-                    document.getElementById('iosBannerDriver').style.display = 'block';
-                } else {
-                    // Ya instalada
-                    alert('✅ ZIPPY ya está instalada en tu dispositivo.');
-                }
+        document.getElementById('pwaInstallBtnDriver').addEventListener('click', function() {
+            if (_pwaPromptDriver) {
+                _pwaPromptDriver.prompt();
+                _pwaPromptDriver.userChoice.then(function(choice) {
+                    if (choice.outcome === 'accepted') {
+                        document.getElementById('pwaInstallWrapperDriver').style.display = 'none';
+                    }
+                    _pwaPromptDriver = null;
+                });
+            } else if (_isIOSDriver) {
+                alert('Para instalar: Toca el botón "Compartir" y luego "Añadir a la pantalla de inicio".');
             }
         });
 
         window.addEventListener('appinstalled', function() {
-            var btn = document.getElementById('pwaInstallBtnDriver');
-            if (btn) btn.textContent = '✅ App Instalada';
+            const wrapper = document.getElementById('pwaInstallWrapperDriver');
+            if (wrapper) wrapper.style.display = 'none';
         });
     </script>
 </body>

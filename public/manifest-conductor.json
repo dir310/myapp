@@ -4,7 +4,7 @@
   "description": "Panel de control para conductores ZIPPY.",
   "id": "com.zippy.conductor",
   "start_url": "./conductor.html",
-  "scope": "./",
+  "scope": "./conductor.html",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#FF6B00",
