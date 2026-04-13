@@ -146,7 +146,14 @@ async function handleSession(session) {
 
     if (profileError || !profile) {
       console.error('Error cargando perfil:', profileError);
-      return handleSession(null); // Si no hay perfil, forzar login de nuevo
+      // Fallback: si tenemos ID de usuario pero falló la carga del registro completo, 
+      // intentamos proceder con datos mínimos en lugar de expulsar al usuario.
+      if (currentUser && currentUser.id) {
+        currentProfile = profile || { id: currentUser.id, nombre: 'Conductor' };
+        proceedToApp();
+        return;
+      }
+      return handleSession(null);
     }
 
     currentProfile = profile;
