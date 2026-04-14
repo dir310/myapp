@@ -117,7 +117,7 @@ function setAuthMode(mode) {
     if(groupCedula) groupCedula.style.display = 'none';
     if(groupTelefono) groupTelefono.style.display = 'none';
     if(captchaCont) captchaCont.style.display = 'none';
-    if(termsLabel) termsLabel.style.display = 'none';
+    if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'none'; 
   }
 }
