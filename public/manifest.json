@@ -3,6 +3,7 @@
   "short_name": "ZIPPY",
   "description": "Pide tu viaje rápido y seguro con ZIPPY.",
   "id": "com.zippy.passenger",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#111111",
