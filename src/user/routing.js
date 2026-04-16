@@ -124,24 +124,19 @@ export function checkRoute(state, map) {
 
   // 1.1 ELIMINADO: Ya no dibujamos línea recta. Esperamos a la curva por la vía.
 
-  // 2. PEDIR RUTA REAL A OSRM (Vía Proxy para saltar límites y CORS)
+  // 2. PEDIR RUTA REAL A OSRM (Directo preferido por velocidad)
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
-  const secureUrl = `https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`;
-
-  fetch(secureUrl)
+  
+  // Intentamos directo primero, si falla usamos proxy
+  fetch(osrmUrl)
+    .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
     .then(r => r.json())
     .then(data => {
       if (data.code !== 'Ok' || !data.routes?.length) return;
       
       const route  = data.routes[0];
-      const distKm = (route.distance / 1000).toFixed(1);
-      const mins   = Math.round(route.duration / 60) || 1;
-      // Solo mostramos la ruta, la tarifa y distancia ya se fijaron arriba
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
       renderRouteOnMap(curvyCoords, state, map); 
-      console.log('[MovilCal] Ruta visualizada sobre la vía.');
     })
-    .catch(err => {
-      console.error('[MovilCal] Error en ruteo por vía:', err);
-    });
+    .catch(err => console.error('[ZIPPY] Error en ruteo:', err));
 }
