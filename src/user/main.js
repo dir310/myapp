@@ -222,6 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!email || !password) return alert('Por favor llena el correo y la clave.');
 
+      const terms = document.getElementById('authTerms').checked;
+      if (!terms) return alert('Debes marcar la casilla aceptando los términos y condiciones para continuar.');
+
       // --- VALIDACIONES DE SEGURIDAD ---
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -242,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const fotoF = document.getElementById('authFotoFrontal').files[0];
         const fotoT = document.getElementById('authFotoTrasera').files[0];
         const captcha = parseInt(document.getElementById('passengerCaptcha').value);
-        const terms = document.getElementById('authTerms').checked;
 
         if (isNaN(captcha) || captcha !== passengerCaptchaAnswer) {
           alert('Suma de seguridad incorrecta.');
@@ -258,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
           return alert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.');
         }
 
-        if (!terms) return alert('Debes marcar la casilla aceptando los términos.');
 
         btn.disabled = true;
         btn.textContent = 'Procesando...';
