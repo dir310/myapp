@@ -7,16 +7,16 @@ import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 import { sanitizeHTML } from '../utils/security.js';
 
 // ── Tarifas Moto ───────────────────────────────────────────────────────────
-const BASE_FARE    = 2500;
-const PER_KM_FARE  = 1000;
+const BASE_FARE = 2700;
+const PER_KM_FARE = 1000;
 const PER_MIN_FARE = 120;
-const MIN_FARE     = 3500;
+const MIN_FARE = 3700;
 
 function haversineKm(a, b) {
-  const R    = 6371;
+  const R = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
   const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const x    = Math.sin(dLat / 2) ** 2 +
+  const x = Math.sin(dLat / 2) ** 2 +
     Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) *
     Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
@@ -34,7 +34,7 @@ function showPrice(distKm, mins) {
 
 // ── Íconos ─────────────────────────────────────────────────────────────────
 const iconStart = pinIcon('#30D158', 'A');
-const iconEnd   = pinIcon('#FF6B00', 'B');
+const iconEnd = pinIcon('#FF6B00', 'B');
 
 // ── Marcadores ─────────────────────────────────────────────────────────────
 export function placeMarker(type, lat, lng, name, state, map) {
@@ -46,13 +46,13 @@ export function placeMarker(type, lat, lng, name, state, map) {
     showStatus('📍 Fuera de cobertura: ZIPPY opera entre Cra 7ma y Sopó.', true);
     // Borrar el punto anterior si existía para evitar confusión
     if (type === 'start') {
-       if (state.startMarker) map.removeLayer(state.startMarker);
-       state.startLatLng = null;
-       state.startMarker = null;
+      if (state.startMarker) map.removeLayer(state.startMarker);
+      state.startLatLng = null;
+      state.startMarker = null;
     } else {
-       if (state.endMarker) map.removeLayer(state.endMarker);
-       state.endLatLng = null;
-       state.endMarker = null;
+      if (state.endMarker) map.removeLayer(state.endMarker);
+      state.endLatLng = null;
+      state.endMarker = null;
     }
     return;
   }
@@ -91,7 +91,7 @@ export function clearPoint(type, state, map) {
   const pill = document.getElementById('routePill');
   if (pill) pill.style.display = 'none';
 
-  const actions  = document.getElementById('mainActions');
+  const actions = document.getElementById('mainActions');
   const priceSec = document.getElementById('priceSection');
   if (actions) {
     actions.style.display = 'flex';
@@ -120,7 +120,7 @@ export function checkRoute(state, map) {
   if (!(state.startLatLng && state.endLatLng)) return;
 
   // 1. Mostrar Pills y Precio Haversine al instante
-  const quickKm   = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
+  const quickKm = haversineKm(state.startLatLng, state.endLatLng) * 1.3;
   const quickMins = Math.round((quickKm / 22) * 60) || 1;
 
   const distEl = document.getElementById('routeDistance');
@@ -132,9 +132,9 @@ export function checkRoute(state, map) {
   if (pillEl) pillEl.style.display = 'flex';
 
   showPrice(quickKm.toFixed(1), quickMins);
-  document.getElementById('mainActions').style.display  = 'none';
+  document.getElementById('mainActions').style.display = 'none';
   document.getElementById('priceSection').style.display = 'block';
-  
+
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
   if (isSheetMinimized()) toggleSheet();
 
@@ -142,17 +142,17 @@ export function checkRoute(state, map) {
 
   // 2. PEDIR RUTA REAL A OSRM (Directo preferido por velocidad)
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
-  
+
   // Intentamos directo primero, si falla usamos proxy
   fetch(osrmUrl)
     .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
     .then(r => r.json())
     .then(data => {
       if (data.code !== 'Ok' || !data.routes?.length) return;
-      
-      const route  = data.routes[0];
+
+      const route = data.routes[0];
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      renderRouteOnMap(curvyCoords, state, map); 
+      renderRouteOnMap(curvyCoords, state, map);
     })
     .catch(err => console.error('[ZIPPY] Error en ruteo:', err));
 }
