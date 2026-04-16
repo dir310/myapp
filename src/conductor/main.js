@@ -14,7 +14,6 @@ document.getElementById('radarBtn').addEventListener('click', toggleRadar);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     loadViajes();
-    playAlert(); // Sonar alarma al volver si el radar está encendido
   }
 });
 
