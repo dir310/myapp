@@ -171,11 +171,11 @@ export function renderViajes(viajes, handlers) {
           </div>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
-          <div style="text-align:center; padding: 10px 0;">
-            <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
+          <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
+            <div style="color: #30D158; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 10px;">✨ Viaje en Curso — En Camino</div>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino (Punto B)</button>
-            <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
+            <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%; height: 50px; font-size: 16px;" data-action="finish" data-id="${v.id}">🏁 PAGADO Y FINALIZAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       }
