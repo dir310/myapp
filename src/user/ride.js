@@ -226,6 +226,13 @@ export function listenForDriver(rideId, state, map) {
             // Animar el movimiento suavemente (2 segundos de duración)
             animateMarker(driverMarker, [lat, lng], 2000);
           }
+          
+          // Zoom Inteligente: Ajustar mapa para ver ambos puntos (Pasajero y Moto)
+          if (state.startLatLng) {
+            const bounds = L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.4);
+            map.fitBounds(bounds, { animate: true });
+          }
+
           updateETA(lat, lng, state);
         }
       }
@@ -270,6 +277,13 @@ export function listenForDriver(rideId, state, map) {
         } else {
           animateMarker(driverMarker, [lat, lng], 2000);
         }
+
+        // Zoom Inteligente (Respaldo Polling)
+        if (state.startLatLng) {
+          const bounds = L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.4);
+          map.fitBounds(bounds, { animate: true });
+        }
+
         updateETA(lat, lng, state);
       }
     }
