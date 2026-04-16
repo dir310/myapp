@@ -216,6 +216,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const isRegister = btn.textContent.includes('Registrar');
+
       if (!email || !password) return alert('Por favor llena el correo y la clave.');
 
       // --- VALIDACIONES DE SEGURIDAD ---
