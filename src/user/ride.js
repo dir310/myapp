@@ -12,7 +12,6 @@ const STORAGE_KEY = 'calmovil_current_ride_id';
 let driverMarker = null; // Guardará el ícono en vivo de la moto
 let rideChannel = null; // Referencia al canal de Supabase
 
-// local sanitizeInput removed in favor of centralized security.js
 function playNotificationSound() {
   const audio = document.getElementById('notificationSound');
   if (audio) {
@@ -572,7 +571,7 @@ function showRatingScreen(state) {
  * Stops all listeners (polling and websocket) and cleans up the map.
  * @param {object} state 
  */
-export function stopListening(state) {
+export function stopListening(state, map) {
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
@@ -583,10 +582,10 @@ export function stopListening(state) {
     rideChannel = null;
   }
 
-  if (driverMarker) {
-    // No removemos el marcador si queremos que el pasajero lo vea al final? 
-    // Por ahora lo quitamos para limpiar memoria.
-    console.log('[MovilCal] Limpiando marcador de conductor.');
+  if (driverMarker && map) {
+    map.removeLayer(driverMarker);
+    driverMarker = null;
+    console.log('[ZIPPY] Limpiando marcador de conductor.');
   }
 }
 
