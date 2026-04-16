@@ -210,6 +210,31 @@
                     </div>
                 </div>
 
+                <div id="groupEdad">
+                    <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Tu Edad * (Mínimo 18 años)</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="number" id="authEdad" class="route-input" 
+                            style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;" 
+                            placeholder="Ej. 25" min="1" max="120">
+                    </div>
+                </div>
+
+                <div id="groupFotoFrontal">
+                    <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Foto Frontal de la Cédula *</label>
+                    <div style="margin-bottom: 15px; position:relative;">
+                        <input type="file" id="authFotoFrontal" accept="image/*" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; font-size: 12px; background: rgba(255,107,0,0.05); border: 1px dashed rgba(255,107,0,0.3); color:rgba(255,255,255,0.7); border-radius: 8px; cursor:pointer;">
+                    </div>
+                </div>
+
+                <div id="groupFotoTrasera">
+                    <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Foto Trasera de la Cédula *</label>
+                    <div style="margin-bottom: 15px;">
+                        <input type="file" id="authFotoTrasera" accept="image/*" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; font-size: 12px; background: rgba(255,107,0,0.05); border: 1px dashed rgba(255,107,0,0.3); color:rgba(255,255,255,0.7); border-radius: 8px; cursor:pointer;">
+                    </div>
+                </div>
+
                 <!-- Captcha Matemático Pasajero -->
                 <div id="passengerCaptchaContainer"
                     style="background:rgba(255,255,255,.05); border-radius:8px; padding:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,.1);">
