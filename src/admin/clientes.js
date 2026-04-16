@@ -68,6 +68,40 @@ async function loadClientes() {
     tdTel.appendChild(a);
     tr.appendChild(tdTel);
 
+    // Edad
+    const tdEdad = document.createElement('td');
+    tdEdad.textContent = c.edad || '-';
+    tr.appendChild(tdEdad);
+
+    // Identificación (Fotos)
+    const tdDocs = document.createElement('td');
+    if (c.foto_frontal_url || c.foto_trasera_url) {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '5px';
+
+        if (c.foto_frontal_url) {
+            const btnF = document.createElement('button');
+            btnF.textContent = 'Frontal 📷';
+            btnF.style.cssText = 'background:rgba(255,107,0,.2); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
+            btnF.onclick = () => window.open(c.foto_frontal_url, '_blank');
+            div.appendChild(btnF);
+        }
+        if (c.foto_trasera_url) {
+            const btnT = document.createElement('button');
+            btnT.textContent = 'Trasera 📷';
+            btnT.style.cssText = 'background:rgba(255,107,0,.2); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
+            btnT.onclick = () => window.open(c.foto_trasera_url, '_blank');
+            div.appendChild(btnT);
+        }
+        tdDocs.appendChild(div);
+    } else {
+        tdDocs.textContent = 'Sin fotos';
+        tdDocs.style.opacity = '0.4';
+        tdDocs.style.fontSize = '12px';
+    }
+    tr.appendChild(tdDocs);
+
     // Fecha
     const tdDate = document.createElement('td');
     tdDate.style.color = 'rgba(255,255,255,0.5)';

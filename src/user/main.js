@@ -89,6 +89,9 @@ function setAuthMode(mode) {
   const groupNombre = document.getElementById('groupNombre');
   const groupCedula = document.getElementById('groupCedula');
   const groupTelefono = document.getElementById('groupTelefono');
+  const groupEdad = document.getElementById('groupEdad');
+  const groupFotoFrontal = document.getElementById('groupFotoFrontal');
+  const groupFotoTrasera = document.getElementById('groupFotoTrasera');
   const captchaCont = document.getElementById('passengerCaptchaContainer');
   const termsLabel = document.getElementById('authTerms').closest('label');
   const backBtn = document.getElementById('authBackBtn');
@@ -103,6 +106,9 @@ function setAuthMode(mode) {
     if(groupNombre) groupNombre.style.display = 'block';
     if(groupCedula) groupCedula.style.display = 'block';
     if(groupTelefono) groupTelefono.style.display = 'block';
+    if(groupEdad) groupEdad.style.display = 'block';
+    if(groupFotoFrontal) groupFotoFrontal.style.display = 'block';
+    if(groupFotoTrasera) groupFotoTrasera.style.display = 'block';
     if(captchaCont) captchaCont.style.display = 'block';
     if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'flex';
@@ -116,6 +122,9 @@ function setAuthMode(mode) {
     if(groupNombre) groupNombre.style.display = 'none';
     if(groupCedula) groupCedula.style.display = 'none';
     if(groupTelefono) groupTelefono.style.display = 'none';
+    if(groupEdad) groupEdad.style.display = 'none';
+    if(groupFotoFrontal) groupFotoFrontal.style.display = 'none';
+    if(groupFotoTrasera) groupFotoTrasera.style.display = 'none';
     if(captchaCont) captchaCont.style.display = 'none';
     if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'none'; 
@@ -207,16 +216,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value;
-      const isRegister = btn.textContent.includes('Registrar');
-
       if (!email || !password) return alert('Por favor llena el correo y la clave.');
+
+      // --- VALIDACIONES DE SEGURIDAD ---
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+      if (!emailRegex.test(email)) {
+        return alert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
+      }
+
+      if (isRegister && !passRegex.test(password)) {
+        return alert('⚠️ Contraseña débil. Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&).');
+      }
 
       if (isRegister) {
         const n = sanitizeHTML(document.getElementById('authNombre').value);
         const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
         const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
+        const ed = parseInt(document.getElementById('authEdad').value);
+        const fotoF = document.getElementById('authFotoFrontal').files[0];
+        const fotoT = document.getElementById('authFotoTrasera').files[0];
         const captcha = parseInt(document.getElementById('passengerCaptcha').value);
         const terms = document.getElementById('authTerms').checked;
 
@@ -226,13 +246,39 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        if (!n || !c || !t) return alert('Por favor llena todos los campos del registro.');
+        if (!n || !c || !t || isNaN(ed) || !fotoF || !fotoT) {
+          return alert('Por favor llena todos los campos, incluyendo tu edad y las fotos de tu cédula.');
+        }
+
+        if (ed < 18) {
+          return alert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.');
+        }
+
         if (!terms) return alert('Debes marcar la casilla aceptando los términos.');
 
         btn.disabled = true;
-        btn.textContent = 'Creando cuenta...';
+        btn.textContent = 'Procesando...';
 
         try {
+          // 1. Subir fotos a Supabase Storage
+          const uploadFile = async (file, prefix) => {
+            const fileName = `${Date.now()}_${prefix}_${c}.png`;
+            const { data, error } = await supabase.storage
+              .from('identificaciones')
+              .upload(fileName, file);
+            if (error) throw error;
+            const { data: { publicUrl } } = supabase.storage
+              .from('identificaciones')
+              .getPublicUrl(fileName);
+            return publicUrl;
+          };
+
+          btn.textContent = 'Subiendo documentos...';
+          const urlFrontal = await uploadFile(fotoF, 'frontal');
+          const urlTrasera = await uploadFile(fotoT, 'trasera');
+
+          btn.textContent = 'Creando cuenta...';
+
           const { data: insertedData, error: dbError } = await supabase
             .from('clientes')
             .insert([{
@@ -240,7 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
               cedula: c,
               telefono: t,
               email: email,
-              password: password
+              password: password,
+              edad: ed,
+              foto_frontal_url: urlFrontal,
+              foto_trasera_url: urlTrasera
             }])
             .select()
             .single();
@@ -339,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('passengerAuthOverlay').style.display = 'flex';
 
           // Ocultar campos que no aplican en edición
-          ['groupEmail', 'groupPassword', 'groupCedula', 'passengerCaptchaContainer'].forEach(id => {
+          ['groupEmail', 'groupPassword', 'groupCedula', 'groupEdad', 'groupFotoFrontal', 'groupFotoTrasera', 'passengerCaptchaContainer'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
