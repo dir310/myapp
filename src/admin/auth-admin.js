@@ -134,7 +134,7 @@ export function showAdminPinOverlay() {
       <div id="adminPinCard">
         <div style="font-size:48px; margin-bottom:12px;">🔐</div>
         <h2>Acceso Restringido</h2>
-        <p>Este panel es solo para administradores de MovilCal. Ingresa tu PIN de acceso.</p>
+        <p>Este panel es solo para administradores de ZIPPY. Ingresa tu PIN de acceso.</p>
         <input type="password" id="pinInput" placeholder="••••••" maxlength="20" autocomplete="off">
         <button id="pinSubmitBtn">Ingresar al Panel</button>
         <div id="pinError"></div>

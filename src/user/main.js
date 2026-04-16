@@ -447,9 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (openAboutBtn) {
     openAboutBtn.addEventListener('click', () => {
       if (aboutZippyOverlay) aboutZippyOverlay.style.display = 'flex';
-      // Mover el zIindex de leaflet si es necesario para evitar solapamientos visuales extraños
-    });
-  }
+  });
+}
 
   if (closeAboutBtn) {
     closeAboutBtn.addEventListener('click', () => {
@@ -548,7 +547,6 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
   }
 });
 
-// Rating logic removed by user request.
 // Suggestion dismiss on outside click
 setupSuggestionDismiss();
 
@@ -561,5 +559,4 @@ if ('serviceWorker' in navigator) {
 restoreActiveRide(state, map);
 
 // ── Pre-warming Supabase (Cold Start Fix) ──
-// Lanza una pequeña consulta para despertar la DB mientras el usuario elige ruta.
-supabase.from('clientes').select('id').limit(1).then(() => console.log('⚡ DB Wake-up ping sent.'));
+supabase.from('clientes').select('id').limit(1);

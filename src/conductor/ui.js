@@ -276,7 +276,6 @@ export function renderViajes(viajes, handlers) {
     );
   });
 
-
   // ── Inicializar Mini Mapas para viajes activos ──
   container.querySelectorAll('.mini-map-container').forEach((el) => {
     const rideId = el.id.replace('mini-map-', '');

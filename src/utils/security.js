@@ -1,5 +1,5 @@
 /**
- * Security utilities for MovilCal.
+ * Security utilities for ZIPPY.
  * Focuses on preventing XSS and other injection attacks.
  */
 
