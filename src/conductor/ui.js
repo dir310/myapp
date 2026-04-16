@@ -165,8 +165,8 @@ export function renderViajes(viajes, handlers) {
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
-            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate-blocked">🧭 Navegar a Recoger</button>
-            <button class="btn btn-accept" style="width:100%; background: #30D158;" data-action="verify" data-id="${v.id}">INICIAR VIAJE</button>
+            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger (Punto A)</button>
+            <button class="btn btn-accept" style="width:100%; background: #007AFF; box-shadow: 0 4px 15px rgba(0,122,255,.3);" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🚖 PASAJERO RECOGIDO — IR AL DESTINO</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       } else if (v.estado === 'en_progreso') {
@@ -174,8 +174,7 @@ export function renderViajes(viajes, handlers) {
           <div style="text-align:center; padding: 10px 0;">
             <div style="color: #30D158; font-weight: 800; font-size: 14px; margin-bottom: 10px;">✨ VIAJE EN CURSO</div>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
-            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino</button>
-            <a href="https://waze.com/ul?ll=${v.destino_lat},${v.destino_lng}&navigate=yes" target="_blank" class="btn" style="display:block; width:100%; margin-bottom:10px; background:rgba(0,122,255,0.15); color:#007AFF; border:1.5px solid #007AFF; font-size:13px; font-weight:800; text-decoration:none; text-align:center; padding:12px 0; border-radius:12px; box-sizing:border-box;">🚖 Pasajero Recogido — Ir al Destino en Waze</a>
+            <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino (Punto B)</button>
             <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%;" data-action="finish" data-id="${v.id}">🏁 FINALIZAR VIAJE</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
@@ -256,7 +255,11 @@ export function renderViajes(viajes, handlers) {
   });
 
   container.querySelectorAll('[data-action="verify"]').forEach((btn) => {
-    btn.addEventListener('click', () => handlers.onVerify(btn.dataset.id));
+    btn.addEventListener('click', () => {
+      handlers.onVerify(btn.dataset.id);
+      // Abrir Waze al destino inmediatamente al marcar como recogido
+      window.open(`https://waze.com/ul?ll=${btn.dataset.lat},${btn.dataset.lng}&navigate=yes`, '_blank');
+    });
   });
 
   container.querySelectorAll('[data-action="finish"]').forEach((btn) => {
@@ -273,11 +276,6 @@ export function renderViajes(viajes, handlers) {
     );
   });
 
-  container.querySelectorAll('[data-action="navigate-blocked"]').forEach((btn) => {
-    btn.addEventListener('click', () =>
-      alert('⚠️ Debes presionar INICIAR VIAJE primero antes de poder navegar.')
-    );
-  });
 
   // ── Inicializar Mini Mapas para viajes activos ──
   container.querySelectorAll('.mini-map-container').forEach((el) => {
@@ -315,9 +313,10 @@ export function renderViajes(viajes, handlers) {
     L.marker(s, { icon: pinIcon('#30D158', 'A') }).addTo(miniMap);
     L.marker(e, { icon: pinIcon('#FF6B00', 'B') }).addTo(miniMap);
 
-    // Dibujar Ruta OSRM
+    // Dibujar Ruta OSRM (Directo preferido por velocidad)
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${s[1]},${s[0]};${e[1]},${e[0]}?overview=full&geometries=geojson`;
-    fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`)
+    fetch(osrmUrl)
+        .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
         .then(r => r.json())
         .then(data => {
             if (data.code === 'Ok' && data.routes?.length) {
