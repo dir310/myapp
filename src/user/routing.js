@@ -2,7 +2,7 @@
  * Route calculation, marker management, and pricing.
  */
 import L from 'leaflet';
-import { pinIcon } from '../utils/map.js';
+import { pinIcon, COVERAGE_POLYGON, isPointInPolygon } from '../utils/map.js';
 import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
 import { sanitizeHTML } from '../utils/security.js';
 
@@ -40,6 +40,22 @@ const iconEnd   = pinIcon('#FF6B00', 'B');
 export function placeMarker(type, lat, lng, name, state, map) {
   const ll = L.latLng(lat, lng);
   const cleanName = sanitizeHTML(name, 100);
+
+  // Validación de Cobertura
+  if (!isPointInPolygon({ lat, lng }, COVERAGE_POLYGON)) {
+    showStatus('📍 Fuera de cobertura: ZIPPY opera entre Cra 7ma y Sopó.', true);
+    // Borrar el punto anterior si existía para evitar confusión
+    if (type === 'start') {
+       if (state.startMarker) map.removeLayer(state.startMarker);
+       state.startLatLng = null;
+       state.startMarker = null;
+    } else {
+       if (state.endMarker) map.removeLayer(state.endMarker);
+       state.endLatLng = null;
+       state.endMarker = null;
+    }
+    return;
+  }
 
   if (type === 'start') {
     if (state.startMarker) map.removeLayer(state.startMarker);

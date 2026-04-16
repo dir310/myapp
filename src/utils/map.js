@@ -120,3 +120,34 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
 
   requestAnimationFrame(animate);
 }
+
+/**
+ * Puntos del polígono de cobertura de ZIPPY.
+ * Puntos: Sopó, Cra 7 con 245, Cra 7 con 85, Rural Sur, Rural Este.
+ */
+export const COVERAGE_POLYGON = [
+  [4.91, -73.94], // Sopó Norte
+  [4.85, -73.90], // Noreste (Veredas Sopó)
+  [4.72, -73.87], // Este (Rural Calera +10km)
+  [4.62, -74.00], // Sur (Veredas Sur)
+  [4.66, -74.05], // Suroccidente (Cra 7 con Calle 85)
+  [4.68, -74.04], // Occidente (Cra 7 con Calle 100)
+  [4.82, -74.03]  // Noroccidente (Cra 7 con Calle 245 / Torca)
+];
+
+/**
+ * Algoritmo de Ray-casting para determinar si un punto {lat, lng} está dentro de un polígono.
+ * @param {object} point - {lat, lng}
+ * @param {Array} polygon - Array de [lat, lng]
+ */
+export function isPointInPolygon(point, polygon) {
+  const x = point.lat, y = point.lng;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
