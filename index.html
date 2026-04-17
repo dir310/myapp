@@ -312,8 +312,68 @@
         </div>
     </div>
 
-    <div id="statusSheet" class="status-sheet">
-        <div id="statusContent"></div>
+    </div>
+
+    <!-- Modal Protocolo de Seguridad (Pasajero) -->
+    <div id="passengerSafetyModal" class="rating-overlay" style="display: none; z-index: 10001; padding:15px; background:rgba(0,0,0,0.9);">
+        <div class="rating-card" style="max-width:420px; padding:25px; border:1px solid rgba(255,107,0,0.3); text-align:left;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <span style="font-size:40px; display:block; margin-bottom:10px;">🛡️</span>
+                <h2 style="color:#FF6B00; margin:0; font-size:20px; font-weight:900; letter-spacing:0.5px;">MANUAL DEL VIAJERO SEGURO</h2>
+                <p style="color:rgba(255,255,255,0.5); font-size:12px; margin-top:5px;">Tu seguridad es nuestra prioridad</p>
+            </div>
+
+            <div style="max-height:60vh; overflow-y:auto; padding-right:5px;">
+                <!-- Grupo 1: Emergencias -->
+                <div style="margin-bottom:22px; background:rgba(255,59,48,0.05); border:1px solid rgba(255,59,48,0.2); border-radius:12px; padding:15px;">
+                    <div style="color:#ff3b30; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                        🚨 Emergencia (Seguridad)
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-modal-item"><span>📞</span> Ante cualquier peligro, llama a la <b>Estación de Policía La Calera</b>: <a href="tel:3223482399" style="color:#fff; text-decoration:underline; font-weight:bold;">322 348 2399</a></li>
+                        <li class="safety-modal-item"><span>🆘</span> Reporta cualquier incidente vial de inmediato al 123 o por nuestro chat.</li>
+                    </ul>
+                </div>
+
+                <!-- Grupo 2: Seguridad -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                        🛡️ Verificación y Equipo
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-modal-item"><span>🔍</span> Verifica que la placa y nombre del conductor coincidan con la app.</li>
+                        <li class="safety-modal-item"><span>⛑️</span> Es obligatorio usar el casco y llevarlo bien abrochado siempre.</li>
+                    </ul>
+                </div>
+
+                <!-- Grupo 3: Comportamiento -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                        🏍️ Normas a Bordo
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-modal-item"><span>⬅️</span> Sube y baja siempre por el <b>costado izquierdo</b> de la moto.</li>
+                        <li class="safety-modal-item"><span>👣</span> Mantén tus pies en los estribos en todo momento, no los bajes.</li>
+                        <li class="safety-modal-item"><span>🧘</span> Evita movimientos bruscos o saltos; deja que tu cuerpo siga la moto.</li>
+                    </ul>
+                </div>
+
+                <!-- Grupo 4: Otros -->
+                <div style="margin-bottom:10px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                        🧼 Higiene y Calidad
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-modal-item"><span>🧢</span> Usa el gorro desechable para mantener la higiene del casco.</li>
+                        <li class="safety-modal-item"><span>⭐</span> Califica tu viaje al finalizar para mejorar nuestra comunidad.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="closePassengerSafetyBtn" class="btn btn-primary" style="width:100%; margin-top:20px; height:50px; font-weight:900; font-size:14px; letter-spacing:1px;">
+                ¡ENTENDIDO, VAMOS A VIAJAR!
+            </button>
+        </div>
     </div>
 
     <!-- Lottie Player for premium animations -->
