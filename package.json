@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
-    "leaflet": "^1.9.4",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {
