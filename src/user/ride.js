@@ -6,6 +6,7 @@ import { showStatus, hideGuidance } from './ui.js';
 import { clearPoint, placeMarker, checkRoute } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
+import { initGame, stopGame } from './game.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
@@ -135,7 +136,15 @@ function updateETA(lat, lng, state) {
     etaText.style.color = '#fff';
     etaText.style.background = '#30D158';
     etaText.style.boxShadow = '0 4px 12px rgba(48,209,88,0.3)';
+    
+    // Auto-cerrar juego si el conductor llegó
+    stopGame();
     return;
+  }
+  
+  // Si está muy cerca (120m), avisar y cerrar juego
+  if (distMeters <= 120) {
+      stopGame();
   }
 
   // Si ha pasado poco tiempo, no volvemos a llamar a la API (ahorro de cuota)
@@ -412,9 +421,25 @@ async function showDriverAssigned(driverId, state) {
 
       <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 12px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px;">Calculando llegada...</p>
       
+      <div style="margin-bottom: 15px;">
+        <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
+            <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
+        </button>
+      </div>
+
       <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
+
+  // Init game listeners
+  initGame();
+
+  const openGameBtn = document.getElementById('openGameBtn');
+  if (openGameBtn) {
+      openGameBtn.onclick = () => {
+          document.getElementById('zippyJumpModal').style.display = 'flex';
+      };
+  }
 
   // Control del Carrusel (Slide Left)
   const track = document.getElementById('zippyTrack');

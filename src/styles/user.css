@@ -890,4 +890,13 @@ body {
 .safety-modal-item span:first-child {
     font-size: 18px;
     flex-shrink: 0;
-}
+}
+
+/* ── Zippy Jump Game Styles ── */
+#zippyGameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #1a1a1a;
+}
+
