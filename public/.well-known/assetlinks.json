@@ -1,8 +1,18 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.appzippy.oficial",
-        "sha256_cert_fingerprints": ["B2:70:76:B3:AB:B0:0F:BE:9E:9D:62:85:E8:8A:5C:C1:26:1A:0D:26:09:B5:75:D7:31:04:36:E3:38:EC:E0:FE"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.appzippy.oficial",
+      "sha256_cert_fingerprints": ["B2:70:76:B3:AB:B0:0F:BE:9E:9D:62:85:E8:8A:5C:C1:26:1A:0D:26:09:B5:75:D7:31:04:36:E3:38:EC:E0:FE"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.appzippy.conductor",
+      "sha256_cert_fingerprints": ["0C:77:2E:15:BF:5A:68:B1:28:CF:2F:08:7A:B5:A4:27:40:AB:E9:E8:3D:4F:04:D0:09:6D:B2:69:2D:82:E0:ED"]
+    }
+  }
+]
