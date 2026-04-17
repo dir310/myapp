@@ -75,6 +75,12 @@ function checkPassengerAuth() {
               }
             }
           });
+        
+        // --- Trigger Safety Modal (Solo una vez por sesión) ---
+        if (!sessionStorage.getItem('zippy_passenger_safety_shown')) {
+          const safetyModal = document.getElementById('passengerSafetyModal');
+          if (safetyModal) safetyModal.style.display = 'flex';
+        }
     }
   }
 }
@@ -454,6 +460,15 @@ document.addEventListener('DOMContentLoaded', () => {
     closeAboutBtn.addEventListener('click', () => {
       if (aboutZippyOverlay) aboutZippyOverlay.style.display = 'none';
     });
+  }
+
+  // --- Botón cerrar Protocolo de Seguridad (Pasajero) ---
+  const closePassengerSafetyBtn = document.getElementById('closePassengerSafetyBtn');
+  if (closePassengerSafetyBtn) {
+    closePassengerSafetyBtn.onclick = () => {
+      document.getElementById('passengerSafetyModal').style.display = 'none';
+      sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
+    };
   }
 });
 // ── Initialize Map ──
