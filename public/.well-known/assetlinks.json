@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "appzippy.com",
-        "sha256_cert_fingerprints": ["D5:48:B9:FE:65:AA:EA:5D:03:8D:BF:B4:64:3C:B1:4B:28:F1:D6:FC:0A:0D:37:F1:C7:96:E5:6B:86:91:85:A5"]
+        "package_name": "com.appzippy.oficial",
+        "sha256_cert_fingerprints": ["B2:70:76:B3:AB:B0:0F:BE:9E:9D:62:85:E8:8A:5C:C1:26:1A:0D:26:09:B5:75:D7:31:04:36:E3:38:EC:E0:FE"]
       }
-}]
+    }]
