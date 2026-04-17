@@ -122,6 +122,15 @@ function setupUIEvents() {
       openProfile();
     }
   };
+
+  // Botón cerrar Protocolo de Seguridad
+  const closeSafetyBtn = document.getElementById('closeSafetyBtn');
+  if (closeSafetyBtn) {
+    closeSafetyBtn.onclick = () => {
+      document.getElementById('safetyRulesModal').style.display = 'none';
+      sessionStorage.setItem('zippy_safety_shown', 'true');
+    };
+  }
 }
 
 function generateCaptcha() {
@@ -184,6 +193,12 @@ function proceedToApp() {
   loadViajes();
   setupRealtimeChannel();
   initRadar();
+
+  // Mostrar Protocolo de Seguridad una vez por sesión
+  if (!sessionStorage.getItem('zippy_safety_shown')) {
+    const safetyModal = document.getElementById('safetyRulesModal');
+    if (safetyModal) safetyModal.style.display = 'flex';
+  }
 }
 
 async function handleSaveProfileSetup() {

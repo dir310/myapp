@@ -398,3 +398,27 @@ body {
   font-size: 11px;
 }
 
+/* ── Safety Modal Styles ── */
+.safety-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.safety-item span:first-child {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.safety-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+

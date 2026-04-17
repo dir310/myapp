@@ -246,6 +246,60 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal Protocolo de Seguridad (Conductor) -->
+    <div id="safetyRulesModal" class="modal-overlay" style="display: none; z-index: 10001; padding:15px; background:rgba(0,0,0,0.9);">
+        <div class="auth-container" style="max-width:450px; padding:25px; border:1px solid rgba(255,107,0,0.3); box-shadow:0 0 40px rgba(255,107,0,0.15);">
+            <div style="text-align:center; margin-bottom:20px;">
+                <span style="font-size:40px; display:block; margin-bottom:10px;">🛡️</span>
+                <h2 style="color:#FF6B00; margin:0; font-size:20px; font-weight:900; letter-spacing:0.5px;">PROTOCOLO DE SEGURIDAD</h2>
+                <p style="color:rgba(255,255,255,0.5); font-size:12px; margin-top:5px;">Por tu bienestar y el de tus pasajeros</p>
+            </div>
+
+            <div class="safety-content" style="max-height:60vh; overflow-y:auto; padding-right:5px;">
+                <!-- Grupo 1 -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">01</span> Seguridad del Pasajero
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-item"><span>🔞</span> No transportes personas en estado de embriaguez.</li>
+                        <li class="safety-item"><span>🤰</span> No transportes personas en estado de embarazo.</li>
+                        <li class="safety-item"><span>🐾</span> No transportes personas con mascotas.</li>
+                        <li class="safety-item"><span>🏍️</span> Solo 1 pasajero adicional (Tú + 1).</li>
+                    </ul>
+                </div>
+
+                <!-- Grupo 2 -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">02</span> Conducción Responsable
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-item"><span>🏁</span> No superes el límite de velocidad de <b>60km/h</b>.</li>
+                        <li class="safety-item"><span>🚦</span> Respeta rigurosamente las normas de tránsito.</li>
+                        <li class="safety-item"><span>🛠️</span> Revisa frenos y mantenimiento de tu moto a diario.</li>
+                    </ul>
+                </div>
+
+                <!-- Grupo 3 -->
+                <div style="margin-bottom:15px;">
+                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">03</span> Equipo y Bioseguridad
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                        <li class="safety-item"><span>⛑️</span> Utiliza siempre tu casco de seguridad.</li>
+                        <li class="safety-item"><span>🔒</span> Abrocha bien tu casco y verifica el del pasajero.</li>
+                        <li class="safety-item"><span>🧼</span> Desinfecta el casco del pasajero tras cada viaje.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="closeSafetyBtn" class="btn btn-accept" style="width:100%; margin-top:20px; font-weight:900; letter-spacing:1px; height:50px; font-size:15px;">
+                HE LEÍDO Y ACEPTO EL PROTOCOLO
+            </button>
+        </div>
+    </div>
 
     <!-- Lottie Player for premium animations -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
