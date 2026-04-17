@@ -108,3 +108,14 @@ export function showStatus(msg, isError) {
   el.className = 'status-bar' + (isError ? ' error' : '');
   el.style.display = 'block';
 }
+
+/**
+ * Hide the guidance banner and GPS button immediately.
+ */
+export function hideGuidance() {
+  const banner = document.getElementById('guidanceBanner');
+  const gpsBtn = document.getElementById('gpsQuickBtn');
+  if (banner) banner.style.display = 'none';
+  if (gpsBtn) gpsBtn.style.display = 'none';
+}
+

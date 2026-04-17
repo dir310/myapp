@@ -2,7 +2,7 @@
  * Ride request lifecycle: create, listen for driver, cancel.
  */
 import { supabase } from '../config/supabase.js';
-import { showStatus } from './ui.js';
+import { showStatus, hideGuidance } from './ui.js';
 import { clearPoint, placeMarker, checkRoute } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
@@ -29,6 +29,9 @@ function playNotificationSound() {
 export async function acceptRide(state, map) {
   if (!state.startLatLng || !state.endLatLng) return;
   state.driverArrived = false;
+  
+  // Limpiar UI de selección
+  hideGuidance();
 
   const originName = sanitizeHTML(document.getElementById('startInput').value || 'Punto de Inicio', 120);
   const destName = sanitizeHTML(document.getElementById('endInput').value || 'Destino', 120);
