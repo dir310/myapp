@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.appzippy.twa",
+        "sha256_cert_fingerprints": ["16:BE:8E:71:69:F5:03:B7:2E:74:27:73:54:3B:85:32:A4:11:10:49:A3:30:85:33:79:61:87:E6:1E:CC:60:F6"]
+      }
+    }]
