@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.appzippy.oficial",
-      "sha256_cert_fingerprints": ["B2:70:76:B3:AB:B0:0F:BE:9E:9D:62:85:E8:8A:5C:C1:26:1A:0D:26:09:B5:75:D7:31:04:36:E3:38:EC:E0:FE"]
+      "sha256_cert_fingerprints": ["44:17:9B:B7:42:A9:2A:60:1E:EA:7D:B5:94:FB:18:05:22:50:2D:1E:84:88:85:20:E4:F6:C8:CD:83:92:9F:66"]
     }
   },
   {
@@ -12,7 +12,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.appzippy.conductor",
-      "sha256_cert_fingerprints": ["0C:77:2E:15:BF:5A:68:B1:28:CF:2F:08:7A:B5:A4:27:40:AB:E9:E8:3D:4F:04:D0:09:6D:B2:69:2D:82:E0:ED"]
+      "sha256_cert_fingerprints": ["67:A9:56:B2:44:54:63:8F:2F:E6:48:E9:02:2D:03:2A:FC:05:37:2B:AA:26:E5:10:FA:4A:81:7A:B2:E6:38:D0"]
     }
   }
 ]
