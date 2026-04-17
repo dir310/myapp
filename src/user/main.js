@@ -5,8 +5,8 @@ import '../styles/common.css';
 import '../styles/user.css';
 
 import { createMap, LA_CALERA } from '../utils/map.js';
-import { toggleSheet, setMode, showStatus, isSheetMinimized } from './ui.js';
-import { onInput, showLocationSugg, setupSuggestionDismiss } from './geocoding.js';
+import { toggleSheet, setMode, showStatus, isSheetMinimized, updateGuidance } from './ui.js';
+import { onInput, showLocationSugg, setupSuggestionDismiss, useCurrentLocation } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
 import { supabase } from '../config/supabase.js';
@@ -502,12 +502,31 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   state.isLocked = false;
   showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
   
+  // Reset Guidance
+  updateGuidance(1);
+
   // Dar feedback visual al botón
   const btn = document.getElementById('resetPointsBtn');
   const originalText = btn.innerHTML;
   btn.innerHTML = '✅ Reiniciado';
   setTimeout(() => btn.innerHTML = originalText, 1500);
 });
+
+// Botón GPS Rápido
+const gpsQuickBtn = document.getElementById('gpsQuickBtn');
+if (gpsQuickBtn) {
+  gpsQuickBtn.addEventListener('click', () => {
+    useCurrentLocation((type, lat, lng, name) => {
+      boundPlaceMarker(type, lat, lng, name);
+      // Tras fijar inicio con GPS, pasamos al paso 2
+      state.nextClick = 'end';
+      updateGuidance(2);
+      // Ocultar hint de inicio
+      const hint = document.getElementById('clickHint');
+      if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
+    });
+  });
+}
 
 // Search inputs
 document.getElementById('startInput').addEventListener('input', (e) => onInput(e.target, 'start', boundPlaceMarker));
@@ -538,6 +557,7 @@ map.on('click', (e) => {
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
     showStatus('', false); // Sin texto extra, el hint ya orienta
+    updateGuidance(2); // Paso 2: Destino
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
@@ -546,6 +566,7 @@ map.on('click', (e) => {
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '📍 Ruta fijada. Usa "Reiniciar" para cambiar.';
     showStatus('', false);
+    updateGuidance(3); // Paso 3: Listo
     boundPlaceMarker('end', lat, lng, name);
   }
 });

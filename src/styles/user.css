@@ -531,6 +531,69 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* ── Guidance Banner ── */
+.guidance-banner {
+  position: fixed;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: 1.5px solid #ff6b00;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  pointer-events: none;
+  animation: slideDownIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideDownIn {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+#guidanceIcon {
+  font-size: 16px;
+}
+
+/* ── GPS Quick Button ── */
+.gps-quick-btn {
+  position: fixed;
+  bottom: 120px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: #ff6b00;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.5);
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.gps-quick-btn:active {
+  transform: scale(0.9);
+}
+
+.gps-quick-btn:hover {
+  background: #ff8533;
+}
+
+
 /* ── rating UI ── */
 .rating-overlay {
   position: fixed;
