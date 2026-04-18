@@ -29,6 +29,14 @@ function playNotificationSound() {
  */
 export async function acceptRide(state, map) {
   if (!state.startLatLng || !state.endLatLng) return;
+
+  // --- Bloqueo por Validación Pendiente ---
+  const status = localStorage.getItem('zippy_passenger_status');
+  if (status === 'pendiente') {
+    alert('⚠️ Tu cuenta está en proceso de validación por seguridad. Podrás pedir viajes en cuanto el administrador te apruebe (esto suele tardar unos minutos).');
+    return;
+  }
+
   state.driverArrived = false;
   
   // Limpiar UI de selección

@@ -39,25 +39,67 @@ async function loadClientes() {
   listEl.innerHTML = '';
   clientes.forEach(c => {
     const date = new Date(c.created_at).toLocaleString('es-CO', {
-      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      day: '2-digit', month: 'short', year: 'numeric'
     });
 
     const tr = document.createElement('tr');
 
-    // Nombre
+    // 1. Estado (Aprobación) - Switch Toggle
+    const tdEstado = document.createElement('td');
+    const isAprobado = c.estado_validacion === 'aprobado';
+    
+    const label = document.createElement('label');
+    label.className = 'switch';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = isAprobado;
+    const span = document.createElement('span');
+    span.className = 'slider';
+    
+    label.appendChild(input);
+    label.appendChild(span);
+    
+    const statusTxt = document.createElement('span');
+    statusTxt.className = 'status-txt ' + (isAprobado ? 'status-aprobado' : 'status-pendiente');
+    statusTxt.textContent = isAprobado ? 'Aprobado' : 'Pendiente';
+    
+    // Toggle Event for Client Approval
+    input.onchange = async (e) => {
+        const check = e.target.checked;
+        const newStatus = check ? 'aprobado' : 'pendiente';
+        
+        statusTxt.textContent = 'Guardando...';
+        statusTxt.className = 'status-txt';
+        
+        const { error: updErr } = await supabase
+            .from('clientes')
+            .update({ estado_validacion: newStatus })
+            .eq('id', c.id);
+            
+        if (updErr) {
+            alert('Error guardando estado: ' + updErr.message);
+            input.checked = !check; // revert visual
+            statusTxt.textContent = !check ? 'Aprobado' : 'Pendiente';
+            statusTxt.className = 'status-txt ' + (!check ? 'status-aprobado' : 'status-pendiente');
+        } else {
+            statusTxt.textContent = check ? 'Aprobado' : 'Pendiente';
+            statusTxt.className = 'status-txt ' + (check ? 'status-aprobado' : 'status-pendiente');
+        }
+    };
+
+    tdEstado.appendChild(label);
+    tdEstado.appendChild(statusTxt);
+    tr.appendChild(tdEstado);
+
+    // 2. Nombre
     const tdNombre = document.createElement('td');
     tdNombre.style.fontWeight = 'bold';
     tdNombre.style.textTransform = 'capitalize';
     tdNombre.textContent = c.nombre || '-';
     tr.appendChild(tdNombre);
 
-    // Cédula
-    const tdCedula = document.createElement('td');
-    tdCedula.textContent = c.cedula || '-';
-    tr.appendChild(tdCedula);
-
-    // Teléfono (link seguro)
-    const tdTel = document.createElement('td');
+    // 3. Contacto (Tel + Email)
+    const tdContacto = document.createElement('td');
     const a = document.createElement('a');
     a.href = `tel:${c.telefono}`;
     a.style.textDecoration = 'none';
@@ -65,32 +107,39 @@ async function loadClientes() {
     badge.className = 'phone-badge';
     badge.textContent = `📞 ${c.telefono || '-'}`;
     a.appendChild(badge);
-    tdTel.appendChild(a);
-    tr.appendChild(tdTel);
+    
+    const mailDiv = document.createElement('div');
+    mailDiv.style.cssText = 'color:rgba(255,255,255,0.5); font-size:11px; margin-top:5px;';
+    mailDiv.textContent = `📧 ${c.email || '-'}`;
+    
+    tdContacto.appendChild(a);
+    tdContacto.appendChild(mailDiv);
+    tr.appendChild(tdContacto);
 
-    // Edad
-    const tdEdad = document.createElement('td');
-    tdEdad.textContent = c.edad || '-';
-    tr.appendChild(tdEdad);
+    // 4. Identidad (Cédula + Edad)
+    const tdIden = document.createElement('td');
+    tdIden.innerHTML = `<span style="font-weight:bold;">${esc(c.cedula)}</span><br><span style="font-size:11px; opacity:0.6;">Edad: ${c.edad} años</span>`;
+    tr.appendChild(tdIden);
 
-    // Identificación (Fotos)
+    // 5. Documentos (Fotos)
     const tdDocs = document.createElement('td');
     if (c.foto_frontal_url || c.foto_trasera_url) {
         const div = document.createElement('div');
         div.style.display = 'flex';
-        div.style.gap = '5px';
+        div.style.flexDirection = 'column';
+        div.style.gap = '4px';
 
         if (c.foto_frontal_url) {
             const btnF = document.createElement('button');
             btnF.textContent = 'Frontal 📷';
-            btnF.style.cssText = 'background:rgba(255,107,0,.2); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
+            btnF.style.cssText = 'background:rgba(255,107,0,.15); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
             btnF.onclick = () => window.open(c.foto_frontal_url, '_blank');
             div.appendChild(btnF);
         }
         if (c.foto_trasera_url) {
             const btnT = document.createElement('button');
             btnT.textContent = 'Trasera 📷';
-            btnT.style.cssText = 'background:rgba(255,107,0,.2); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
+            btnT.style.cssText = 'background:rgba(255,107,0,.15); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
             btnT.onclick = () => window.open(c.foto_trasera_url, '_blank');
             div.appendChild(btnT);
         }
@@ -102,9 +151,10 @@ async function loadClientes() {
     }
     tr.appendChild(tdDocs);
 
-    // Fecha
+    // 6. Registro
     const tdDate = document.createElement('td');
-    tdDate.style.color = 'rgba(255,255,255,0.5)';
+    tdDate.style.color = 'rgba(255,255,255,0.4)';
+    tdDate.style.fontSize = '11px';
     tdDate.textContent = date;
     tr.appendChild(tdDate);
 
