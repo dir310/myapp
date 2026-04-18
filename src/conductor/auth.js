@@ -58,7 +58,6 @@ window.togglePassword = function (inputId, iconElement) {
 
 function setupUIEvents() {
   document.getElementById('loginBtn').onclick = handleLogin;
-  document.getElementById('saveCompleteProfileBtn').onclick = handleSaveProfileSetup;
 
   // Profile Sidebar toggles
   profileBtn.onclick = openProfile;
@@ -69,59 +68,8 @@ function setupUIEvents() {
     window.location.reload();
   };
 
-  // Edit Profile UI logic
-  document.getElementById('editProfileBtn').onclick = () => {
-    document.getElementById('editProfileForm').style.display = 'block';
-    document.getElementById('editProfileBtn').style.display = 'none';
-    if (currentProfile) {
-      document.getElementById('editNombre').value = currentProfile.nombre || '';
-      document.getElementById('editPlaca').value = currentProfile.placa || '';
-      document.getElementById('editMarca').value = currentProfile.marca || '';
-      document.getElementById('editColor').value = currentProfile.color || '';
-      document.getElementById('editTelefono').value = currentProfile.telefono || '';
-    }
-  };
+  // Edit Profile UI logic eliminada al no estar permitido
 
-  document.getElementById('cancelEditBtn').onclick = () => {
-    document.getElementById('editProfileForm').style.display = 'none';
-    document.getElementById('editProfileBtn').style.display = 'inline-block';
-  };
-
-  document.getElementById('saveProfileBtn').onclick = async () => {
-    const btn = document.getElementById('saveProfileBtn');
-    const newNombre = document.getElementById('editNombre').value;
-    const newPlaca = document.getElementById('editPlaca').value;
-    const newMarca = document.getElementById('editMarca').value;
-    const newColor = document.getElementById('editColor').value;
-    const newTelefono = document.getElementById('editTelefono').value;
-
-    if (!newNombre || !newPlaca || !newTelefono || !newMarca || !newColor) return alert('Llena todos los campos');
-
-    btn.textContent = '...';
-    btn.disabled = true;
-
-    const { error } = await supabase
-      .from('conductores')
-      .update({ nombre: newNombre, placa: newPlaca, telefono: newTelefono, marca: newMarca, color: newColor })
-      .eq('id', currentUser.id);
-
-    btn.textContent = 'Guardar';
-    btn.disabled = false;
-
-    if (error) {
-      alert('Error updating: ' + error.message);
-    } else {
-      currentProfile.nombre = newNombre;
-      currentProfile.placa = newPlaca;
-      currentProfile.marca = newMarca;
-      currentProfile.color = newColor;
-      currentProfile.telefono = newTelefono;
-
-      document.getElementById('editProfileForm').style.display = 'none';
-      document.getElementById('editProfileBtn').style.display = 'inline-block';
-      openProfile();
-    }
-  };
 
   // Botón cerrar Protocolo de Seguridad
   const closeSafetyBtn = document.getElementById('closeSafetyBtn');
@@ -169,30 +117,38 @@ async function handleSession(session) {
     authModal.style.display = 'none';
     document.querySelector('.fab-whatsapp').style.display = 'none'; // Ocultar en app
 
-    // Check if new fields are missing (profile incomplete)
-    if (!profile.nombre || !profile.placa || !profile.marca || !profile.color) {
-      document.getElementById('completeProfileModal').style.display = 'flex';
-    } else {
-      proceedToApp();
-    }
+    proceedToApp();
   } else {
     currentUser = null;
     currentProfile = null;
     authModal.style.display = 'flex';
-    document.getElementById('completeProfileModal').style.display = 'none';
     mainAppContent.style.display = 'none';
+
     profileBtn.style.display = 'none';
     document.querySelector('.fab-whatsapp').style.display = 'flex'; // Mostrar en login
   }
 }
 
 function proceedToApp() {
-  document.getElementById('completeProfileModal').style.display = 'none';
   mainAppContent.style.display = 'block';
   profileBtn.style.display = 'block';
   loadViajes();
   setupRealtimeChannel();
   initRadar();
+
+  // Validar el estado del conductor
+  const estadoValidacion = currentProfile.estado_validacion || 'pendiente';
+  if (estadoValidacion === 'pendiente') {
+      const warning = document.getElementById('validationWarning');
+      const radarBtn = document.getElementById('radarBtn');
+      if (warning) warning.style.display = 'block';
+      if (radarBtn) radarBtn.style.display = 'none'; // Ocultar radar, no puede trabajar
+  } else {
+      const warning = document.getElementById('validationWarning');
+      const radarBtn = document.getElementById('radarBtn');
+      if (warning) warning.style.display = 'none';
+      if (radarBtn) radarBtn.style.display = 'flex';
+  }
 
   // Mostrar Protocolo de Seguridad una vez por sesión
   if (!sessionStorage.getItem('zippy_safety_shown')) {
@@ -201,139 +157,150 @@ function proceedToApp() {
   }
 }
 
-async function handleSaveProfileSetup() {
-  const nombre = document.getElementById('setupNombre').value.trim();
-  const placa = document.getElementById('setupPlaca').value.trim();
-  const marca = document.getElementById('setupMarca').value.trim();
-  const color = document.getElementById('setupColor').value.trim();
-
-  if (!nombre || !placa || !marca || !color) {
-    return alert("Por favor completa todos los datos para poder trabajar.");
-  }
-
-  const btn = document.getElementById('saveCompleteProfileBtn');
-  btn.textContent = "Guardando...";
-  btn.disabled = true;
-
-  const { error } = await supabase.from('conductores').update({
-    nombre, placa, marca, color
-  }).eq('id', currentUser.id);
-
-  if (error) {
-    alert("Hubo un error al guardar: " + error.message);
-    btn.textContent = "Guardar y Empezar a Trabajar";
-    btn.disabled = false;
-    return;
-  }
-
-  currentProfile.nombre = nombre;
-  currentProfile.placa = placa;
-  currentProfile.marca = marca;
-  currentProfile.color = color;
-
-  proceedToApp();
-}
 
 async function handleLogin() {
+  const btn = document.getElementById('loginBtn');
   const telefono = document.getElementById('loginTelefono').value.trim();
   const password = document.getElementById('loginPassword').value;
   const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
   const termsElement = document.getElementById('loginTerms');
-  const terms = termsElement ? termsElement.checked : true; // Fallback just in case
-  const btn = document.getElementById('loginBtn');
+  const terms = termsElement ? termsElement.checked : true; 
 
-  if (!telefono || !password) return alert('Por favor ingresa tu número y PIN.');
-
-  if (!terms) return alert('Debes aceptar las condiciones de uso (riesgo) marcando la casilla para poder ingresar.');
-
+  if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
+  if (!password) return alert('Por favor ingresa tu clave.');
+  if (!terms) return alert('Debes aceptar las condiciones y la política de privacidad marcando la casilla.');
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
     alert('La respuesta a la suma de seguridad es incorrecta.');
     generateCaptcha();
     return;
   }
 
-  // ── Rate Limiting: verificar bloqueo ──
-  const blockUntil = parseInt(sessionStorage.getItem('login_block_until') || '0');
-  if (Date.now() < blockUntil) {
-    const secsLeft = Math.ceil((blockUntil - Date.now()) / 1000);
-    alert(`Demasiados intentos fallidos. Espera ${secsLeft} segundos antes de intentar de nuevo.`);
-    return;
-  }
-
-  btn.textContent = 'Ingresando...';
+  btn.textContent = 'Verificando...';
   btn.disabled = true;
 
-  // Custom Auth Login — AutoRegistro incorporado
+  // 1. Verificar si el usuario ya existe
   const { data: existingUser, error: searchError } = await supabase
     .from('conductores')
     .select('*')
     .eq('telefono', telefono)
-    .maybeSingle(); // maybeSingle para que no dé error si no existe
-
-  let finalUserId = null;
+    .maybeSingle();
 
   if (existingUser) {
-    // Ya existe ese teléfono, verificamos que el PIN coincida
     if (existingUser.password !== password) {
-      // Contar intento fallido
-      let attempts = parseInt(sessionStorage.getItem('login_attempts') || '0') + 1;
-      sessionStorage.setItem('login_attempts', attempts);
-
-      if (attempts >= MAX_LOGIN_ATTEMPTS) {
-        const until = Date.now() + LOCK_DURATION_MS;
-        sessionStorage.setItem('login_block_until', until);
-        sessionStorage.removeItem('login_attempts');
-        
-        // Mostrar cuenta regresiva en el botón
-        let secsLeft = Math.ceil(LOCK_DURATION_MS / 1000);
-        btn.textContent = `Bloqueado (${secsLeft}s)`;
-        btn.disabled = true;
-        const countdown = setInterval(() => {
-          secsLeft--;
-          if (secsLeft <= 0) {
-            clearInterval(countdown);
-            btn.textContent = 'Ingresar';
-            btn.disabled = false;
-          } else {
-            btn.textContent = `Bloqueado (${secsLeft}s)`;
-          }
-        }, 1000);
-        
-        alert(`Demasiados intentos. Serás desbloqueado en ${Math.ceil(LOCK_DURATION_MS/1000)} segundos.`);
-      } else {
-        alert(`Teléfono o PIN incorrectos. Intento ${attempts}/${MAX_LOGIN_ATTEMPTS}.`);
-        btn.textContent = 'Ingresar';
+        alert('Credenciales incorrectas (Teléfono o clave no coinciden).');
+        btn.textContent = 'Crear o Ingresar';
         btn.disabled = false;
-      }
-      generateCaptcha();
-      return;
+        generateCaptcha();
+        return;
     }
-    // Si la contraseña es correcta, este será el usuario
-    finalUserId = existingUser.id;
-  } else {
-    // ── MAGIA DE AUTO-REGISTRO ──
-    const newId = crypto.randomUUID();
-    const { error: insertError } = await supabase
-      .from('conductores')
-      .insert([{ id: newId, telefono: telefono, password: password, nombre: '', placa: '', marca: '', color: '' }]);
-
-    if (insertError) {
-      alert('Hubo un error configurando tu primer ingreso: ' + insertError.message);
-      btn.textContent = 'Ingresar';
-      btn.disabled = false;
-      generateCaptcha();
-      return;
-    }
-    
-    // Al crearse, este será el usuario
-    finalUserId = newId;
+    // YA ESTÁ REGISTRADO -> Login directo
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: existingUser.id, timestamp: Date.now() }));
+    window.location.reload();
+    return;
   }
 
-  // Login y Registro exitoso — limpiar contadores y guardar sesión con timestamp
-  sessionStorage.removeItem('login_attempts');
-  sessionStorage.removeItem('login_block_until');
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: finalUserId, timestamp: Date.now() }));
-  window.location.reload();
+  // NO ESTÁ REGISTRADO -> Mostrar formulario completo si no está visible
+  const registerFields = document.getElementById('registerFields');
+  if (registerFields.style.display === 'none') {
+      registerFields.style.display = 'block';
+      btn.textContent = 'Enviar Registro Completado';
+      btn.disabled = false;
+      return; 
+  }
+
+  // Validaciones del formulario completo
+  const regPass = document.getElementById('regPassword').value;
+  const regPassConf = document.getElementById('regPasswordConfirm').value;
+  
+  if (regPass !== regPassConf) {
+      btn.textContent = 'Enviar Registro Completado';
+      btn.disabled = false;
+      return alert('Las claves no coinciden.');
+  }
+
+  // Clave: exactamente 5 números y 1 mayúscula (6 caracteres totales)
+  const is6Chars = regPass.length === 6;
+  const has1Upper = (regPass.match(/[A-Z]/g) || []).length === 1;
+  const has5Digits = (regPass.match(/\d/g) || []).length === 5;
+  
+  if (!is6Chars || !has1Upper || !has5Digits) {
+      btn.textContent = 'Enviar Registro Completado';
+      btn.disabled = false;
+      return alert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345 o 12345B).');
+  }
+
+  const n = document.getElementById('regNombre').value.trim();
+  const p = document.getElementById('regPlaca').value.trim();
+  const c = document.getElementById('regCorreo').value.trim();
+  const d = document.getElementById('regDireccion').value.trim();
+  const m = document.getElementById('regMotoDetalle').value.trim();
+  
+  const fProp = document.getElementById('fotoPropiedad').files[0];
+  const fCedF = document.getElementById('fotoCedulaFrontal').files[0];
+  const fCedT = document.getElementById('fotoCedulaTrasera').files[0];
+  const fRosto = document.getElementById('fotoRostro').files[0];
+
+  if (!n || !p || !c || !d || !m || !fProp || !fCedF || !fCedT || !fRosto) {
+      btn.textContent = 'Enviar Registro';
+      btn.disabled = false;
+      return alert('Debes llenar todos los datos y subir las 4 imágenes obligatorias de forma correcta.');
+  }
+
+  // Filtros y validaciones
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(c)) {
+      btn.textContent = 'Enviar Registro';
+      btn.disabled = false;
+      return alert('Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
+  }
+
+  btn.textContent = 'Subiendo Imágenes...';
+
+  try {
+      const uploadFile = async (file, prefix) => {
+          const fileName = `${Date.now()}_conductor_${prefix}_${telefono}.png`;
+          const { error } = await supabase.storage.from('identificaciones').upload(fileName, file);
+          if (error) throw error;
+          const { data: { publicUrl } } = supabase.storage.from('identificaciones').getPublicUrl(fileName);
+          return publicUrl;
+      };
+
+      const urlProp = await uploadFile(fProp, 'propiedad');
+      const urlCedF = await uploadFile(fCedF, 'cedula_frontal');
+      const urlCedT = await uploadFile(fCedT, 'cedula_trasera');
+      const urlRostro = await uploadFile(fRosto, 'rostro');
+
+      btn.textContent = 'Guardando datos...';
+      const newId = crypto.randomUUID();
+
+      const { error: insertError } = await supabase.from('conductores').insert([{ 
+          id: newId, 
+          telefono: telefono, 
+          password: regPass,
+          nombre: n, 
+          placa: p, 
+          correo: c,
+          direccion: d,
+          marca_cilindraje_color: m,
+          foto_propiedad_url: urlProp,
+          foto_cedula_frontal_url: urlCedF,
+          foto_cedula_trasera_url: urlCedT,
+          foto_rostro_url: urlRostro,
+          estado_validacion: 'pendiente' // Clave para bloquear el trabajo
+      }]);
+
+      if (insertError) throw insertError;
+
+      // Registro exitoso
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: newId, timestamp: Date.now() }));
+      window.location.reload();
+
+  } catch (err) {
+      alert('Error en el registro: ' + (err.message || 'Inténtalo de nuevo.'));
+      btn.textContent = 'Enviar Registro';
+      btn.disabled = false;
+      generateCaptcha();
+  }
 }
 
 
@@ -349,9 +316,8 @@ async function openProfile() {
     document.getElementById('profileName').textContent = currentProfile.nombre;
     document.getElementById('profilePlaca').textContent = `Placa: ${currentProfile.placa}`;
 
-    const marca = currentProfile.marca || 'N/A';
-    const color = currentProfile.color || 'N/A';
-    document.getElementById('profileVehiculo').textContent = `${marca} - ${color}`;
+    const marcaColor = currentProfile.marca_cilindraje_color || (currentProfile.marca + ' - ' + currentProfile.color) || 'N/A';
+    document.getElementById('profileVehiculo').textContent = marcaColor;
 
     document.getElementById('profileTelefono').textContent = `Cel: ${currentProfile.telefono}`;
 
