@@ -287,6 +287,34 @@ body {
   transform: scale(0.95);
 }
 
+/* ── Top Search Area (Floating) ── */
+.top-search-area {
+  position: fixed;
+  top: 75px;
+  left: 20px;
+  right: 80px; /* Deja espacio para el logo/hamburguesa en ciertos layouts */
+  max-width: 450px;
+  background: rgba(28, 28, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  border-radius: 20px;
+  padding: 12px 15px;
+  z-index: 998;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  animation: slideDownFade 0.4s ease-out;
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.top-search-area .route-row {
+  margin-bottom: 0;
+  gap: 12px;
+}
+
 /* ── Route Inputs ── */
 .route-row {
   display: flex;
@@ -509,7 +537,7 @@ body {
 /* ── Route Info Pill ── */
 .route-pill {
   position: fixed;
-  top: 72px;
+  top: 190px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 998;
@@ -550,7 +578,7 @@ body {
 /* ── Guidance Banner ── */
 .guidance-banner {
   position: fixed;
-  top: 130px;
+  top: 200px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;

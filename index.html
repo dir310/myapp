@@ -63,6 +63,31 @@
         </div>
     </div>
 
+    <!-- ── Top Search Area (Floating) ── -->
+    <div id="topSearchArea" class="top-search-area" style="display: none;">
+        <div class="route-row">
+            <div class="route-dots">
+                <div class="dot-a"></div>
+                <div class="dot-line"></div>
+                <div class="dot-b"></div>
+            </div>
+            <div class="inputs-col">
+                <div class="input-wrapper">
+                    <input type="text" id="startInput" class="route-input" placeholder="¿Dónde estás?"
+                        autocomplete="off">
+                    <button class="clear-btn">✕</button>
+                    <div class="suggestions" id="startSuggestions"></div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" id="endInput" class="route-input" placeholder="¿A dónde vas?"
+                        autocomplete="off">
+                    <button class="clear-btn">✕</button>
+                    <div class="suggestions" id="endSuggestions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Sidebar ── -->
     <div class="sidebar" id="sidebar">
         <div class="sheet-header" id="sidebarHeader" title="Abrir Menú">
@@ -98,28 +123,7 @@
                 <button class="mode-btn reset-btn" id="resetPointsBtn" title="Reiniciar puntos">🔄 Reiniciar</button>
             </div>
 
-            <!-- Route Inputs -->
-            <div class="route-row">
-                <div class="route-dots">
-                    <div class="dot-a"></div>
-                    <div class="dot-line"></div>
-                    <div class="dot-b"></div>
-                </div>
-                <div class="inputs-col">
-                    <div class="input-wrapper">
-                        <input type="text" id="startInput" class="route-input" placeholder="¿Dónde estás?"
-                            autocomplete="off">
-                        <button class="clear-btn">✕</button>
-                        <div class="suggestions" id="startSuggestions"></div>
-                    </div>
-                    <div class="input-wrapper">
-                        <input type="text" id="endInput" class="route-input" placeholder="¿A dónde vas?"
-                            autocomplete="off">
-                        <button class="clear-btn">✕</button>
-                        <div class="suggestions" id="endSuggestions"></div>
-                    </div>
-                </div>
-            </div>
+
 
             <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
 
