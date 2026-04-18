@@ -27,122 +27,101 @@
 
     <!-- Auth Modal -->
     <div id="loginOverlay" class="modal-overlay" style="z-index: 10000; background:rgba(0,0,0,0.95);">
-        <div class="modal-content auth-container">
-            <h2 style="margin-bottom:20px; color:#FF6B00;">Acceso Conductor</h2>
+        <div class="modal-content auth-container" style="margin: auto; bottom: auto; position:relative; max-height:90vh; overflow-y:auto; padding: 25px 20px;">
+            <!-- ========================= MODO REGISTRO (POR DEFECTO) ========================= -->
+            <div id="registerView" class="auth-form active">
+                <h2 style="margin-bottom:20px; color:#FF6B00; text-align:center;">Únete como Conductor</h2>
+                <p style="color:rgba(255,255,255,0.7); font-size:12px; margin-bottom:15px; text-align:center;">Completa todos tus datos oficiales para empezar a trabajar con nosotros.</p>
+                
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Número de Celular (Tu Usuario) *</label>
+                <input type="tel" id="regTelefono" class="driver-name" placeholder="10 dígitos" maxlength="10" style="margin-bottom:12px;">
 
-            <div id="loginForm" class="auth-form active">
-                <!-- Se piden teléfono y clave para acceder -->
-                <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular (10 dígitos)"
-                    maxlength="10">
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Crea tu Clave (1 mayúscula y 5 números) *</label>
+                <div class="password-wrapper" style="margin-bottom: 12px;">
+                    <input type="password" id="regPassword" class="driver-name" placeholder="Ej. A12345" maxlength="6" style="margin-bottom:0;">
+                    <span class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</span>
+                </div>
+                
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Confirmar Clave *</label>
+                <div class="password-wrapper" style="margin-bottom: 12px;">
+                    <input type="password" id="regPasswordConfirm" class="driver-name" placeholder="Repite la clave" maxlength="6" style="margin-bottom:0;">
+                    <span class="password-toggle" onclick="togglePassword('regPasswordConfirm', this)">👁️</span>
+                </div>
+
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Nombres y Apellidos *</label>
+                <input type="text" id="regNombre" class="driver-name" placeholder="Ej. Juan Pérez" maxlength="30" style="margin-bottom:12px;">
+
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Placa de la Moto *</label>
+                <input type="text" id="regPlaca" class="driver-name" placeholder="Ej. ABC12D" maxlength="6" style="margin-bottom:12px; text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Correo Electrónico *</label>
+                <input type="email" id="regCorreo" class="driver-name" placeholder="ejemplo@correo.com" maxlength="40" style="margin-bottom:12px;">
+
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Dirección de Residencia *</label>
+                <input type="text" id="regDireccion" class="driver-name" placeholder="Ej. Calle 1 #2-3" maxlength="20" style="margin-bottom:12px;">
+
+                <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Marca, Cilindraje y Color *</label>
+                <input type="text" id="regMotoDetalle" class="driver-name" placeholder="Ej. Bajaj 150 Negro" maxlength="30" style="margin-bottom:15px;">
+
+                <div style="background:rgba(255,107,0,.05); border:1px solid rgba(255,107,0,.2); border-radius:8px; padding:10px; margin-bottom:15px;">
+                    <p style="color:#FF6B00; font-size:12px; font-weight:bold; margin-top:0; margin-bottom:10px;">Subida de Documentos (Obligatorio)</p>
+                    
+                    <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">1. Tarjeta de Propiedad</label>
+                    <input type="file" id="fotoPropiedad" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+
+                    <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">2. Cédula (Frontal)</label>
+                    <input type="file" id="fotoCedulaFrontal" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+
+                    <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">3. Cédula (Trasera)</label>
+                    <input type="file" id="fotoCedulaTrasera" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+
+                    <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">4. Foto de tu Rostro (Selfie)</label>
+                    <input type="file" id="fotoRostro" accept="image/*" style="width:100%; font-size:11px; margin-bottom:5px; color:rgba(255,255,255,.7);">
+                </div>
+
+                <label style="display:flex; align-items:flex-start; margin-top:15px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
+                    <input type="checkbox" id="regTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
+                    <span>Al registrarme, acepto la <a href="/privacy.html" style="color:#FF6B00; text-decoration:underline; font-weight:bold;">Política de Privacidad</a> y declaro que ZIPPY es únicamente un puente tecnológico.</span>
+                </label>
+
+                <button id="registerSubmitBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Enviar Registro Completado</button>
+                
+                <div style="text-align:center; margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                    <p style="color:rgba(255,255,255,0.6); font-size:12px; margin-bottom:10px;">¿Ya estás registrado y validado?</p>
+                    <a href="#" id="switchToLogin" style="color:#FF6B00; font-weight:bold; text-decoration:underline; font-size:13px;">Inicia Sesión Aquí</a>
+                </div>
+            </div>
+
+            <!-- ========================= MODO LOGIN (OCULTO POR DEFECTO SALVO AL CERRAR SESION) ========================= -->
+            <div id="loginView" class="auth-form" style="display:none;">
+                <h2 style="margin-bottom:20px; color:#FF6B00; text-align:center;">Acceso Conductor</h2>
+                
+                <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular (10 dígitos)" maxlength="10">
                 <div class="password-wrapper" style="margin-top: 12px;">
                     <input type="password" id="loginPassword" class="driver-name" placeholder="Clave de conductor">
                     <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
                 </div>
 
-                <!-- Campos de Registro (Ocultos inicialmente) -->
-                <div id="registerFields" style="display:none; text-align:left; margin-top:20px;">
-                    <hr style="border-color: rgba(255,107,0,0.3); margin-bottom: 20px;">
-                    <p style="color:#FF6B00; font-size:14px; font-weight:bold; margin-top:0; margin-bottom:15px;">
-                        Registro de Nuevo Conductor</p>
-
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Crea
-                        tu Clave (1 mayúscula y 5 números) *</label>
-                    <div class="password-wrapper" style="margin-bottom: 12px;">
-                        <input type="password" id="regPassword" class="driver-name" placeholder="Ej. A12345"
-                            maxlength="6" style="margin-bottom:0;">
-                    </div>
-
-                    <label
-                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Confirmar
-                        Clave *</label>
-                    <div class="password-wrapper" style="margin-bottom: 12px;">
-                        <input type="password" id="regPasswordConfirm" class="driver-name" placeholder="Repite la clave"
-                            maxlength="6" style="margin-bottom:0;">
-                    </div>
-                    <label
-                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Nombres
-                        y Apellidos *</label>
-                    <input type="text" id="regNombre" class="driver-name" placeholder="Ej. Juan Pérez" maxlength="30"
-                        style="margin-bottom:12px;">
-
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Placa
-                        de la Moto *</label>
-                    <input type="text" id="regPlaca" class="driver-name" placeholder="Ej. ABC12D" maxlength="6"
-                        style="margin-bottom:12px; text-transform:uppercase;"
-                        oninput="this.value = this.value.toUpperCase()">
-
-                    <label
-                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Correo
-                        Electrónico *</label>
-                    <input type="email" id="regCorreo" class="driver-name" placeholder="ejemplo@correo.com"
-                        maxlength="40" style="margin-bottom:12px;">
-
-                    <label
-                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Dirección
-                        de Residencia *</label>
-                    <input type="text" id="regDireccion" class="driver-name" placeholder="Ej. Calle 1 #2-3"
-                        maxlength="20" style="margin-bottom:12px;">
-
-                    <label
-                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Marca,
-                        Cilindraje y Color *</label>
-                    <input type="text" id="regMotoDetalle" class="driver-name" placeholder="Ej. Bajaj 150 Negro"
-                        maxlength="30" style="margin-bottom:15px;">
-
-                    <div
-                        style="background:rgba(255,107,0,.05); border:1px solid rgba(255,107,0,.2); border-radius:8px; padding:10px; margin-bottom:15px;">
-                        <p style="color:#FF6B00; font-size:12px; font-weight:bold; margin-top:0; margin-bottom:10px;">
-                            Subida de Documentos (Obligatorio)</p>
-
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">1. Tarjeta de
-                            Propiedad</label>
-                        <input type="file" id="fotoPropiedad" accept="image/*"
-                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
-
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">2. Cédula
-                            (Frontal)</label>
-                        <input type="file" id="fotoCedulaFrontal" accept="image/*"
-                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
-
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">3. Cédula
-                            (Trasera)</label>
-                        <input type="file" id="fotoCedulaTrasera" accept="image/*"
-                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
-
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">4. Foto de tu
-                            Rostro (Selfie)</label>
-                        <input type="file" id="fotoRostro" accept="image/*"
-                            style="width:100%; font-size:11px; margin-bottom:5px; color:rgba(255,255,255,.7);">
-                    </div>
-                </div>
-
-                <!-- Captcha Matemático para Login -->
-                <div id="loginCaptchaContainer"
-                    style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
-                    <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">
-                        Seguridad: Resuelve la suma</p>
+                <div id="loginCaptchaContainer" style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
+                    <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">Seguridad: Resuelve la suma</p>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <span id="loginCaptchaQuestion"
-                            style="font-weight:bold; font-size:14px; flex:1; text-align:right;"></span>
-                        <input type="number" id="loginCaptcha" class="driver-name" placeholder="?"
-                            style="flex:1; margin-bottom:0; padding:8px;">
+                        <span id="loginCaptchaQuestion" style="font-weight:bold; font-size:14px; flex:1; text-align:right;"></span>
+                        <input type="number" id="loginCaptcha" class="driver-name" placeholder="?" style="flex:1; margin-bottom:0; padding:8px;">
                     </div>
                 </div>
 
-                <label
-                    style="display:flex; align-items:flex-start; margin-top:15px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
-                    <input type="checkbox" id="loginTerms"
-                        style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
-                    <span>Al iniciar sesión o registrarme, acepto la <a href="/privacy.html"
-                            style="color:#FF6B00; text-decoration:underline; font-weight:bold;">Política de
-                            Privacidad</a> y declaro que ZIPPY es únicamente un puente tecnológico de conexión.</span>
+                <label style="display:flex; align-items:flex-start; margin-top:15px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
+                    <input type="checkbox" id="loginTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
+                    <span>Al iniciar sesión, acepto usar la plataforma bajo mi responsabilidad.</span>
                 </label>
 
-                <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Crear o
-                    Ingresar</button>
+                <button id="loginSubmitBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar al Panel</button>
+                
+                <div style="text-align:center; margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                    <a href="#" id="switchToRegister" style="color:rgba(255,255,255,.5); font-size:13px; text-decoration:underline;">¿No tienes cuenta? Regístrate aquí</a>
+                </div>
             </div>
         </div>
-    </div>
     </div>
 
     <!-- Complete Profile Modal (Removed) -->
