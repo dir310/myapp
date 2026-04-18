@@ -62,11 +62,15 @@ export function placeMarker(type, lat, lng, name, state, map) {
     state.startLatLng = ll;
     state.startMarker = L.marker(ll, { icon: iconStart }).addTo(map)
       .bindPopup(`<b>🟢 Inicio</b><br>${cleanName}`);
+    const input = document.getElementById('startInput');
+    if (input) input.value = cleanName;
   } else {
     if (state.endMarker) map.removeLayer(state.endMarker);
     state.endLatLng = ll;
     state.endMarker = L.marker(ll, { icon: iconEnd }).addTo(map)
       .bindPopup(`<b>🟠 Destino</b><br>${cleanName}`);
+    const input = document.getElementById('endInput');
+    if (input) input.value = cleanName;
   }
   map.panTo(ll);
   checkRoute(state, map);
