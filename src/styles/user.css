@@ -131,21 +131,17 @@ body {
 }
 
 .sheet-header {
-  width: 50px;
+  width: 60px;
+  height: 60px;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 107, 0, 0.08));
-  border-radius: 0 32px 32px 0;
-  border-left: none;
-  padding: 20px 0;
+  top: 15px;
+  right: -60px;
+  background: transparent;
+  padding: 0;
 }
 
 .sheet-handle {
@@ -159,9 +155,7 @@ body {
 
 .sheet-header:hover .sheet-handle,
 .sidebar.minimized .sheet-handle {
-  background: #ff6b00;
-  height: 55px;
-  box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
+  display: none;
 }
 
 .menu-hamburger-mini {
@@ -195,7 +189,7 @@ body {
 }
 
 .sidebar.minimized .sheet-title-mini {
-  opacity: 1;
+  display: none;
 }
 
 .sheet-content {
