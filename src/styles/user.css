@@ -560,24 +560,27 @@ body {
 
 .confirm-route-btn {
   position: fixed;
-  bottom: 35px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
+  width: 90%;
+  max-width: 320px;
   z-index: 1000;
   background: linear-gradient(135deg, #FF6B00, #FF9500);
   color: #fff;
   border: none;
-  border-radius: 100px;
-  padding: 16px 32px;
-  font-size: 16px;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 10px 30px rgba(255, 107, 0, 0.4);
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4);
   cursor: pointer;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
