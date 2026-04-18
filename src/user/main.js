@@ -51,6 +51,25 @@ function checkPassengerAuth() {
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
 
+        // --- Verificación de Aprobación Administrativa ---
+        const emailStored = localStorage.getItem('calmovil_cliente_email');
+        supabase
+          .from('clientes')
+          .select('estado_validacion')
+          .eq('email', emailStored)
+          .single()
+          .then(({ data, error }) => {
+            const banner = document.getElementById('passengerValidationBanner');
+            if (!error && data) {
+              localStorage.setItem('zippy_passenger_status', data.estado_validacion);
+              if (data.estado_validacion === 'pendiente') {
+                if (banner) banner.style.display = 'block';
+              } else {
+                if (banner) banner.style.display = 'none';
+              }
+            }
+          });
+
         // Fetch Total Trips count
         supabase
           .from('viajes')
@@ -233,14 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // --- VALIDACIONES DE SEGURIDAD ---
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      const passRegex = /^(?=.*[a-z])(?=(?:.*\d){5}).{6}$/;
 
       if (!emailRegex.test(email)) {
         return alert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
       }
 
       if (isRegister && !passRegex.test(password)) {
-        return alert('⚠️ Contraseña débil. Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&).');
+        return alert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).');
       }
 
       if (isRegister) {

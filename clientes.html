@@ -15,6 +15,18 @@
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
         tr:last-child td { border-bottom: none; }
         .phone-badge { background: rgba(48,209,88,.15); color: #30D158; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; font-size: 12px;}
+        
+        /* Switch Styles */
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; border: 1px solid rgba(255,255,255,0.1); }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #30D158; }
+        input:checked + .slider:before { transform: translateX(18px); }
+        
+        .status-txt { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-left: 8px; vertical-align: middle; padding: 4px 8px; border-radius: 6px; }
+        .status-aprobado { color: #30D158; background: rgba(48,209,88,0.1); border: 1px solid rgba(48,209,88,0.2); }
+        .status-pendiente { color: #FFD60A; background: rgba(255,214,10,0.1); border: 1px solid rgba(255,214,10,0.2); }
     </style>
 </head>
 <body>
@@ -31,12 +43,12 @@
     <table>
         <thead>
             <tr>
+                <th>Estado</th>
                 <th>Nombre del Pasajero</th>
-                <th>Cédula</th>
-                <th>Teléfono</th>
-                <th>Edad</th>
-                <th>Cédula (Fotos)</th>
-                <th>Fecha de Registro</th>
+                <th>Contacto (Tel+Email)</th>
+                <th>Identidad (Cédula+Edad)</th>
+                <th>Documentos</th>
+                <th>Registro</th>
             </tr>
         </thead>
         <tbody id="clientesList">
