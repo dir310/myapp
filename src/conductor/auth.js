@@ -57,7 +57,29 @@ window.togglePassword = function (inputId, iconElement) {
 };
 
 function setupUIEvents() {
-  document.getElementById('loginBtn').onclick = handleLogin;
+  const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+  const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+  const switchToLoginBtn = document.getElementById('switchToLogin');
+  const switchToRegisterBtn = document.getElementById('switchToRegister');
+
+  if (loginSubmitBtn) loginSubmitBtn.onclick = handleLoginSubmit;
+  if (registerSubmitBtn) registerSubmitBtn.onclick = handleRegisterSubmit;
+
+  if (switchToLoginBtn) {
+      switchToLoginBtn.onclick = (e) => {
+          e.preventDefault();
+          document.getElementById('registerView').style.display = 'none';
+          document.getElementById('loginView').style.display = 'block';
+      };
+  }
+
+  if (switchToRegisterBtn) {
+      switchToRegisterBtn.onclick = (e) => {
+          e.preventDefault();
+          document.getElementById('loginView').style.display = 'none';
+          document.getElementById('registerView').style.display = 'block';
+      };
+  }
 
   // Profile Sidebar toggles
   profileBtn.onclick = openProfile;
@@ -65,6 +87,7 @@ function setupUIEvents() {
   document.getElementById('logoutBtn').onclick = async () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem('calmovil_driver_id'); // compatibilidad con sesión anterior
+    localStorage.setItem('zippy_driver_logged_out', 'true'); // Bandera para mostrar login al volver
     window.location.reload();
   };
 
@@ -126,6 +149,15 @@ async function handleSession(session) {
 
     profileBtn.style.display = 'none';
     document.querySelector('.fab-whatsapp').style.display = 'flex'; // Mostrar en login
+
+    // Logica: Si hizo logout previamente, mostrar Login; de lo contrario, Registro (Defecto)
+    if (localStorage.getItem('zippy_driver_logged_out') === 'true') {
+        document.getElementById('registerView').style.display = 'none';
+        document.getElementById('loginView').style.display = 'block';
+    } else {
+        document.getElementById('registerView').style.display = 'block';
+        document.getElementById('loginView').style.display = 'none';
+    }
   }
 }
 
@@ -158,8 +190,8 @@ function proceedToApp() {
 }
 
 
-async function handleLogin() {
-  const btn = document.getElementById('loginBtn');
+async function handleLoginSubmit() {
+  const btn = document.getElementById('loginSubmitBtn');
   const telefono = document.getElementById('loginTelefono').value.trim();
   const password = document.getElementById('loginPassword').value;
   const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
@@ -168,7 +200,7 @@ async function handleLogin() {
 
   if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
   if (!password) return alert('Por favor ingresa tu clave.');
-  if (!terms) return alert('Debes aceptar las condiciones y la política de privacidad marcando la casilla.');
+  if (!terms) return alert('Debes aceptar las políticas para ingresar.');
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
     alert('La respuesta a la suma de seguridad es incorrecta.');
     generateCaptcha();
@@ -178,7 +210,6 @@ async function handleLogin() {
   btn.textContent = 'Verificando...';
   btn.disabled = true;
 
-  // 1. Verificar si el usuario ya existe
   const { data: existingUser, error: searchError } = await supabase
     .from('conductores')
     .select('*')
@@ -188,7 +219,7 @@ async function handleLogin() {
   if (existingUser) {
     if (existingUser.password !== password) {
         alert('Credenciales incorrectas (Teléfono o clave no coinciden).');
-        btn.textContent = 'Crear o Ingresar';
+        btn.textContent = 'Ingresar al Panel';
         btn.disabled = false;
         generateCaptcha();
         return;
@@ -196,16 +227,38 @@ async function handleLogin() {
     // YA ESTÁ REGISTRADO -> Login directo
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: existingUser.id, timestamp: Date.now() }));
     window.location.reload();
-    return;
+  } else {
+      alert('Esta cuenta no existe. Por favor regístrate primero.');
+      btn.textContent = 'Ingresar al Panel';
+      btn.disabled = false;
+      generateCaptcha();
   }
+}
 
-  // NO ESTÁ REGISTRADO -> Mostrar formulario completo si no está visible
-  const registerFields = document.getElementById('registerFields');
-  if (registerFields.style.display === 'none') {
-      registerFields.style.display = 'block';
+async function handleRegisterSubmit() {
+  const btn = document.getElementById('registerSubmitBtn');
+  const telefono = document.getElementById('regTelefono').value.trim();
+  const termsElement = document.getElementById('regTerms');
+  const terms = termsElement ? termsElement.checked : true;
+
+  if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
+  if (!terms) return alert('Debes aceptar las políticas marcando la casilla.');
+
+  btn.textContent = 'Verificando datos...';
+  btn.disabled = true;
+
+  // 1. Verificar si el usuario ya existe
+  const { data: existingUser } = await supabase
+    .from('conductores')
+    .select('id')
+    .eq('telefono', telefono)
+    .maybeSingle();
+
+  if (existingUser) {
+      alert('Este número de teléfono ya está registrado. Por favor, inicia sesión.');
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return; 
+      return;
   }
 
   // Validaciones del formulario completo
@@ -226,7 +279,7 @@ async function handleLogin() {
   if (!is6Chars || !has1Upper || !has5Digits) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return alert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345 o 12345B).');
+      return alert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345).');
   }
 
   const n = document.getElementById('regNombre').value.trim();
@@ -235,13 +288,13 @@ async function handleLogin() {
   const d = document.getElementById('regDireccion').value.trim();
   const m = document.getElementById('regMotoDetalle').value.trim();
   
-  const fProp = document.getElementById('fotoPropiedad').files[0];
-  const fCedF = document.getElementById('fotoCedulaFrontal').files[0];
-  const fCedT = document.getElementById('fotoCedulaTrasera').files[0];
-  const fRosto = document.getElementById('fotoRostro').files[0];
+  const fProp = document.getElementById('fotoPropiedad').files ? document.getElementById('fotoPropiedad').files[0] : null;
+  const fCedF = document.getElementById('fotoCedulaFrontal').files ? document.getElementById('fotoCedulaFrontal').files[0] : null;
+  const fCedT = document.getElementById('fotoCedulaTrasera').files ? document.getElementById('fotoCedulaTrasera').files[0] : null;
+  const fRosto = document.getElementById('fotoRostro').files ? document.getElementById('fotoRostro').files[0] : null;
 
   if (!n || !p || !c || !d || !m || !fProp || !fCedF || !fCedT || !fRosto) {
-      btn.textContent = 'Enviar Registro';
+      btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
       return alert('Debes llenar todos los datos y subir las 4 imágenes obligatorias de forma correcta.');
   }
@@ -249,7 +302,7 @@ async function handleLogin() {
   // Filtros y validaciones
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(c)) {
-      btn.textContent = 'Enviar Registro';
+      btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
       return alert('Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
   }
@@ -297,9 +350,8 @@ async function handleLogin() {
 
   } catch (err) {
       alert('Error en el registro: ' + (err.message || 'Inténtalo de nuevo.'));
-      btn.textContent = 'Enviar Registro';
+      btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      generateCaptcha();
   }
 }
 

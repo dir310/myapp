@@ -32,55 +32,87 @@
 
             <div id="loginForm" class="auth-form active">
                 <!-- Se piden teléfono y clave para acceder -->
-                <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular (10 dígitos)" maxlength="10">
+                <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular (10 dígitos)"
+                    maxlength="10">
                 <div class="password-wrapper" style="margin-top: 12px;">
                     <input type="password" id="loginPassword" class="driver-name" placeholder="Clave de conductor">
                     <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
                 </div>
-                
+
                 <!-- Campos de Registro (Ocultos inicialmente) -->
                 <div id="registerFields" style="display:none; text-align:left; margin-top:20px;">
                     <hr style="border-color: rgba(255,107,0,0.3); margin-bottom: 20px;">
-                    <p style="color:#FF6B00; font-size:14px; font-weight:bold; margin-top:0; margin-bottom:15px;">Registro de Nuevo Conductor</p>
-                    
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Crea tu Clave (1 mayúscula y 5 números) *</label>
+                    <p style="color:#FF6B00; font-size:14px; font-weight:bold; margin-top:0; margin-bottom:15px;">
+                        Registro de Nuevo Conductor</p>
+
+                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Crea
+                        tu Clave (1 mayúscula y 5 números) *</label>
                     <div class="password-wrapper" style="margin-bottom: 12px;">
-                        <input type="password" id="regPassword" class="driver-name" placeholder="Ej. A12345" maxlength="6" style="margin-bottom:0;">
+                        <input type="password" id="regPassword" class="driver-name" placeholder="Ej. A12345"
+                            maxlength="6" style="margin-bottom:0;">
                     </div>
-                    
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Confirmar Clave *</label>
+
+                    <label
+                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Confirmar
+                        Clave *</label>
                     <div class="password-wrapper" style="margin-bottom: 12px;">
-                        <input type="password" id="regPasswordConfirm" class="driver-name" placeholder="Repite la clave" maxlength="6" style="margin-bottom:0;">
+                        <input type="password" id="regPasswordConfirm" class="driver-name" placeholder="Repite la clave"
+                            maxlength="6" style="margin-bottom:0;">
                     </div>
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Nombres y Apellidos *</label>
-                    <input type="text" id="regNombre" class="driver-name" placeholder="Ej. Juan Pérez" maxlength="30" style="margin-bottom:12px;">
+                    <label
+                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Nombres
+                        y Apellidos *</label>
+                    <input type="text" id="regNombre" class="driver-name" placeholder="Ej. Juan Pérez" maxlength="30"
+                        style="margin-bottom:12px;">
 
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Placa de la Moto *</label>
-                    <input type="text" id="regPlaca" class="driver-name" placeholder="Ej. ABC12D" maxlength="6" style="margin-bottom:12px; text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Placa
+                        de la Moto *</label>
+                    <input type="text" id="regPlaca" class="driver-name" placeholder="Ej. ABC12D" maxlength="6"
+                        style="margin-bottom:12px; text-transform:uppercase;"
+                        oninput="this.value = this.value.toUpperCase()">
 
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Correo Electrónico *</label>
-                    <input type="email" id="regCorreo" class="driver-name" placeholder="ejemplo@correo.com" maxlength="40" style="margin-bottom:12px;">
+                    <label
+                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Correo
+                        Electrónico *</label>
+                    <input type="email" id="regCorreo" class="driver-name" placeholder="ejemplo@correo.com"
+                        maxlength="40" style="margin-bottom:12px;">
 
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Dirección de Residencia *</label>
-                    <input type="text" id="regDireccion" class="driver-name" placeholder="Ej. Calle 1 #2-3" maxlength="20" style="margin-bottom:12px;">
+                    <label
+                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Dirección
+                        de Residencia *</label>
+                    <input type="text" id="regDireccion" class="driver-name" placeholder="Ej. Calle 1 #2-3"
+                        maxlength="20" style="margin-bottom:12px;">
 
-                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Marca, Cilindraje y Color *</label>
-                    <input type="text" id="regMotoDetalle" class="driver-name" placeholder="Ej. Bajaj 150 Negro" maxlength="30" style="margin-bottom:15px;">
+                    <label
+                        style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Marca,
+                        Cilindraje y Color *</label>
+                    <input type="text" id="regMotoDetalle" class="driver-name" placeholder="Ej. Bajaj 150 Negro"
+                        maxlength="30" style="margin-bottom:15px;">
 
-                    <div style="background:rgba(255,107,0,.05); border:1px solid rgba(255,107,0,.2); border-radius:8px; padding:10px; margin-bottom:15px;">
-                        <p style="color:#FF6B00; font-size:12px; font-weight:bold; margin-top:0; margin-bottom:10px;">Subida de Documentos (Obligatorio)</p>
-                        
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">1. Tarjeta de Propiedad</label>
-                        <input type="file" id="fotoPropiedad" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+                    <div
+                        style="background:rgba(255,107,0,.05); border:1px solid rgba(255,107,0,.2); border-radius:8px; padding:10px; margin-bottom:15px;">
+                        <p style="color:#FF6B00; font-size:12px; font-weight:bold; margin-top:0; margin-bottom:10px;">
+                            Subida de Documentos (Obligatorio)</p>
 
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">2. Cédula (Frontal)</label>
-                        <input type="file" id="fotoCedulaFrontal" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">1. Tarjeta de
+                            Propiedad</label>
+                        <input type="file" id="fotoPropiedad" accept="image/*"
+                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
 
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">3. Cédula (Trasera)</label>
-                        <input type="file" id="fotoCedulaTrasera" accept="image/*" style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">2. Cédula
+                            (Frontal)</label>
+                        <input type="file" id="fotoCedulaFrontal" accept="image/*"
+                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
 
-                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">4. Foto de tu Rostro (Selfie)</label>
-                        <input type="file" id="fotoRostro" accept="image/*" style="width:100%; font-size:11px; margin-bottom:5px; color:rgba(255,255,255,.7);">
+                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">3. Cédula
+                            (Trasera)</label>
+                        <input type="file" id="fotoCedulaTrasera" accept="image/*"
+                            style="width:100%; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,.7);">
+
+                        <label style="color:#fff; font-size:11px; margin-bottom:5px; display:block;">4. Foto de tu
+                            Rostro (Selfie)</label>
+                        <input type="file" id="fotoRostro" accept="image/*"
+                            style="width:100%; font-size:11px; margin-bottom:5px; color:rgba(255,255,255,.7);">
                     </div>
                 </div>
 
@@ -101,13 +133,16 @@
                     style="display:flex; align-items:flex-start; margin-top:15px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
                     <input type="checkbox" id="loginTerms"
                         style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
-                    <span>Al iniciar sesión o registrarme, acepto la <a href="/privacy.html" style="color:#FF6B00; text-decoration:underline; font-weight:bold;">Política de Privacidad</a> y declaro que ZIPPY es únicamente un puente tecnológico de conexión.</span>
+                    <span>Al iniciar sesión o registrarme, acepto la <a href="/privacy.html"
+                            style="color:#FF6B00; text-decoration:underline; font-weight:bold;">Política de
+                            Privacidad</a> y declaro que ZIPPY es únicamente un puente tecnológico de conexión.</span>
                 </label>
 
-                <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Crear o Ingresar</button>
-              </div>
+                <button id="loginBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Crear o
+                    Ingresar</button>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Complete Profile Modal (Removed) -->
@@ -147,8 +182,10 @@
                 <div id="statEarnings" style="font-size:18px; font-weight:bold; color:#30D158;">$0</div>
             </div>
         </div>
-        <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.2); border-radius:12px; padding:15px; text-align:center; margin-top:10px;">
-            <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">⭐ Calificación Pública</div>
+        <div
+            style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.2); border-radius:12px; padding:15px; text-align:center; margin-top:10px;">
+            <div style="font-size:11px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px;">⭐
+                Calificación Pública</div>
             <div id="statRating" style="font-size:18px; font-weight:bold; color:#FF6B00;">Cargando...</div>
         </div>
 
@@ -161,7 +198,8 @@
             </div>
         </div>
 
-        <button id="openDriverAboutBtn" class="btn" style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:rgba(255,255,255,.6); font-size:12px; padding:12px; width:100%; margin-top:30px; margin-bottom: 10px; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
+        <button id="openDriverAboutBtn" class="btn"
+            style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:rgba(255,255,255,.6); font-size:12px; padding:12px; width:100%; margin-top:30px; margin-bottom: 10px; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
             ℹ️ Acerca de ZIPPY
         </button>
 
@@ -171,10 +209,13 @@
     </div>
 
     <div class="status-container">
-        <div id="validationWarning" style="display:none; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.4); padding:15px; border-radius:12px; margin-bottom:15px; text-align:center;">
+        <div id="validationWarning"
+            style="display:none; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.4); padding:15px; border-radius:12px; margin-bottom:15px; text-align:center;">
             <p style="font-size:16px; margin:0 0 5px 0;">⏳</p>
-            <p style="color:#ff3b30; font-weight:bold; font-size:14px; margin:0 0 5px 0;">Tus datos están en validación</p>
-            <p style="color:rgba(255,255,255,0.7); font-size:12px; margin:0;">Pronto nos contactaremos contigo para aprobar tu cuenta.</p>
+            <p style="color:#ff3b30; font-weight:bold; font-size:14px; margin:0 0 5px 0;">Tus datos están en validación
+            </p>
+            <p style="color:rgba(255,255,255,0.7); font-size:12px; margin:0;">Pronto nos contactaremos contigo para
+                aprobar tu cuenta.</p>
         </div>
 
         <button id="radarBtn" class="radar-toggle radar-off">
@@ -219,23 +260,41 @@
     <!-- Overlay Acerca de ZIPPY (Conductor) -->
     <div id="driverAboutOverlay" class="modal-overlay" style="display: none; z-index: 10000; padding:20px;">
         <div class="auth-container" style="text-align: center; padding: 30px; position:relative; background:#1c1c1e;">
-            <button id="closeDriverAboutBtn" style="position:absolute; top:15px; right:15px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer; padding:5px;">✕</button>
-            
-            <img src="https://i.imgur.com/YLqlfOy.jpeg" alt="ZIPPY logo" style="max-width:70px; height:auto; margin:0 auto 15px auto; display:block; border-radius:12px;" />
-            <h2 style="color:#FF6B00; margin:0 0 5px 0; font-size:22px; font-weight:800; letter-spacing:0.5px;">Acerca de ZIPPY</h2>
-            
-            <div style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,.1); margin-top:20px;">
+            <button id="closeDriverAboutBtn"
+                style="position:absolute; top:15px; right:15px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer; padding:5px;">✕</button>
+
+            <img src="https://i.imgur.com/YLqlfOy.jpeg" alt="ZIPPY logo"
+                style="max-width:70px; height:auto; margin:0 auto 15px auto; display:block; border-radius:12px;" />
+            <h2 style="color:#FF6B00; margin:0 0 5px 0; font-size:22px; font-weight:800; letter-spacing:0.5px;">Acerca
+                de ZIPPY</h2>
+
+            <div
+                style="background:rgba(255,255,255,.05); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,.1); margin-top:20px;">
                 <p style="font-size:12px; color:rgba(255,255,255,.7); line-height:1.6; margin:0; text-align:left;">
-                    <strong style="color:rgba(255,255,255,.9);">Aviso Legal:</strong> ZIPPY actúa únicamente como intermediario tecnológico para facilitar conexión. No somos una empresa de transporte ni asumimos responsabilidad patrimonial ni legal por el servicio prestado.
+                    <strong style="color:rgba(255,255,255,.9);">Aviso Legal:</strong> ZIPPY actúa únicamente como
+                    intermediario tecnológico para facilitar conexión. No somos una empresa de transporte ni asumimos
+                    responsabilidad patrimonial ni legal por el servicio prestado.
                 </p>
             </div>
         </div>
     </div>
 
     <!-- Banner iOS Instalar (Conductor) -->
-    <div id="iosBannerDriver" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99999; background:linear-gradient(135deg,#1c1c1e,#2c2c2e); border-top:2px solid #FF6B00; padding:18px 20px 28px 20px; box-shadow:0 -4px 30px rgba(0,0,0,.6); animation:slideUpBanner .3s ease;">
-        <style>@keyframes slideUpBanner{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
-        <button onclick="document.getElementById('iosBannerDriver').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+    <div id="iosBannerDriver"
+        style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99999; background:linear-gradient(135deg,#1c1c1e,#2c2c2e); border-top:2px solid #FF6B00; padding:18px 20px 28px 20px; box-shadow:0 -4px 30px rgba(0,0,0,.6); animation:slideUpBanner .3s ease;">
+        <style>
+            @keyframes slideUpBanner {
+                from {
+                    transform: translateY(100%)
+                }
+
+                to {
+                    transform: translateY(0)
+                }
+            }
+        </style>
+        <button onclick="document.getElementById('iosBannerDriver').style.display='none'"
+            style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:4px;">✕</button>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
             <img src="https://i.imgur.com/YLqlfOy.jpeg" style="width:40px;height:40px;border-radius:10px;" alt="ZIPPY">
             <div>
@@ -244,35 +303,47 @@
             </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+            <div
+                style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
                 <span style="font-size:20px;">1️⃣</span>
-                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca el ícono <strong style="color:#FF6B00;">compartir ↑</strong> en Safari (barra inferior)</span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca el ícono <strong
+                        style="color:#FF6B00;">compartir ↑</strong> en Safari (barra inferior)</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+            <div
+                style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
                 <span style="font-size:20px;">2️⃣</span>
-                <span style="color:rgba(255,255,255,.85);font-size:13px;">Selecciona <strong style="color:#FF6B00;">"Añadir a pantalla de inicio"</strong></span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Selecciona <strong
+                        style="color:#FF6B00;">"Añadir a pantalla de inicio"</strong></span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
+            <div
+                style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;">
                 <span style="font-size:20px;">3️⃣</span>
-                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca <strong style="color:#FF6B00;">"Añadir"</strong> y listo ✅</span>
+                <span style="color:rgba(255,255,255,.85);font-size:13px;">Toca <strong
+                        style="color:#FF6B00;">"Añadir"</strong> y listo ✅</span>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal Protocolo de Seguridad (Conductor) -->
-    <div id="safetyRulesModal" class="modal-overlay" style="display: none; z-index: 10001; padding:15px; background:rgba(0,0,0,0.9);">
-        <div class="auth-container" style="max-width:450px; padding:25px; border:1px solid rgba(255,107,0,0.3); box-shadow:0 0 40px rgba(255,107,0,0.15);">
+    <div id="safetyRulesModal" class="modal-overlay"
+        style="display: none; z-index: 10001; padding:15px; background:rgba(0,0,0,0.9);">
+        <div class="auth-container"
+            style="max-width:450px; padding:25px; border:1px solid rgba(255,107,0,0.3); box-shadow:0 0 40px rgba(255,107,0,0.15);">
             <div style="text-align:center; margin-bottom:20px;">
                 <span style="font-size:40px; display:block; margin-bottom:10px;">🛡️</span>
-                <h2 style="color:#FF6B00; margin:0; font-size:20px; font-weight:900; letter-spacing:0.5px;">PROTOCOLO DE SEGURIDAD</h2>
-                <p style="color:rgba(255,255,255,0.5); font-size:12px; margin-top:5px;">Por tu bienestar y el de tus pasajeros</p>
+                <h2 style="color:#FF6B00; margin:0; font-size:20px; font-weight:900; letter-spacing:0.5px;">PROTOCOLO DE
+                    SEGURIDAD</h2>
+                <p style="color:rgba(255,255,255,0.5); font-size:12px; margin-top:5px;">Por tu bienestar y el de tus
+                    pasajeros</p>
             </div>
 
             <div class="safety-content" style="max-height:60vh; overflow-y:auto; padding-right:5px;">
                 <!-- Grupo 1 -->
                 <div style="margin-bottom:20px;">
-                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">01</span> Seguridad del Pasajero
+                    <div
+                        style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">01</span>
+                        Seguridad del Pasajero
                     </div>
                     <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
                         <li class="safety-item"><span>🔞</span> No transportes personas en estado de embriaguez.</li>
@@ -284,8 +355,10 @@
 
                 <!-- Grupo 2 -->
                 <div style="margin-bottom:20px;">
-                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">02</span> Conducción Responsable
+                    <div
+                        style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">02</span>
+                        Conducción Responsable
                     </div>
                     <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
                         <li class="safety-item"><span>🏁</span> No superes el límite de velocidad de <b>60km/h</b>.</li>
@@ -296,8 +369,10 @@
 
                 <!-- Grupo 3 -->
                 <div style="margin-bottom:15px;">
-                    <div style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">03</span> Equipo y Bioseguridad
+                    <div
+                        style="color:#FF6B00; font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span style="background:rgba(255,107,0,0.1); padding:4px 8px; border-radius:4px;">03</span>
+                        Equipo y Bioseguridad
                     </div>
                     <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
                         <li class="safety-item"><span>⛑️</span> Utiliza siempre tu casco de seguridad.</li>
@@ -307,7 +382,8 @@
                 </div>
             </div>
 
-            <button id="closeSafetyBtn" class="btn btn-accept" style="width:100%; margin-top:20px; font-weight:900; letter-spacing:1px; height:50px; font-size:15px;">
+            <button id="closeSafetyBtn" class="btn btn-accept"
+                style="width:100%; margin-top:20px; font-weight:900; letter-spacing:1px; height:50px; font-size:15px;">
                 HE LEÍDO Y ACEPTO EL PROTOCOLO
             </button>
         </div>
@@ -322,17 +398,17 @@
         var _pwaPromptDriver = null;
         var _isIOSDriver = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        window.addEventListener('beforeinstallprompt', function(e) {
+        window.addEventListener('beforeinstallprompt', function (e) {
             e.preventDefault();
             _pwaPromptDriver = e;
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target && e.target.id === 'pwaInstallBtnDriver') {
                 if (_pwaPromptDriver) {
                     // Android: instalacion directa
                     _pwaPromptDriver.prompt();
-                    _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
+                    _pwaPromptDriver.userChoice.then(function () { _pwaPromptDriver = null; });
                 } else if (_isIOSDriver) {
                     // iOS: banner con instrucciones
                     document.getElementById('iosBannerDriver').style.display = 'block';
@@ -343,7 +419,7 @@
             }
         });
 
-        window.addEventListener('appinstalled', function() {
+        window.addEventListener('appinstalled', function () {
             var btn = document.getElementById('pwaInstallBtnDriver');
             if (btn) btn.textContent = '✅ App Instalada';
         });
