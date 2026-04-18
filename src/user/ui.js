@@ -42,10 +42,10 @@ export function setMode(m, state, map) {
   const hint = document.getElementById('clickHint');
   const banner = document.getElementById('guidanceBanner');
   const gpsBtn = document.getElementById('gpsQuickBtn');
+  const topSearch = document.getElementById('topSearchArea');
 
   if (m === 'click') {
-    document.querySelectorAll('.inputs-col .route-input').forEach((i) => (i.style.display = 'none'));
-    document.querySelector('.route-dots').style.display = 'none';
+    if (topSearch) topSearch.style.display = 'none';
     hint.style.display = 'block';
     state.nextClick = state.startLatLng ? 'end' : 'start';
     map.getContainer().style.cursor = 'crosshair';
@@ -58,8 +58,7 @@ export function setMode(m, state, map) {
     }
     if (gpsBtn && state.nextClick === 'start') gpsBtn.style.display = 'flex';
   } else {
-    document.querySelectorAll('.inputs-col .route-input').forEach((i) => (i.style.display = ''));
-    document.querySelector('.route-dots').style.display = '';
+    if (topSearch) topSearch.style.display = 'block';
     hint.style.display = 'none';
     map.getContainer().style.cursor = '';
     if (banner) banner.style.display = 'none';
