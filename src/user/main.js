@@ -531,6 +531,15 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   setTimeout(() => btn.innerHTML = originalText, 1500);
 });
 
+// Confirm Route Button (Floating)
+const confirmRouteBtn = document.getElementById('confirmRouteBtn');
+if (confirmRouteBtn) {
+  confirmRouteBtn.addEventListener('click', () => {
+    toggleSheet();
+    confirmRouteBtn.style.display = 'none';
+  });
+}
+
 // Botón GPS Rápido
 const gpsQuickBtn = document.getElementById('gpsQuickBtn');
 if (gpsQuickBtn) {

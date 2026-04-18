@@ -90,6 +90,9 @@ export function clearPoint(type, state, map) {
     if (el) el.value = '';
   }
 
+  const confirmBtn = document.getElementById('confirmRouteBtn');
+  if (confirmBtn) confirmBtn.style.display = 'none';
+
   if (state.routeLine) { map.removeLayer(state.routeLine); state.routeLine = null; }
 
   const pill = document.getElementById('routePill');
@@ -140,7 +143,9 @@ export function checkRoute(state, map) {
   document.getElementById('priceSection').style.display = 'block';
 
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
-  if (isSheetMinimized()) toggleSheet();
+  
+  const confirmBtn = document.getElementById('confirmRouteBtn');
+  if (confirmBtn) confirmBtn.style.display = 'flex';
 
   // 1.1 ELIMINADO: Ya no dibujamos línea recta. Esperamos a la curva por la vía.
 
