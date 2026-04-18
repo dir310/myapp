@@ -557,9 +557,17 @@ if (gpsQuickBtn) {
 }
 
 // Search inputs
-document.getElementById('startInput').addEventListener('input', (e) => onInput(e.target, 'start', boundPlaceMarker));
-document.getElementById('startInput').addEventListener('focus', () => showLocationSugg(boundPlaceMarker));
-document.getElementById('endInput').addEventListener('input', (e) => onInput(e.target, 'end', boundPlaceMarker));
+document.getElementById('startInput').addEventListener('input', (e) => onInput(e.target, 'start', boundPlaceMarker, state));
+document.getElementById('startInput').addEventListener('focus', () => {
+  state.nextClick = 'start';
+  showLocationSugg('start', boundPlaceMarker, state);
+});
+
+document.getElementById('endInput').addEventListener('input', (e) => onInput(e.target, 'end', boundPlaceMarker, state));
+document.getElementById('endInput').addEventListener('focus', () => {
+  state.nextClick = 'end';
+  showLocationSugg('end', boundPlaceMarker, state);
+});
 
 // Clear buttons
 document.querySelectorAll('.clear-btn').forEach((btn, i) => {

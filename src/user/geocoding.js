@@ -10,39 +10,65 @@ const timers = {};
  * @param {HTMLInputElement} input - The input element.
  * @param {string} type - 'start' or 'end'.
  * @param {Function} placeMarkerFn - Callback to place marker on selection.
+ * @param {object} state - Shared app state.
  */
-export function onInput(input, type, placeMarkerFn) {
+export function onInput(input, type, placeMarkerFn, state) {
   const val = input.value.trim();
   clearTimeout(timers[type]);
 
   const el = document.getElementById(type + 'Suggestions');
   if (val.length < 3) {
-    if (type === 'start' && val.length === 0) {
-      showLocationSugg(placeMarkerFn);
+    if (val.length === 0) {
+      showLocationSugg(type, placeMarkerFn, state);
     } else {
       el.style.display = 'none';
     }
     return;
   }
 
-  timers[type] = setTimeout(() => geocode(val, type, placeMarkerFn), 420);
+  timers[type] = setTimeout(() => geocode(val, type, placeMarkerFn, state), 420);
 }
 
 /**
- * Show "use my current location" suggestion for start input.
- * @param {Function} placeMarkerFn - Callback to place marker.
+ * Show shortcut suggestions for an input.
+ * @param {string} type - 'start' or 'end'.
+ * @param {Function} placeMarkerFn - Callback.
+ * @param {object} state - App state to update nextClick.
  */
-export function showLocationSugg(placeMarkerFn) {
-  if (document.getElementById('startInput').value.trim() !== '') return;
+export function showLocationSugg(type, placeMarkerFn, state) {
+  const input = document.getElementById(type + 'Input');
+  if (input.value.trim() !== '') return;
 
-  const sugg = document.getElementById('startSuggestions');
-  sugg.innerHTML = `<div class="suggestion-item curr-loc" id="useLocBtn"><span class="sugg-icon">🎯</span> Usar mi ubicación actual</div>`;
+  const sugg = document.getElementById(type + 'Suggestions');
+  let html = '';
+
+  if (type === 'start') {
+    html += `<div class="suggestion-item curr-loc" id="useLocBtn"><span class="sugg-icon">🎯</span> Usar mi ubicación actual</div>`;
+  }
+
+  html += `<div class="suggestion-item mode-click" id="clickMapBtn"><span class="sugg-icon">📍</span> Tocar en el mapa</div>`;
+  
+  sugg.innerHTML = html;
   sugg.style.display = 'block';
 
-  // Attach click handler
-  document.getElementById('useLocBtn').addEventListener('click', () => {
-    useCurrentLocation(placeMarkerFn);
-  });
+  // Attach handlers
+  const useLoc = document.getElementById('useLocBtn');
+  if (useLoc) {
+    useLoc.addEventListener('click', () => useCurrentLocation(placeMarkerFn));
+  }
+
+  const clickMap = document.getElementById('clickMapBtn');
+  if (clickMap) {
+    clickMap.addEventListener('click', () => {
+      state.nextClick = type;
+      sugg.style.display = 'none';
+      const hint = document.getElementById('clickHint');
+      if (hint) {
+        hint.style.display = 'block';
+        hint.textContent = type === 'start' ? '🟢 Toca el inicio en el mapa' : '🟠 Toca el destino en el mapa';
+      }
+    });
+  }
 }
 
 /**
@@ -107,7 +133,7 @@ async function geocode(q, type, placeMarkerFn) {
       data = await res.json();
     }
 
-    renderSugg(data, type, placeMarkerFn);
+    renderSugg(data, type, placeMarkerFn, state);
   } catch (e) {
     // Silently fail — network issues
   }
@@ -116,12 +142,12 @@ async function geocode(q, type, placeMarkerFn) {
 /**
  * Render suggestion dropdown items.
  */
-function renderSugg(data, type, placeMarkerFn) {
+function renderSugg(data, type, placeMarkerFn, state) {
   const el = document.getElementById(type + 'Suggestions');
 
   if (!data.length) {
-    if (type === 'start' && document.getElementById('startInput').value === '') {
-      showLocationSugg(placeMarkerFn);
+    if (document.getElementById(type + 'Input').value === '') {
+      showLocationSugg(type, placeMarkerFn, state);
     } else {
       el.style.display = 'none';
     }
