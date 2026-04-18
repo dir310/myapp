@@ -509,10 +509,6 @@ document.getElementById('openSidebarLink').addEventListener('click', toggleSheet
 // --- Inicializar Gestos (Swipe) ---
 initSwipeGestures();
 
-// Mode buttons
-document.getElementById('modeSearchBtn').addEventListener('click', () => setMode('search', state, map));
-document.getElementById('modeClickBtn').addEventListener('click', () => setMode('click', state, map));
-
 // Reset points button
 document.getElementById('resetPointsBtn').addEventListener('click', () => {
   if (state.currentRideId) {
