@@ -211,6 +211,8 @@ export function listenForDriver(rideId, state, map) {
 
           if (payload.new.estado === 'aceptado' || payload.new.estado === 'en_progreso') {
             if (payload.new.estado === 'aceptado') playNotificationSound();
+            const topSearch = document.getElementById('topSearchArea');
+            if (topSearch) topSearch.style.display = 'none';
             showDriverAssigned(payload.new.conductor_id, state);
           } else if (payload.new.estado === 'finalizado') {
             showRatingScreen(state);
