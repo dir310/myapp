@@ -521,8 +521,8 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   state.isLocked = false;
   showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
   
-  // Reset Guidance
-  updateGuidance(1);
+  const hint = document.getElementById('clickHint');
+  if (hint) hint.textContent = '🟢 Toca el inicio en el mapa';
 
   // Dar feedback visual al botón
   const btn = document.getElementById('resetPointsBtn');
@@ -537,22 +537,6 @@ if (confirmRouteBtn) {
   confirmRouteBtn.addEventListener('click', () => {
     toggleSheet();
     confirmRouteBtn.style.display = 'none';
-  });
-}
-
-// Botón GPS Rápido
-const gpsQuickBtn = document.getElementById('gpsQuickBtn');
-if (gpsQuickBtn) {
-  gpsQuickBtn.addEventListener('click', () => {
-    useCurrentLocation((type, lat, lng, name) => {
-      boundPlaceMarker(type, lat, lng, name);
-      // Tras fijar inicio con GPS, pasamos al paso 2
-      state.nextClick = 'end';
-      updateGuidance(2);
-      // Ocultar hint de inicio
-      const hint = document.getElementById('clickHint');
-      if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
-    });
   });
 }
 
@@ -589,20 +573,16 @@ map.on('click', (e) => {
 
   if (state.nextClick === 'start') {
     state.nextClick = 'end';
-    // Actualizar hint para guiar al segundo toque
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
-    showStatus('', false); // Sin texto extra, el hint ya orienta
-    updateGuidance(2); // Paso 2: Destino
+    showStatus('', false);
     boundPlaceMarker('start', lat, lng, name);
   } else {
     state.nextClick = 'start';
-    state.isLocked = true; // Bloquear tras seleccionar el destino
-    // La tarifa y la línea naranja aparecen solas — no mostrar texto de calculando
+    state.isLocked = true;
     const hint = document.getElementById('clickHint');
     if (hint) hint.textContent = '📍 Ruta fijada. Usa "Reiniciar" para cambiar.';
     showStatus('', false);
-    updateGuidance(3); // Paso 3: Listo
     boundPlaceMarker('end', lat, lng, name);
   }
 });

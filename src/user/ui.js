@@ -36,31 +36,16 @@ export function isSheetMinimized() {
 export function setMode(m, state, map) {
   state.mode = m;
   const hint = document.getElementById('clickHint');
-  const banner = document.getElementById('guidanceBanner');
-  const gpsBtn = document.getElementById('gpsQuickBtn');
 
   if (m === 'click') {
     hint.style.display = 'block';
     state.nextClick = state.startLatLng ? 'end' : 'start';
     map.getContainer().style.cursor = 'crosshair';
-    
-    // Asistente Guiado
-    if (banner) {
-      banner.style.display = 'flex';
-      updateGuidance(state.nextClick === 'start' ? 1 : 2);
-    }
-    if (gpsBtn && state.nextClick === 'start') gpsBtn.style.display = 'flex';
   } else {
     hint.style.display = 'none';
     map.getContainer().style.cursor = '';
   }
 }
-
-/**
- * Update the guidance banner text and icon based on current step.
- * @param {number} step - 1 (Start), 2 (End), 3 (Done)
- */
-export function updateGuidance(step) {}
 
 /**
  * Show or hide the status bar with a message.
@@ -78,10 +63,6 @@ export function showStatus(msg, isError) {
   el.style.display = 'block';
 }
 
-/**
- * Hide the guidance banner and GPS button immediately.
- */
-export function hideGuidance() {}
 /**
  * Initialize swipe gestures to open (right) and close (left) the sidebar.
  */
