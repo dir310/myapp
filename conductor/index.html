@@ -31,10 +31,27 @@
             <h2 style="margin-bottom:20px; color:#FF6B00;">Acceso Conductor</h2>
 
             <div id="loginForm" class="auth-form active">
+                <!-- Se piden teléfono y clave para acceder -->
                 <input type="tel" id="loginTelefono" class="driver-name" placeholder="Número de celular (10 dígitos)" maxlength="10">
+                <div class="password-wrapper" style="margin-top: 12px;">
+                    <input type="password" id="loginPassword" class="driver-name" placeholder="Clave de conductor">
+                    <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
+                </div>
                 
                 <!-- Campos de Registro (Ocultos inicialmente) -->
-                <div id="registerFields" style="display:none; text-align:left; margin-top:15px;">
+                <div id="registerFields" style="display:none; text-align:left; margin-top:20px;">
+                    <hr style="border-color: rgba(255,107,0,0.3); margin-bottom: 20px;">
+                    <p style="color:#FF6B00; font-size:14px; font-weight:bold; margin-top:0; margin-bottom:15px;">Registro de Nuevo Conductor</p>
+                    
+                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Crea tu Clave (1 mayúscula y 5 números) *</label>
+                    <div class="password-wrapper" style="margin-bottom: 12px;">
+                        <input type="password" id="regPassword" class="driver-name" placeholder="Ej. A12345" maxlength="6" style="margin-bottom:0;">
+                    </div>
+                    
+                    <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Confirmar Clave *</label>
+                    <div class="password-wrapper" style="margin-bottom: 12px;">
+                        <input type="password" id="regPasswordConfirm" class="driver-name" placeholder="Repite la clave" maxlength="6" style="margin-bottom:0;">
+                    </div>
                     <label style="color:#fff; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">Nombres y Apellidos *</label>
                     <input type="text" id="regNombre" class="driver-name" placeholder="Ej. Juan Pérez" maxlength="30" style="margin-bottom:12px;">
 

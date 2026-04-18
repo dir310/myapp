@@ -42,7 +42,19 @@ export async function initAuth() {
   handleSession(null);
 }
 
-// Lógica eliminada, ya no hay contraseña
+// Lógica para mostrar/ocultar contraseña
+window.togglePassword = function (inputId, iconElement) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconElement.style.filter = 'grayscale(0)'; // Color completo
+    iconElement.style.opacity = '1';
+  } else {
+    input.type = 'password';
+    iconElement.style.filter = 'grayscale(1)'; // Blanco y negro / tenue
+    iconElement.style.opacity = '0.6';
+  }
+};
 
 function setupUIEvents() {
   document.getElementById('loginBtn').onclick = handleLogin;
@@ -149,11 +161,13 @@ function proceedToApp() {
 async function handleLogin() {
   const btn = document.getElementById('loginBtn');
   const telefono = document.getElementById('loginTelefono').value.trim();
+  const password = document.getElementById('loginPassword').value;
   const userCaptcha = parseInt(document.getElementById('loginCaptcha').value);
   const termsElement = document.getElementById('loginTerms');
   const terms = termsElement ? termsElement.checked : true; 
 
   if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
+  if (!password) return alert('Por favor ingresa tu clave.');
   if (!terms) return alert('Debes aceptar las condiciones y la política de privacidad marcando la casilla.');
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
     alert('La respuesta a la suma de seguridad es incorrecta.');
@@ -172,6 +186,13 @@ async function handleLogin() {
     .maybeSingle();
 
   if (existingUser) {
+    if (existingUser.password !== password) {
+        alert('Credenciales incorrectas (Teléfono o clave no coinciden).');
+        btn.textContent = 'Crear o Ingresar';
+        btn.disabled = false;
+        generateCaptcha();
+        return;
+    }
     // YA ESTÁ REGISTRADO -> Login directo
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: existingUser.id, timestamp: Date.now() }));
     window.location.reload();
@@ -182,12 +203,32 @@ async function handleLogin() {
   const registerFields = document.getElementById('registerFields');
   if (registerFields.style.display === 'none') {
       registerFields.style.display = 'block';
-      btn.textContent = 'Enviar Registro';
+      btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
       return; 
   }
 
   // Validaciones del formulario completo
+  const regPass = document.getElementById('regPassword').value;
+  const regPassConf = document.getElementById('regPasswordConfirm').value;
+  
+  if (regPass !== regPassConf) {
+      btn.textContent = 'Enviar Registro Completado';
+      btn.disabled = false;
+      return alert('Las claves no coinciden.');
+  }
+
+  // Clave: exactamente 5 números y 1 mayúscula (6 caracteres totales)
+  const is6Chars = regPass.length === 6;
+  const has1Upper = (regPass.match(/[A-Z]/g) || []).length === 1;
+  const has5Digits = (regPass.match(/\d/g) || []).length === 5;
+  
+  if (!is6Chars || !has1Upper || !has5Digits) {
+      btn.textContent = 'Enviar Registro Completado';
+      btn.disabled = false;
+      return alert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345 o 12345B).');
+  }
+
   const n = document.getElementById('regNombre').value.trim();
   const p = document.getElementById('regPlaca').value.trim();
   const c = document.getElementById('regCorreo').value.trim();
@@ -235,6 +276,7 @@ async function handleLogin() {
       const { error: insertError } = await supabase.from('conductores').insert([{ 
           id: newId, 
           telefono: telefono, 
+          password: regPass,
           nombre: n, 
           placa: p, 
           correo: c,
