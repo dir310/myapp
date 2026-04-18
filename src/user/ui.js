@@ -118,4 +118,44 @@ export function hideGuidance() {
   if (banner) banner.style.display = 'none';
   if (gpsBtn) gpsBtn.style.display = 'none';
 }
+/**
+ * Initialize swipe gestures to open (right) and close (left) the sidebar.
+ */
+export function initSwipeGestures() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const threshold = 60; // Pixeles mínimos para detectar el swipe
+  const sidebar = document.getElementById('sidebar');
 
+  // Abrir: Deslizar desde el borde izquierdo hacia la derecha
+  window.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchEndX - touchStartX;
+    const diffY = Math.abs(touchEndY - touchStartY);
+
+    // Solo si el deslizamiento es mayoritariamente horizontal y desde el borde
+    if (sheetMinimized && touchStartX < 50 && diffX > threshold && diffY < 100) {
+      toggleSheet();
+    }
+  }, { passive: true });
+
+  // Cerrar: Deslizar la barra lateral hacia la izquierda
+  sidebar.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  sidebar.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+
+    if (!sheetMinimized && diffX > threshold) {
+      toggleSheet();
+    }
+  }, { passive: true });
+}

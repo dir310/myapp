@@ -5,7 +5,7 @@ import '../styles/common.css';
 import '../styles/user.css';
 
 import { createMap, LA_CALERA } from '../utils/map.js';
-import { toggleSheet, setMode, showStatus, isSheetMinimized, updateGuidance } from './ui.js';
+import { toggleSheet, setMode, showStatus, isSheetMinimized, updateGuidance, initSwipeGestures } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss, useCurrentLocation } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
@@ -504,6 +504,10 @@ setMode('click', state, map);
 
 // Sidebar tab toggle
 document.getElementById('sidebarHeader').addEventListener('click', toggleSheet);
+document.getElementById('openSidebarLink').addEventListener('click', toggleSheet);
+
+// --- Inicializar Gestos (Swipe) ---
+initSwipeGestures();
 
 // Mode buttons
 document.getElementById('modeSearchBtn').addEventListener('click', () => setMode('search', state, map));
