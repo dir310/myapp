@@ -53,8 +53,6 @@ export function setMode(m, state, map) {
   } else {
     hint.style.display = 'none';
     map.getContainer().style.cursor = '';
-    if (banner) banner.style.display = 'none';
-    if (gpsBtn) gpsBtn.style.display = 'none';
   }
 }
 
@@ -62,27 +60,7 @@ export function setMode(m, state, map) {
  * Update the guidance banner text and icon based on current step.
  * @param {number} step - 1 (Start), 2 (End), 3 (Done)
  */
-export function updateGuidance(step) {
-  const textEl = document.getElementById('guidanceText');
-  const iconEl = document.getElementById('guidanceIcon');
-  const gpsBtn = document.getElementById('gpsQuickBtn');
-
-  if (!textEl || !iconEl) return;
-
-  if (step === 1) {
-    iconEl.textContent = '📍';
-    textEl.textContent = 'Selecciona el Inicio. Toca el mapa o usa el botón 🎯';
-    if (gpsBtn) gpsBtn.style.display = 'flex';
-  } else if (step === 2) {
-    iconEl.textContent = '🏁';
-    textEl.textContent = '¡Excelente! Ahora toca en el mapa tu Destino.';
-    if (gpsBtn) gpsBtn.style.display = 'none';
-  } else if (step === 3) {
-    iconEl.textContent = '🏍️';
-    textEl.textContent = '¡Ruta lista! Revisa tu tarifa y pide tu moto.';
-    if (gpsBtn) gpsBtn.style.display = 'none';
-  }
-}
+export function updateGuidance(step) {}
 
 /**
  * Show or hide the status bar with a message.
@@ -103,12 +81,7 @@ export function showStatus(msg, isError) {
 /**
  * Hide the guidance banner and GPS button immediately.
  */
-export function hideGuidance() {
-  const banner = document.getElementById('guidanceBanner');
-  const gpsBtn = document.getElementById('gpsQuickBtn');
-  if (banner) banner.style.display = 'none';
-  if (gpsBtn) gpsBtn.style.display = 'none';
-}
+export function hideGuidance() {}
 /**
  * Initialize swipe gestures to open (right) and close (left) the sidebar.
  */
