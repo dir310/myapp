@@ -2,7 +2,7 @@
  * User page UI management: bottom sheet, mode toggle, status bar.
  */
 
-let sheetMinimized = false;
+let sheetMinimized = true;
 
 /**
  * Toggle sidebar minimize/expand state.
@@ -43,7 +43,6 @@ export function setMode(m, state, map) {
     hint.style.display = 'block';
     state.nextClick = state.startLatLng ? 'end' : 'start';
     map.getContainer().style.cursor = 'crosshair';
-    if (sheetMinimized) toggleSheet();
     
     // Asistente Guiado
     if (banner) {
