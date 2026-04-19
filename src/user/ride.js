@@ -345,7 +345,7 @@ async function showDriverAssigned(driverId, state) {
   `;
 
   // Fetch datos reales a base de datos
-  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca, color').eq('id', driverId).single();
+  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
 
   // Fetch rating promedio
   const { data: ratingData } = await supabase
@@ -366,7 +366,7 @@ async function showDriverAssigned(driverId, state) {
   const driverName = driver ? driver.nombre : 'Conductor asignado';
   const driverDetails = {
     placa: driver?.placa || '---',
-    vehiculo: `${driver?.marca || ''} ${driver?.color || ''}`.trim() || 'Moto',
+    vehiculo: driver?.marca_cilindraje_color || 'Moto',
     telefono: driver?.telefono || ''
   };
 
