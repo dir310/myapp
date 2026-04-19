@@ -1,11 +1,6 @@
 /**
- * Genera un código de viaje corto y aleatorio (ej: ZIPPY-A7B2)
+ * Genera un código de viaje numérico de 6 dígitos (ej: 482910)
  */
 export function generateRideCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Evitamos I, O, 0, 1 para legibilidad
-    let result = '';
-    for (let i = 0; i < 4; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return `ZIPPY-${result}`;
+    return Math.floor(100000 + Math.random() * 900000).toString();
 }
