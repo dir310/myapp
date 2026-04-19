@@ -521,18 +521,19 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   boundClearPoint('end');
   state.nextClick = 'start';
   state.isLocked = false;
-  state.mapClickTarget = null;        // Cancelar cualquier espera de toque en mapa
-  state.mapClickProcessing = false;   // Liberar el flag anti-doble-tap
-  showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
+  state.mapClickTarget = null;
+  state.mapClickProcessing = false;
+  showStatus('', false);
 
-  // Ocultar el hint — el usuario debe volver a elegir "Tocar en el mapa"
   const hint = document.getElementById('clickHint');
   if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
   const btn = document.getElementById('resetPointsBtn');
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '✅ Reiniciado';
-  setTimeout(() => btn.innerHTML = originalText, 1500);
+  btn.textContent = '✅ Reiniciando...';
+  btn.style.color = 'rgba(48,209,88,0.8)';
+
+  // Refresca la página después de un breve feedback visual
+  setTimeout(() => window.location.reload(), 700);
 });
 
 // Confirm Route Button (Floating)
