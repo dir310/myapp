@@ -61,6 +61,7 @@ export function showLocationSugg(type, placeMarkerFn, state) {
   if (clickMap) {
     clickMap.addEventListener('click', () => {
       state.nextClick = type;
+      state.mapClickTarget = type; // Gate: habilita exactamente UN toque en el mapa para este punto
       sugg.style.display = 'none';
       const hint = document.getElementById('clickHint');
       if (hint) {

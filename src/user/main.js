@@ -23,11 +23,13 @@ const state = {
   startMarker: null,
   endMarker: null,
   routingControl: null,
-  mode: 'click',       // Por defecto: tocar mapa
+  mode: 'click',
   nextClick: 'start',
   currentRideId: null,
   pollerInterval: null,
-  isLocked: false,     // Bloquea interacción tras elegir destino
+  isLocked: false,        // Bloquea interacción tras elegir destino
+  mapClickTarget: null,   // 'start' | 'end' | null — solo activo cuando el usuario eligió "Tocar en el mapa"
+  mapClickProcessing: false, // Anti-doble-tap: bloquea un segundo clic simultáneo
 };
 
 // ── Passenger Auth Logic ──
@@ -497,8 +499,8 @@ const map = createMap('map', LA_CALERA, 13);
 const boundPlaceMarker = (type, lat, lng, name) => placeMarker(type, lat, lng, name, state, map);
 const boundClearPoint = (type) => clearPoint(type, state, map);
 
-// ── Activar modo por defecto: Tocar Mapa ──
-setMode('click', state, map);
+// ── El hint de mapa solo aparece cuando el usuario elige "Tocar en el mapa" ──
+// (No se preactiva automáticamente al cargar)
 
 // ── Event Listeners ──
 
@@ -519,12 +521,14 @@ document.getElementById('resetPointsBtn').addEventListener('click', () => {
   boundClearPoint('end');
   state.nextClick = 'start';
   state.isLocked = false;
+  state.mapClickTarget = null;        // Cancelar cualquier espera de toque en mapa
+  state.mapClickProcessing = false;   // Liberar el flag anti-doble-tap
   showStatus('✨ Puntos reiniciados. Selecciona donde inicias.', false);
-  
-  const hint = document.getElementById('clickHint');
-  if (hint) hint.textContent = '🟢 Toca el inicio en el mapa';
 
-  // Dar feedback visual al botón
+  // Ocultar el hint — el usuario debe volver a elegir "Tocar en el mapa"
+  const hint = document.getElementById('clickHint');
+  if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
+
   const btn = document.getElementById('resetPointsBtn');
   const originalText = btn.innerHTML;
   btn.innerHTML = '✅ Reiniciado';
@@ -559,32 +563,26 @@ document.querySelectorAll('.clear-btn').forEach((btn, i) => {
   btn.addEventListener('click', () => boundClearPoint(type));
 });
 
-// Map click (for 'click' mode)
+// Map click — solo activo cuando el usuario eligió explícitamente "Tocar en el mapa"
 map.on('click', (e) => {
-  if (state.isLocked) return; // No permitir clics si está bloqueado
+  if (state.isLocked) return;            // Ruta ya fijada
+  if (!state.mapClickTarget) return;     // Nadie pidió un toque en el mapa → ignorar
+  if (state.mapClickProcessing) return;  // Anti-doble-tap
 
-  if (state.mode !== 'click') {
-    if (!isSheetMinimized()) toggleSheet();
-    return;
-  }
+  state.mapClickProcessing = true;
+  const target = state.mapClickTarget;
+  state.mapClickTarget = null; // Limpiar de inmediato: solo un punto por selección
+
+  const hint = document.getElementById('clickHint');
+  if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
   const { lat, lng } = e.latlng;
   const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  showStatus('', false);
+  boundPlaceMarker(target, lat, lng, name);
 
-  if (state.nextClick === 'start') {
-    state.nextClick = 'end';
-    const hint = document.getElementById('clickHint');
-    if (hint) hint.textContent = '🟠 Ahora toca el destino en el mapa';
-    showStatus('', false);
-    boundPlaceMarker('start', lat, lng, name);
-  } else {
-    state.nextClick = 'start';
-    state.isLocked = true;
-    const hint = document.getElementById('clickHint');
-    if (hint) hint.textContent = '📍 Ruta fijada. Usa "Reiniciar" para cambiar.';
-    showStatus('', false);
-    boundPlaceMarker('end', lat, lng, name);
-  }
+  // Liberar el guard después de un breve periodo para evitar doble-tap en móvil
+  setTimeout(() => { state.mapClickProcessing = false; }, 400);
 });
 
 // Price section buttons — delegated since they're rebuilt dynamically
