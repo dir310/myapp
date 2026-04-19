@@ -291,8 +291,8 @@ body {
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  max-width: 240px;
+  width: 75%;
+  max-width: 210px;
   background: rgba(28, 28, 30, 0.85);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
