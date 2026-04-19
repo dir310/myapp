@@ -51,13 +51,13 @@ export function showLocationSugg(type, placeMarkerFn, state) {
   sugg.innerHTML = html;
   sugg.style.display = 'block';
 
-  // Attach handlers
-  const useLoc = document.getElementById('useLocBtn');
+  // Attach handlers — usar sugg.querySelector para evitar conflicto con IDs duplicados entre A y B
+  const useLoc = sugg.querySelector('#useLocBtn');
   if (useLoc) {
     useLoc.addEventListener('click', () => useCurrentLocation(placeMarkerFn));
   }
 
-  const clickMap = document.getElementById('clickMapBtn');
+  const clickMap = sugg.querySelector('#clickMapBtn');
   if (clickMap) {
     clickMap.addEventListener('click', () => {
       state.nextClick = type;
