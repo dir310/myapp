@@ -64,6 +64,16 @@ export function showStatus(msg, isError) {
 }
 
 /**
+ * Show the premium "Fuera de Cobertura" modal.
+ */
+export function showCoverageModal() {
+  const modal = document.getElementById('coverageModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+/**
  * Initialize swipe gestures to open (right) and close (left) the sidebar.
  */
 export function initSwipeGestures() {
