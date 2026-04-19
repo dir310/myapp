@@ -4,6 +4,7 @@
 import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
 import { getCurrentProfile } from './auth.js';
+import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
 let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
@@ -63,14 +64,14 @@ function getHandlers() {
  * @param {string} id - Ride UUID.
  */
 async function cancelActiveViaje(id) {
-  if (confirm('¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.')) {
+  if (await zippyConfirm('¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.', '⚠️')) {
     const { error } = await supabase.from('viajes').update({ estado: 'buscando', conductor_id: null }).eq('id', id);
     if (!error) {
         activeViajes = activeViajes.filter((v) => v.id !== id);
         renderViajes(activeViajes, getHandlers());
         stopGPS();
     } else {
-        alert('Error al cancelar: ' + error.message);
+        zippyAlert('Error al cancelar: ' + error.message, '❌');
     }
   }
 }
@@ -203,7 +204,7 @@ async function acceptViaje(id, lat, lng) {
   const profile = getCurrentProfile();
   
   if (!profile) {
-    alert('Error de sesión: No se pudo obtener tu perfil de conductor. Por favor refresca la página o inicia sesión de nuevo.');
+    zippyAlert('Error de sesión: No se pudo obtener tu perfil de conductor. Por favor refresca la página o inicia sesión de nuevo.', '❌');
     return;
   }
   const conductorName = profile.nombre;
@@ -224,7 +225,7 @@ async function acceptViaje(id, lat, lng) {
 
   if (error) {
     console.error('Error de Supabase:', error);
-    alert('Error técnico: ' + error.message);
+    zippyAlert('Error técnico: ' + error.message, '❌');
     return;
   } 
   
@@ -263,7 +264,7 @@ async function startViaje(id) {
     startGPS(id);
     loadViajes();
   } else {
-    alert('Error al iniciar viaje: ' + error.message);
+    zippyAlert('Error al iniciar viaje: ' + error.message, '❌');
   }
 }
 
@@ -272,7 +273,7 @@ async function startViaje(id) {
  * @param {string} id - Ride UUID.
  */
 async function finishViaje(id) {
-  if (confirm('¿Estás seguro de finalizar el viaje?')) {
+  if (await zippyConfirm('¿Estás seguro de finalizar el viaje?', '🏁')) {
     misViajesFinalizados.push(id);
     const viaje = activeViajes.find(v => v.id === id);
     const clienteNombre = viaje ? (viaje.cliente_nombre || 'Pasajero') : 'Pasajero';
@@ -336,7 +337,7 @@ function showClientRatingModal(viajeId, clienteNombre) {
 
     if (error) {
       console.error('Error al calificar cliente:', error);
-      alert('No se pudo guardar la calificación del cliente: ' + (error.message || 'Error de permisos'));
+      zippyAlert('No se pudo guardar la calificación del cliente: ' + (error.message || 'Error de permisos'), '❌');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Reintentar Calificar';
     } else {
