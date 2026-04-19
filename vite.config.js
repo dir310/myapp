@@ -9,6 +9,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         conductor: resolve(__dirname, 'conductor/index.html'),
         clientes: resolve(__dirname, 'clientes.html'),
+        viajes: resolve(__dirname, 'viajes.html'),
         admin_conductores: resolve(__dirname, 'admin-conductores.html'),
         privacy: resolve(__dirname, 'privacy.html'),
       },

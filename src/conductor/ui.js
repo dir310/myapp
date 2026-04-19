@@ -187,7 +187,9 @@ export function renderViajes(viajes, handlers) {
     <div class="card" id="viaje-${v.id}">
       <div class="card-header" style="padding-bottom: 8px;">
         <div style="flex:1;">
-          <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Ganancia</div>
+          <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">
+            Ganancia <span style="margin-left:8px; background:rgba(255,107,0,.2); color:#FF6B00; padding:1px 6px; border-radius:4px; font-weight:900;">#${v.codigo_viaje || 'ZIPPY'}</span>
+          </div>
           <div class="price">$${v.tarifa.toLocaleString('es-CO')}</div>
         </div>
         <div style="flex:1; text-align:right;">
