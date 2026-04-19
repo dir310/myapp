@@ -139,7 +139,8 @@ export function checkRoute(state, map) {
   if (pillEl) pillEl.style.display = 'flex';
 
   showPrice(quickKm.toFixed(1), quickMins);
-  document.getElementById('mainActions').style.display = 'none';
+  const mainActions = document.getElementById('mainActions');
+  if (mainActions) mainActions.style.display = 'none';
   document.getElementById('priceSection').style.display = 'block';
 
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
