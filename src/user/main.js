@@ -53,6 +53,10 @@ function checkPassengerAuth() {
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
 
+        // Inicial del nombre en el avatar circular
+        const avatarEl = document.getElementById('profileAvatar');
+        if (avatarEl) avatarEl.firstChild.textContent = nombre.charAt(0).toUpperCase();
+
         // --- Verificación de Aprobación Administrativa ---
         const emailStored = localStorage.getItem('calmovil_cliente_email');
         supabase
@@ -82,17 +86,8 @@ function checkPassengerAuth() {
             if (!error && count !== null) {
               let countEl = document.getElementById('displayClientTrips');
               if (countEl) {
-                countEl.innerHTML = `🎯 <b>${count}</b> Viajes Totales`;
+                countEl.textContent = count;
                 countEl.style.display = 'block';
-              } else {
-                 const phoneEl = document.getElementById('displayClientPhone');
-                 if (phoneEl) {
-                   const span = document.createElement('span');
-                   span.id = 'displayClientTrips';
-                   span.innerHTML = `🎯 <b>${count}</b> Viajes Totales`;
-                   span.style.cssText = 'display:block; margin-top:5px; font-size:11px; color:#30D158; text-transform:uppercase; font-weight:bold; background:rgba(48,209,88,.1); padding:2px 6px; border-radius:4px; max-width:fit-content; border:1px solid rgba(48,209,88,.2);';
-                   phoneEl.parentNode.appendChild(span);
-                 }
               }
             }
           });

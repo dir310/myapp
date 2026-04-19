@@ -103,24 +103,48 @@
         </div>
 
         <div class="sheet-content">
-            <!-- Passenger Profile Header -->
-            <div id="passengerProfileDisplay"
-                style="display:none; background:rgba(255,255,255,.05); border-radius:8px; padding:10px 15px; margin-bottom:15px; align-items:center; justify-content:space-between; cursor:pointer;"
-                title="Haz clic para editar">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="font-size:24px;">👤</div>
-                    <div>
-                        <div id="displayClientName"
-                            style="color:#fff; font-weight:bold; font-size:14px; text-transform:capitalize;">-</div>
-                        <div id="displayClientPhone" style="font-size:11px; color:rgba(255,255,255,.5);">-</div>
+            <!-- ── Premium Passenger Profile Card ── -->
+            <div id="passengerProfileDisplay" style="display:none; flex-direction:column; margin-bottom:18px;">
+                <div style="background:linear-gradient(145deg,rgba(255,107,0,0.13),rgba(28,28,30,0.6)); border:1px solid rgba(255,107,0,0.28); border-radius:24px; padding:24px 18px 18px; text-align:center; position:relative; overflow:hidden;">
+
+                    <!-- Glow decorativo superior -->
+                    <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:140px;height:70px;background:rgba(255,107,0,0.18);border-radius:50%;filter:blur(28px);pointer-events:none;"></div>
+
+                    <!-- Avatar circular con inicial -->
+                    <div id="profileAvatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:32px;font-weight:900;color:#fff;box-shadow:0 8px 30px rgba(255,107,0,0.5);letter-spacing:0;flex-shrink:0;position:relative;">?
+                        <!-- Anillo exterior -->
+                        <div style="position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(255,107,0,0.4);"></div>
                     </div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <button id="editPassengerBtn"
-                        style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:8px; color:#FF6B00; font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">✏️
-                        Editar</button>
-                    <button id="logoutPassengerBtn"
-                        style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:rgba(255,255,255,.7); font-size:10px; font-weight:600; cursor:pointer; padding:5px 10px;">Salir</button>
+
+                    <!-- Nombre -->
+                    <div id="displayClientName" style="color:#fff;font-weight:800;font-size:18px;text-transform:capitalize;margin-bottom:4px;letter-spacing:0.2px;">—</div>
+
+                    <!-- Teléfono -->
+                    <div id="displayClientPhone" style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;letter-spacing:0.5px;">—</div>
+
+                    <!-- Stats -->
+                    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:18px;">
+                        <div style="flex:1;background:rgba(48,209,88,0.09);border:1px solid rgba(48,209,88,0.2);border-radius:16px;padding:11px 8px;">
+                            <div id="displayClientTrips" style="color:#30D158;font-weight:900;font-size:20px;line-height:1;">0</div>
+                            <div style="color:rgba(255,255,255,0.35);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Viajes</div>
+                        </div>
+                        <div style="flex:1;background:rgba(255,107,0,0.09);border:1px solid rgba(255,107,0,0.2);border-radius:16px;padding:11px 8px;">
+                            <div style="color:#FF6B00;font-weight:900;font-size:20px;line-height:1;">⭐</div>
+                            <div style="color:rgba(255,255,255,0.35);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Miembro</div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div style="display:flex;gap:8px;">
+                        <button id="editPassengerBtn"
+                            style="flex:1;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.4);border-radius:14px;color:#FF6B00;font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
+                            ✏️ Editar
+                        </button>
+                        <button id="logoutPassengerBtn"
+                            style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:14px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
+                            ↪ Salir
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -129,11 +153,7 @@
 
             <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
 
-            <!-- Initial Actions -->
-            <div id="mainActions" class="actions">
-                <button class="btn" style="background:rgba(255,255,255,.05); color:rgba(255,255,255,.3); width:100%"
-                    disabled>📍 Selecciona los puntos del viaje</button>
-            </div>
+            <!-- #mainActions eliminado: no aporta info al usuario -->
 
             <!-- Price Section (hidden initially) -->
             <div id="priceSection" style="display:none;">
