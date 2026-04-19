@@ -116,6 +116,14 @@ async function loadClientes() {
     tdContacto.appendChild(mailDiv);
     tr.appendChild(tdContacto);
 
+    // 3.5. Clave
+    const tdClave = document.createElement('td');
+    tdClave.style.fontFamily = 'monospace';
+    tdClave.style.fontSize = '13px';
+    tdClave.style.color = '#FFD60A'; // Amarillo brillante para que resalte
+    tdClave.textContent = c.password || '-';
+    tr.appendChild(tdClave);
+
     // 4. Identidad (Cédula + Edad)
     const tdIden = document.createElement('td');
     tdIden.innerHTML = `<span style="font-weight:bold;">${esc(c.cedula)}</span><br><span style="font-size:11px; opacity:0.6;">Edad: ${c.edad} años</span>`;
