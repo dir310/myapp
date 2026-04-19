@@ -4,13 +4,17 @@ import { isAdminAuthenticated, showAdminPinOverlay, logoutAdmin } from './auth-a
 async function loadViajes() {
     const listEl = document.getElementById('viajesList');
 
-    // Consultamos los viajes ordenados por fecha descendente
+    // 1. Cargamos el mapa de conductores para tener los nombres disponibles
+    const { data: conductores, error: condErr } = await supabase.from('conductores').select('id, nombre');
+    const conductorMap = {};
+    if (!condErr && conductores) {
+        conductores.forEach(c => conductorMap[c.id] = c.nombre);
+    }
+
+    // 2. Consultamos los viajes ordenados por fecha descendente
     const { data: viajes, error } = await supabase
         .from('viajes')
-        .select(`
-            *,
-            conductor:conductores(nombre)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -58,10 +62,12 @@ async function loadViajes() {
 
         // 5. Conductor
         const tdConductor = document.createElement('td');
-        const conductorName = v.conductor ? v.conductor.nombre : (v.conductor_id ? 'Asignado' : '-');
-        tdConductor.style.color = v.conductor ? '#30D158' : 'rgba(255,255,255,0.3)';
-        tdConductor.style.fontWeight = v.conductor ? '700' : '400';
-        tdConductor.textContent = conductorName;
+        const nombreConductor = conductorMap[v.conductor_id];
+        const statusConductor = nombreConductor ? nombreConductor : (v.conductor_id ? 'Asignado' : '-');
+        
+        tdConductor.style.color = nombreConductor ? '#30D158' : 'rgba(255,255,255,0.3)';
+        tdConductor.style.fontWeight = nombreConductor ? '700' : '400';
+        tdConductor.textContent = statusConductor;
         tr.appendChild(tdConductor);
 
         // 6. Ruta
