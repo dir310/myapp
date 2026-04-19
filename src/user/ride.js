@@ -7,6 +7,7 @@ import { clearPoint, placeMarker, checkRoute } from './routing.js';
 import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { initGame, stopGame } from './game.js';
+import { generateRideCode } from '../utils/id.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
@@ -63,7 +64,10 @@ export async function acceptRide(state, map) {
       throw new Error('Tarifa inválida. Por favor recalcula la ruta.');
     }
 
+    const rideCode = generateRideCode();
+
     const viajePayload = {
+      codigo_viaje: rideCode,
       origen_nombre: originName,
       origen_lat: state.startLatLng.lat,
       origen_lng: state.startLatLng.lng,
@@ -100,6 +104,7 @@ export async function acceptRide(state, map) {
 
     if (error) throw error;
     state.currentRideId = data[0].id;
+    state.rideCode = data[0].codigo_viaje;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
 
     // Show searching UI with native CSS Radar
@@ -378,7 +383,12 @@ async function showDriverAssigned(driverId, state) {
   // Nota: Mantenemos el estilo de bloques que el usuario mostró en su imagen
   const conductorWindowHTML = `
     <div class="zippy-window">
-      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box;">
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
+        <!-- Código de Viaje (Esquina superior derecha) -->
+        <div style="position:absolute; top:12px; right:15px; background:rgba(255,107,0,.15); color:#FF6B00; font-size:9px; font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,107,0,.3); text-transform:uppercase; letter-spacing:0.5px;">
+            #${state.rideCode || 'ZIPPY'}
+        </div>
+
         <div style="margin-bottom:8px;">
           <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
           <span style="color:#fff; font-size:18px; font-weight:800; display:block;">${driverName}</span>
@@ -485,6 +495,7 @@ function showTripStarted(state) {
       <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
       <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
         <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
+        <div style="margin-top:5px; font-size:11px; opacity:0.6; font-weight:900; color:#30D158;">SERVICIO #${state.rideCode || '-'}</div>
       </div>
     </div>
   `;
@@ -671,6 +682,7 @@ export async function restoreActiveRide(state, map) {
     // 1. Restaurar Estado Base
     state.currentRideId = data.id;
     state.lastKnownEstado = data.estado;
+    state.rideCode = data.codigo_viaje;
 
     // 2. Restaurar Mapa (Marcadores y Ruta)
     placeMarker('start', data.origen_lat, data.origen_lng, data.origen_nombre, state, map);

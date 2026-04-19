@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Viajes | ZIPPY Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/common.css">
+    <style>
+        body { padding: 20px; background: #0a0a0a; color: #fff; font-family: 'Inter', sans-serif; }
+        .table-container { width: 100%; overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; min-width: 1000px; border-collapse: collapse; background: #151515; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        th { background: #FF6B00; color: white; text-align: left; padding: 18px 15px; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+        td { padding: 16px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; vertical-align: middle; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .code-badge { background: rgba(255,107,0,0.15); color: #FF6B00; padding: 4px 8px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 12px; border: 1px solid rgba(255,107,0,0.3); }
+        .status-pill { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; display: inline-block; }
+        .status-buscando { background: rgba(255,179,71,0.1); color: #FFB347; border: 1px solid rgba(255,179,71,0.3); }
+        .status-aceptado { background: rgba(0,122,255,0.1); color: #007AFF; border: 1px solid rgba(0,122,255,0.3); }
+        .status-en_progreso { background: rgba(175,82,222,0.1); color: #AF52DE; border: 1px solid rgba(175,82,222,0.3); }
+        .status-finalizado { background: rgba(48,209,88,0.1); color: #30D158; border: 1px solid rgba(48,209,88,0.3); }
+        .status-cancelado { background: rgba(255,69,58,0.1); color: #FF453A; border: 1px solid rgba(255,69,58,0.3); }
+        .price-text { color: #30D158; font-weight: 900; font-size: 15px; }
+        .route-path { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+        .route-path b { color: rgba(255,255,255,0.8); }
+    </style>
+</head>
+<body>
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div>
+                <img src="https://i.imgur.com/YLqlfOy.jpeg" alt="ZIPPY" style="height: 40px; margin-bottom: 10px;">
+                <h1 style="font-size: 24px; font-weight: 800; margin: 0;">📋 Historial Maestro de Viajes</h1>
+                <p style="color: rgba(255,255,255,0.4); font-size: 14px; margin-top: 5px;">Seguimiento en tiempo real de todos los servicios solicitados.</p>
+            </div>
+            <div id="adminControls"></div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Estado</th>
+                        <th style="width: 120px;">Código</th>
+                        <th style="width: 150px;">Fecha / Hora</th>
+                        <th>Pasajero</th>
+                        <th>Conductor</th>
+                        <th>Ruta (Origen → Destino)</th>
+                        <th style="width: 100px;">Valor</th>
+                        <th style="width: 50px;">⭐</th>
+                    </tr>
+                </thead>
+                <tbody id="viajesList">
+                    <tr><td colspan="8" style="text-align:center; padding:50px; opacity:0.5;">Cargando historial de viajes...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="/src/admin/viajes.js"></script>
+</body>
+</html>
