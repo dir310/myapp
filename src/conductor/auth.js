@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { zippyAlert } from '../utils/ui-global.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 import { initRadar } from './ui.js';
 
@@ -198,11 +199,11 @@ async function handleLoginSubmit() {
   const termsElement = document.getElementById('loginTerms');
   const terms = termsElement ? termsElement.checked : true; 
 
-  if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
-  if (!password) return alert('Por favor ingresa tu clave.');
-  if (!terms) return alert('Debes aceptar las políticas para ingresar.');
+  if (!telefono || telefono.length !== 10) return zippyAlert('Por favor ingresa tu número de celular válido de 10 dígitos.', '📱');
+  if (!password) return zippyAlert('Por favor ingresa tu clave.', '🔑');
+  if (!terms) return zippyAlert('Debes aceptar las políticas para ingresar.', '🛡️');
   if (isNaN(userCaptcha) || userCaptcha !== captchaAnswerLogin) {
-    alert('La respuesta a la suma de seguridad es incorrecta.');
+    await zippyAlert('La respuesta a la suma de seguridad es incorrecta.', '🧩');
     generateCaptcha();
     return;
   }
@@ -218,7 +219,7 @@ async function handleLoginSubmit() {
 
   if (existingUser) {
     if (existingUser.password !== password) {
-        alert('Credenciales incorrectas (Teléfono o clave no coinciden).');
+        zippyAlert('Credenciales incorrectas (Teléfono o clave no coinciden).', '❌');
         btn.textContent = 'Ingresar al Panel';
         btn.disabled = false;
         generateCaptcha();
@@ -228,7 +229,7 @@ async function handleLoginSubmit() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: existingUser.id, timestamp: Date.now() }));
     window.location.reload();
   } else {
-      alert('Esta cuenta no existe. Por favor regístrate primero.');
+      zippyAlert('Esta cuenta no existe. Por favor regístrate primero.', '🔍');
       btn.textContent = 'Ingresar al Panel';
       btn.disabled = false;
       generateCaptcha();
@@ -241,8 +242,8 @@ async function handleRegisterSubmit() {
   const termsElement = document.getElementById('regTerms');
   const terms = termsElement ? termsElement.checked : true;
 
-  if (!telefono || telefono.length !== 10) return alert('Por favor ingresa tu número de celular válido de 10 dígitos.');
-  if (!terms) return alert('Debes aceptar las políticas marcando la casilla.');
+  if (!telefono || telefono.length !== 10) return zippyAlert('Por favor ingresa tu número de celular válido de 10 dígitos.', '📱');
+  if (!terms) return zippyAlert('Debes aceptar las políticas marcando la casilla.', '🛡️');
 
   btn.textContent = 'Verificando datos...';
   btn.disabled = true;
@@ -255,7 +256,7 @@ async function handleRegisterSubmit() {
     .maybeSingle();
 
   if (existingUser) {
-      alert('Este número de teléfono ya está registrado. Por favor, inicia sesión.');
+      zippyAlert('Este número de teléfono ya está registrado. Por favor, inicia sesión.', '👤');
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
       return;
@@ -268,7 +269,7 @@ async function handleRegisterSubmit() {
   if (regPass !== regPassConf) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return alert('Las claves no coinciden.');
+      return zippyAlert('Las claves no coinciden.', '🔐');
   }
 
   // Clave: exactamente 5 números y 1 mayúscula (6 caracteres totales)
@@ -279,7 +280,7 @@ async function handleRegisterSubmit() {
   if (!is6Chars || !has1Upper || !has5Digits) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return alert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345).');
+      return zippyAlert('La clave debe contener exactamente 1 letra mayúscula y 5 números (ejemplo: A12345).', '🔑');
   }
 
   const n = document.getElementById('regNombre').value.trim();
@@ -296,7 +297,7 @@ async function handleRegisterSubmit() {
   if (!n || !p || !c || !d || !m || !fProp || !fCedF || !fCedT || !fRosto) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return alert('Debes llenar todos los datos y subir las 4 imágenes obligatorias de forma correcta.');
+      return zippyAlert('Debes llenar todos los datos y subir las 4 imágenes obligatorias de forma correcta.', '📎');
   }
 
   // Filtros y validaciones
@@ -304,7 +305,7 @@ async function handleRegisterSubmit() {
   if (!emailRegex.test(c)) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return alert('Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
+      return zippyAlert('Por favor ingresa un correo electrónico válido (ejemplo@correo.com).', '📧');
   }
 
   btn.textContent = 'Subiendo Imágenes...';
@@ -349,7 +350,7 @@ async function handleRegisterSubmit() {
       window.location.reload();
 
   } catch (err) {
-      alert('Error en el registro: ' + (err.message || 'Inténtalo de nuevo.'));
+      zippyAlert('Error en el registro: ' + (err.message || 'Inténtalo de nuevo.'), '❌');
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
   }

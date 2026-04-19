@@ -11,6 +11,7 @@ import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
+import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
 let passengerCaptchaAnswer = 0;
 const PASSENGER_MAX_ATTEMPTS = 3;
@@ -212,169 +213,142 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btn.addEventListener('click', async () => {
       if (checkBlockState()) return;
+      const authMode = btn.textContent === 'Guardar Cambios' ? 'edit' : (btn.textContent.includes('Registrar') ? 'register' : 'login');
 
       // ── Modo Edición: solo actualiza nombre y teléfono ──
-      if (btn.textContent === 'Guardar Cambios') {
-        const n = sanitizeHTML(document.getElementById('authNombre').value);
-        const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
-        const storedEmail = localStorage.getItem('calmovil_cliente_email');
-        if (!n || !t) return alert('Por favor llena nombre y teléfono.');
+      if (authMode === 'edit') {
+        const n = sanitizeHTML(document.getElementById('authNombre').value.trim(), 60);
+        const t = sanitizeHTML(document.getElementById('authTelefono').value.trim(), 10);
+
+        if (!n || !t) return zippyAlert('Por favor llena nombre y teléfono.', '⚠️');
+
+        btn.innerHTML = '<span class="spinner"></span> Guardando...';
         btn.disabled = true;
-        btn.textContent = 'Guardando...';
+
         try {
-          const { error } = await supabase
+          const { error: err } = await supabase
             .from('clientes')
             .update({ nombre: n, telefono: t })
-            .eq('email', storedEmail);
-          if (error) throw error;
+            .eq('id', localStorage.getItem('calmovil_cliente_id'));
+
+          if (err) throw err;
+
           localStorage.setItem('calmovil_cliente_nombre', n);
           localStorage.setItem('calmovil_cliente_telefono', t);
-          window.location.reload();
+
+          await zippyAlert('¡Perfil actualizado con éxito!', '✨');
+          location.reload();
         } catch (err) {
-          alert('Error al guardar: ' + (err.message || 'Inténtalo de nuevo.'));
-          btn.disabled = false;
+          zippyAlert('Error al guardar: ' + (err.message || 'Inténtalo de nuevo.'), '❌');
           btn.textContent = 'Guardar Cambios';
-        }
-        return;
-      }
-
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value;
-      const isRegister = btn.textContent.includes('Registrar');
-
-      if (!email || !password) return alert('Por favor llena el correo y la clave.');
-
-      const terms = document.getElementById('authTerms').checked;
-      if (!terms) return alert('Debes marcar la casilla aceptando los términos y condiciones para continuar.');
-
-      // --- VALIDACIONES DE SEGURIDAD ---
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const passRegex = /^(?=.*[a-z])(?=(?:.*\d){5}).{6}$/;
-
-      if (!emailRegex.test(email)) {
-        return alert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).');
-      }
-
-      if (isRegister && !passRegex.test(password)) {
-        return alert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).');
-      }
-
-      if (isRegister) {
-        const n = sanitizeHTML(document.getElementById('authNombre').value);
-        const c = sanitizeHTML(document.getElementById('authCedula').value, 12);
-        const t = sanitizeHTML(document.getElementById('authTelefono').value, 12);
-        const ed = parseInt(document.getElementById('authEdad').value);
-        const fotoF = document.getElementById('authFotoFrontal').files[0];
-        const fotoT = document.getElementById('authFotoTrasera').files[0];
-        const captcha = parseInt(document.getElementById('passengerCaptcha').value);
-
-        if (isNaN(captcha) || captcha !== passengerCaptchaAnswer) {
-          alert('Suma de seguridad incorrecta.');
-          generatePassengerCaptcha();
-          return;
-        }
-
-        if (!n || !c || !t || isNaN(ed) || !fotoF || !fotoT) {
-          return alert('Por favor llena todos los campos, incluyendo tu edad y las fotos de tu cédula.');
-        }
-
-        if (ed < 18) {
-          return alert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.');
-        }
-
-
-        btn.disabled = true;
-        btn.textContent = 'Procesando...';
-
-        try {
-          // 1. Subir fotos a Supabase Storage
-          const uploadFile = async (file, prefix) => {
-            const fileName = `${Date.now()}_${prefix}_${c}.png`;
-            const { data, error } = await supabase.storage
-              .from('identificaciones')
-              .upload(fileName, file);
-            if (error) throw error;
-            const { data: { publicUrl } } = supabase.storage
-              .from('identificaciones')
-              .getPublicUrl(fileName);
-            return publicUrl;
-          };
-
-          btn.textContent = 'Subiendo documentos...';
-          const urlFrontal = await uploadFile(fotoF, 'frontal');
-          const urlTrasera = await uploadFile(fotoT, 'trasera');
-
-          btn.textContent = 'Creando cuenta...';
-
-          const { data: insertedData, error: dbError } = await supabase
-            .from('clientes')
-            .insert([{
-              nombre: n,
-              cedula: c,
-              telefono: t,
-              email: email,
-              password: password,
-              edad: ed,
-              foto_frontal_url: urlFrontal,
-              foto_trasera_url: urlTrasera
-            }])
-            .select()
-            .single();
-
-          if (dbError) throw dbError;
-
-          localStorage.setItem('calmovil_cliente_nombre', n);
-          localStorage.setItem('calmovil_cliente_cedula', c);
-          localStorage.setItem('calmovil_cliente_telefono', t);
-          localStorage.setItem('calmovil_cliente_email', email);
-          if (insertedData && insertedData.id) localStorage.setItem('calmovil_cliente_id', insertedData.id);
-          
-          window.location.reload();
-        } catch (err) {
-          alert('Error al registrar: ' + (err.message || 'Inténtalo de nuevo.'));
           btn.disabled = false;
-          btn.textContent = 'Registrarme y Entrar';
         }
       } else {
-        // MODO LOGIN
-        btn.disabled = true;
-        btn.textContent = 'Validando...';
+        // ── MODO LOGIN / REGISTRO ──
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value.trim();
+        const terms = document.getElementById('authTerms').checked;
 
-        try {
-          const { data, error } = await supabase
-            .from('clientes')
-            .select('*')
-            .eq('email', email)
-            .eq('password', password)
-            .single();
+        if (!email || !password) return zippyAlert('Por favor llena el correo y la clave.', '📧');
+        if (!terms) return zippyAlert('Debes marcar la casilla aceptando los términos y condiciones para continuar.', '🛡️');
 
-          if (error || !data) {
-            let attempts = (parseInt(sessionStorage.getItem('passenger_attempts') || '0')) + 1;
-            sessionStorage.setItem('passenger_attempts', attempts);
-            
-            if (attempts >= PASSENGER_MAX_ATTEMPTS) {
-              const until = Date.now() + PASSENGER_LOCK_MS;
-              sessionStorage.setItem('passenger_block_until', until);
-              checkBlockState();
-            } else {
-              alert('Correo o clave incorrectos.');
+        if (authMode === 'login') {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            return zippyAlert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).', '📧');
+          }
+
+          const passRegex = /^(?=.*[a-z])(?=.*\d).{6,}$/;
+          if (!passRegex.test(password)) {
+            return zippyAlert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).', '🔑');
+          }
+
+          btn.innerHTML = '<span class="spinner"></span> Ingresando...';
+          btn.disabled = true;
+
+          try {
+            const { data, error: err } = await supabase
+              .from('clientes')
+              .select('*')
+              .eq('email', email)
+              .eq('password', password)
+              .single();
+
+            if (err || !data) {
+                let attempts = (parseInt(sessionStorage.getItem('passenger_attempts') || '0')) + 1;
+                sessionStorage.setItem('passenger_attempts', attempts);
+                if (attempts >= PASSENGER_MAX_ATTEMPTS) {
+                  sessionStorage.setItem('passenger_block_until', Date.now() + PASSENGER_LOCK_MS);
+                }
+                zippyAlert('Correo o clave incorrectos.', '❌');
+                btn.textContent = 'Ingresar';
+                btn.disabled = false;
+                return;
             }
-            btn.disabled = false;
+
+            localStorage.setItem('calmovil_cliente_id', data.id);
+            localStorage.setItem('calmovil_cliente_nombre', data.nombre);
+            localStorage.setItem('calmovil_cliente_email', data.email);
+            localStorage.setItem('calmovil_cliente_telefono', data.telefono);
+            localStorage.setItem('calmovil_cliente_cedula', data.cedula);
+            localStorage.setItem('zippy_passenger_status', data.estado || 'activo');
+
+            await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
+            location.reload();
+          } catch (err) {
+            zippyAlert('Error al ingresar: ' + err.message, '❌');
             btn.textContent = 'Ingresar';
+            btn.disabled = false;
+          }
+        } else {
+          // ── MODO REGISTRO ──
+          const nombre = document.getElementById('authNombre').value.trim();
+          const telefono = document.getElementById('authTelefono').value.trim();
+          const cedula = document.getElementById('authCedula').value.trim();
+          const edad = parseInt(document.getElementById('authEdad').value);
+          const captcha = parseInt(document.getElementById('passengerCaptcha').value);
+
+          if (captcha !== passengerCaptchaAnswer) {
+            zippyAlert('Suma de seguridad incorrecta.', '🧩');
             return;
           }
 
-          localStorage.setItem('calmovil_cliente_nombre', data.nombre);
-          localStorage.setItem('calmovil_cliente_cedula', data.cedula);
-          localStorage.setItem('calmovil_cliente_telefono', data.telefono);
-          localStorage.setItem('calmovil_cliente_email', data.email);
-          if (data.id) localStorage.setItem('calmovil_cliente_id', data.id);
-          
-          window.location.reload();
-        } catch (err) {
-          alert('Error al ingresar: ' + err.message);
-          btn.disabled = false;
-          btn.textContent = 'Ingresar';
+          const photoFront = document.getElementById('authFotoFrontal').files[0];
+          const photoBack = document.getElementById('authFotoTrasera').files[0];
+
+          if (!nombre || !telefono || !cedula || isNaN(edad) || !photoFront || !photoBack) {
+            return zippyAlert('Por favor llena todos los campos, incluyendo tu edad y las fotos de tu cédula.', '📎');
+          }
+
+          if (edad < 18) {
+            return zippyAlert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.', '🔞');
+          }
+
+          btn.innerHTML = '<span class="spinner"></span> Registrando...';
+          btn.disabled = true;
+
+          try {
+            const frontRef = `clientes/${Date.now()}_front.jpg`;
+            const backRef = `clientes/${Date.now()}_back.jpg`;
+
+            await supabase.storage.from('documents').upload(frontRef, photoFront);
+            await supabase.storage.from('documents').upload(backRef, photoBack);
+
+            const { error: err } = await supabase.from('clientes').insert([{
+              nombre, email, password, telefono, cedula, edad,
+              foto_frontal: frontRef, foto_trasera: backRef,
+              estado: 'pendiente'
+            }]);
+
+            if (err) throw err;
+
+            await zippyAlert('¡Registro exitoso! Por seguridad, un administrador validará tus datos en unos minutos. Te avisaremos pronto.', '✅');
+            location.reload();
+          } catch (err) {
+            zippyAlert('Error al registrar: ' + (err.message || 'Inténtalo de nuevo.'), '❌');
+            btn.textContent = 'Registrarme y Entrar';
+            btn.disabled = false;
+          }
         }
       }
     });
@@ -392,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const backBtn = document.getElementById('authBackBtn');
   if (backBtn) {
     backBtn.addEventListener('click', () => {
-      // Siempre vuelve al modo Login
       setAuthMode('login');
     });
   }
@@ -400,14 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Registration Form Handlers ──
   const editBtn = document.getElementById('editPassengerBtn');
   if (editBtn) {
-      editBtn.addEventListener('click', () => {
-          // Bloqueo si hay un viaje activo
+      editBtn.addEventListener('click', async () => {
           if (state.currentRideId) {
-            alert('⚠️ No puedes editar tu perfil mientras tienes un viaje solicitado o en curso.');
+            await zippyAlert('⚠️ No puedes editar tu perfil mientras tienes un viaje solicitado o en curso.', '✋');
             return;
           }
 
-          // Pre-llenar solo nombre y teléfono
           document.getElementById('authNombre').value = localStorage.getItem('calmovil_cliente_nombre') || '';
           document.getElementById('authTelefono').value = localStorage.getItem('calmovil_cliente_telefono') || '';
 
@@ -442,16 +413,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const logoutBtn = document.getElementById('logoutPassengerBtn');
   if (logoutBtn) {
-      logoutBtn.addEventListener('click', (e) => {
+      logoutBtn.addEventListener('click', async (e) => {
           e.stopPropagation(); // Evitar conflictos de clics
 
           // Bloqueo si hay un viaje activo
           if (state.currentRideId) {
-            alert('⚠️ No puedes cerrar sesión mientras tienes un viaje solicitado o en curso.');
+            await zippyAlert('⚠️ No puedes cerrar sesión mientras tienes un viaje solicitado o en curso.', '✋');
             return;
           }
 
-          if(confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+          if(await zippyConfirm('¿Estás seguro de que quieres cerrar sesión?', '🚪')) {
               // Limpieza total agresiva
               localStorage.clear(); 
               sessionStorage.clear();

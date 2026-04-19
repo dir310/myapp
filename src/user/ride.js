@@ -8,6 +8,7 @@ import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { initGame, stopGame } from './game.js';
 import { generateRideCode } from '../utils/id.js';
+import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
@@ -34,7 +35,7 @@ export async function acceptRide(state, map) {
   // --- Bloqueo por Validación Pendiente ---
   const status = localStorage.getItem('zippy_passenger_status');
   if (status === 'pendiente') {
-    alert('⚠️ Tu cuenta está en proceso de validación por seguridad. Podrás pedir viajes en cuanto el administrador te apruebe (esto suele tardar unos minutos).');
+    await zippyAlert('⚠️ Tu cuenta está en proceso de validación por seguridad. Podrás pedir viajes en cuanto el administrador te apruebe (esto suele tardar unos minutos).', '⌛');
     return;
   }
 
@@ -233,7 +234,7 @@ export function listenForDriver(rideId, state, map) {
             }
           } else if (payload.new.estado === 'cancelado') {
             playNotificationSound();
-            alert('⚠️ El conductor ha cancelado el servicio.');
+            zippyAlert('⚠️ El conductor ha cancelado el servicio.', '🚫');
             cancelRide(state, map);
           }
         }
@@ -285,7 +286,7 @@ export function listenForDriver(rideId, state, map) {
           showRatingScreen(state);
         } else if (data.estado === 'cancelado') {
           playNotificationSound();
-          alert('⚠️ El conductor ha cancelado el servicio.');
+          zippyAlert('⚠️ El conductor ha cancelado el servicio.', '🚫');
           cancelRide(state, map);
         }
       }
@@ -519,7 +520,7 @@ function showSearchingRecovery(state) {
   }
 
   // Show notification
-  alert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.');
+  zippyAlert('El conductor ha tenido un inconveniente y canceló el servicio. Te hemos regresado a la búsqueda automática de otro conductor.', '⚠️');
 
   // Revert UI to searching mode with native CSS Radar
   document.getElementById('priceSection').innerHTML = `
@@ -598,7 +599,7 @@ function showRatingScreen(state) {
 
       if (error) {
         console.error('Error al guardar calificación:', error);
-        alert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'));
+        zippyAlert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'), '❌');
         // No recargamos si falló para que el usuario pueda intentar de nuevo o avisar
         submitBtn.disabled = false;
         submitBtn.textContent = 'Reintentar Enviar';
@@ -644,6 +645,9 @@ export function stopListening(state, map) {
  * @param {L.Map} map - Leaflet map instance.
  */
 export async function cancelRide(state, map) {
+  // Solo pedir confirmación si realmente se está cancelando activamente
+  // (Si viene de un alert de "conductor canceló", ya se llamó stopListening)
+  
   stopListening(state);
   if (state.currentRideId) {
     localStorage.removeItem(STORAGE_KEY);

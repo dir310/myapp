@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { isAdminAuthenticated, showAdminPinOverlay, logoutAdmin } from './auth-admin.js';
+import { zippyAlert } from '../utils/ui-global.js';
 
 /**
  * Escapa texto para prevenir XSS.
@@ -70,7 +71,8 @@ async function loadConductores() {
             .eq('id', c.id);
             
         if (updErr) {
-            alert('Error guardando estado: ' + updErr.message);
+            console.error('Error updating driver status:', updErr);
+            zippyAlert('Error guardando estado: ' + updErr.message, '❌');
             input.checked = !check; // revert visual
             statusTxt.textContent = !check ? 'Aprobado' : 'Pendiente';
             statusTxt.className = 'status-txt ' + (!check ? 'status-aprobado' : 'status-pendiente');
