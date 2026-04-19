@@ -446,6 +446,41 @@
         </div>
     </div>
 
+    <!-- ── Modal: Fuera de Cobertura ── -->
+    <div id="coverageModal"
+        style="display:none; position:fixed; inset:0; z-index:9997; background:rgba(0,0,0,0.72); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:24px;">
+        <div style="background:linear-gradient(160deg,#1c1c1e,#201208); border:1px solid rgba(255,107,0,0.45); border-radius:28px; padding:36px 24px 28px; max-width:310px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,107,0,0.08); position:relative; overflow:hidden;">
+
+            <!-- Glow superior -->
+            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:180px;height:90px;background:rgba(255,107,0,0.2);border-radius:50%;filter:blur(35px);pointer-events:none;"></div>
+
+            <!-- Ícono principal -->
+            <div style="font-size:58px;margin-bottom:18px;filter:drop-shadow(0 4px 16px rgba(255,107,0,0.5));line-height:1;">🗺️</div>
+
+            <!-- Título -->
+            <div style="color:#FF6B00;font-size:20px;font-weight:900;margin-bottom:8px;letter-spacing:0.3px;">¡Lo sentimos!</div>
+
+            <!-- Subtítulo -->
+            <div style="color:rgba(255,255,255,0.88);font-size:14px;font-weight:600;line-height:1.55;margin-bottom:8px;">
+                Esta ubicación está <span style="color:#FF9500;font-weight:800;">fuera de nuestra zona de cobertura.</span>
+            </div>
+
+            <!-- Descripción -->
+            <div style="color:rgba(255,255,255,0.42);font-size:12px;line-height:1.6;margin-bottom:28px;">
+                📍 ZIPPY opera en <strong style="color:rgba(255,255,255,0.6);">La Calera, Sopó</strong> y el corredor de la <strong style="color:rgba(255,255,255,0.6);">Carrera 7ma</strong>.
+            </div>
+
+            <!-- Botón Aceptar -->
+            <button id="closeCoverageModalBtn"
+                style="width:100%;background:linear-gradient(135deg,#FF6B00,#FF9500);border:none;border-radius:16px;color:#fff;font-size:15px;font-weight:800;padding:15px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(255,107,0,0.45);letter-spacing:0.4px;transition:transform 0.15s;"
+                onmousedown="this.style.transform='scale(0.97)'"
+                onmouseup="this.style.transform='scale(1)'"
+                onclick="document.getElementById('coverageModal').style.display='none'">
+                Entendido ✓
+            </button>
+        </div>
+    </div>
+
     <!-- Lottie Player for premium animations -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script type="module" src="src/user/main.js"></script>

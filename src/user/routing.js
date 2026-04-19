@@ -3,7 +3,7 @@
  */
 import L from 'leaflet';
 import { pinIcon, COVERAGE_POLYGON, isPointInPolygon } from '../utils/map.js';
-import { toggleSheet, isSheetMinimized, showStatus } from './ui.js';
+import { toggleSheet, isSheetMinimized, showStatus, showCoverageModal } from './ui.js';
 import { sanitizeHTML } from '../utils/security.js';
 
 // ── Tarifas Moto ───────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ export function placeMarker(type, lat, lng, name, state, map) {
 
   // Validación de Cobertura
   if (!isPointInPolygon({ lat, lng }, COVERAGE_POLYGON)) {
-    showStatus('📍 Fuera de cobertura: ZIPPY opera entre Cra 7ma y Sopó.', true);
+    showCoverageModal();
     // Borrar el punto anterior si existía para evitar confusión
     if (type === 'start') {
       if (state.startMarker) map.removeLayer(state.startMarker);
