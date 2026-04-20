@@ -55,13 +55,13 @@ export function toggleRadar(isAutoClick = false) {
   const btn = document.getElementById('radarBtn');
   const txt = document.getElementById('radarText');
 
-    if (radarEnabled) {
-      btn.className = 'radar-toggle radar-on';
-      txt.innerText = 'RADAR ENCENDIDO';
-      
-      requestWakeLock(); // Activar bloqueo de pantalla
- 
-      // Forzar petición de permisos GPS y Notificaciones explícitamente 
+  if (radarEnabled) {
+    btn.className = 'radar-toggle radar-on';
+    txt.innerText = 'RADAR ENCENDIDO';
+
+    requestWakeLock(); // Activar bloqueo de pantalla
+
+    // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => console.log('✅ Permiso de GPS concedido por el conductor.'),
@@ -216,7 +216,7 @@ export function renderViajes(viajes, handlers) {
     .join('');
 
   if (lastRenderedHTML === newHTML) return;
-  
+
   container.innerHTML = newHTML;
   lastRenderedHTML = newHTML;
 
@@ -232,11 +232,11 @@ export function renderViajes(viajes, handlers) {
               const badgeEl = document.getElementById(`badge-trips-${v.id}`);
               if (badgeEl) {
                 if (count === 0) {
-                   badgeEl.innerHTML = `🟢 Nuevo/a Pasajero`;
-                   badgeEl.style.color = '#30D158';
+                  badgeEl.innerHTML = `🟢 Nuevo/a Pasajero`;
+                  badgeEl.style.color = '#30D158';
                 } else {
-                   badgeEl.innerHTML = `🏆 Frecuente (🎯 ${count} Viajes)`;
-                   badgeEl.style.color = '#FFB347';
+                  badgeEl.innerHTML = `🏆 Frecuente (🎯 ${count} Viajes)`;
+                  badgeEl.style.color = '#FFB347';
                 }
               }
             }
@@ -283,49 +283,49 @@ export function renderViajes(viajes, handlers) {
     const rideId = el.id.replace('mini-map-', '');
     const s = [parseFloat(el.dataset.latS), parseFloat(el.dataset.lngS)];
     const e = [parseFloat(el.dataset.latE), parseFloat(el.dataset.lngE)];
-    
+
     // Limpiar si ya existe para evitar errores de Leaflet
     if (cardMaps.has(rideId)) {
-        cardMaps.get(rideId).remove();
+      cardMaps.get(rideId).remove();
     }
 
-    const miniMap = L.map(el, { 
-        zoomControl: false, 
-        attributionControl: false,
-        dragging: false, 
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        boxZoom: false
+    const miniMap = L.map(el, {
+      zoomControl: false,
+      attributionControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false
     });
-    
+
     miniMap.fitBounds(L.polyline([s, e]).getBounds(), { padding: [20, 20] });
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxNativeZoom: 17,
-        maxZoom: 18
+      maxNativeZoom: 17,
+      maxZoom: 18
     }).addTo(miniMap);
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        maxNativeZoom: 17,
-        maxZoom: 18,
-        opacity: 0.7
+      maxNativeZoom: 17,
+      maxZoom: 18,
+      opacity: 0.7
     }).addTo(miniMap);
-    
+
     L.marker(s, { icon: pinIcon('#30D158', 'A') }).addTo(miniMap);
     L.marker(e, { icon: pinIcon('#FF6B00', 'B') }).addTo(miniMap);
 
     // Dibujar Ruta OSRM (Directo preferido por velocidad)
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${s[1]},${s[0]};${e[1]},${e[0]}?overview=full&geometries=geojson`;
     fetch(osrmUrl)
-        .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
-        .then(r => r.json())
-        .then(data => {
-            if (data.code === 'Ok' && data.routes?.length) {
-                const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                L.polyline(coords, { color: '#FF6B00', weight: 4, opacity: 0.8 }).addTo(miniMap);
-                miniMap.fitBounds(L.polyline(coords).getBounds(), { padding: [10, 10] });
-            }
-        }).catch(err => console.error('MiniMap route error:', err));
+      .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
+      .then(r => r.json())
+      .then(data => {
+        if (data.code === 'Ok' && data.routes?.length) {
+          const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+          L.polyline(coords, { color: '#FF6B00', weight: 4, opacity: 0.8 }).addTo(miniMap);
+          miniMap.fitBounds(L.polyline(coords).getBounds(), { padding: [10, 10] });
+        }
+      }).catch(err => console.error('MiniMap route error:', err));
 
     cardMaps.set(rideId, miniMap);
   });
@@ -340,7 +340,7 @@ export function showNotification(msg, type = 'success') {
   const banner = document.createElement('div');
   const color = type === 'error' ? '#FF3B30' : '#30D158';
   const icon = type === 'error' ? '🚫' : '🌟';
-  
+
   banner.style.cssText = `
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 400px; padding: 16px; border-radius: 16px;
@@ -349,7 +349,7 @@ export function showNotification(msg, type = 'success') {
     display: flex; align-items: center; gap: 15px; color: #fff;
     animation: slideInDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
   `;
-  
+
   banner.innerHTML = `
     <div style="font-size: 30px;">${icon}</div>
     <div style="flex:1;">
@@ -357,7 +357,7 @@ export function showNotification(msg, type = 'success') {
       <div style="font-size: 15px; font-weight: 600;">${msg}</div>
     </div>
   `;
-  
+
   document.body.appendChild(banner);
   playAlert();
 
