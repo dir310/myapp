@@ -40,7 +40,7 @@ export async function acceptRide(state, map) {
   }
 
   state.driverArrived = false;
-  
+
   // Limpiar UI de selección
 
 
@@ -150,15 +150,15 @@ function updateETA(lat, lng, state) {
     etaText.style.color = '#fff';
     etaText.style.background = '#30D158';
     etaText.style.boxShadow = '0 4px 12px rgba(48,209,88,0.3)';
-    
+
     // Auto-cerrar juego si el conductor llegó
     stopGame();
     return;
   }
-  
+
   // Si está muy cerca (120m), avisar y cerrar juego
   if (distMeters <= 120) {
-      stopGame();
+    stopGame();
   }
 
   // Si ha pasado poco tiempo, no volvemos a llamar a la API (ahorro de cuota)
@@ -253,7 +253,7 @@ export function listenForDriver(rideId, state, map) {
             // Animar el movimiento suavemente (2 segundos de duración)
             animateMarker(driverMarker, [lat, lng], 2000);
           }
-          
+
           // Zoom Inteligente: Ajustar mapa para ver ambos puntos (Pasajero y Moto)
           if (state.startLatLng) {
             const bounds = L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.4);
@@ -457,9 +457,9 @@ async function showDriverAssigned(driverId, state) {
 
   const openGameBtn = document.getElementById('openGameBtn');
   if (openGameBtn) {
-      openGameBtn.onclick = () => {
-          document.getElementById('zippyJumpModal').style.display = 'flex';
-      };
+    openGameBtn.onclick = () => {
+      document.getElementById('zippyJumpModal').style.display = 'flex';
+    };
   }
 
   // Control del Carrusel (Slide Left)
@@ -647,7 +647,7 @@ export function stopListening(state, map) {
 export async function cancelRide(state, map) {
   // Solo pedir confirmación si realmente se está cancelando activamente
   // (Si viene de un alert de "conductor canceló", ya se llamó stopListening)
-  
+
   stopListening(state);
   if (state.currentRideId) {
     localStorage.removeItem(STORAGE_KEY);

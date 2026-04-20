@@ -1,0 +1,57 @@
+/* ══════════════════════════════════════════
+   ZIPPY — Design Tokens / Variables CSS
+   ══════════════════════════════════════════ */
+
+:root {
+  /* Brand Colors */
+  --color-primary:      #FF6B00;
+  --color-primary-light:#FF9500;
+  --color-primary-glow: rgba(255, 107, 0, 0.35);
+  --color-success:      #30D158;
+  --color-danger:       #FF3B30;
+  --color-warning:      #FFD60A;
+  --color-info:         #0A84FF;
+
+  /* Backgrounds */
+  --bg-base:            #111113;
+  --bg-surface:         #1c1c1e;
+  --bg-elevated:        #2c2c2e;
+  --bg-card:            rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --text-primary:       #ffffff;
+  --text-secondary:     rgba(255, 255, 255, 0.65);
+  --text-tertiary:      rgba(255, 255, 255, 0.35);
+
+  /* Borders */
+  --border-subtle:      rgba(255, 255, 255, 0.08);
+  --border-accent:      rgba(255, 107, 0, 0.25);
+
+  /* Border Radius */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Shadows */
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md:  0 8px 24px rgba(0,0,0,0.4);
+  --shadow-lg:  0 20px 50px rgba(0,0,0,0.5);
+  --shadow-glow:0 0 24px rgba(255,107,0,0.2);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Font */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}

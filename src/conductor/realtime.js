@@ -4,7 +4,7 @@
 import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
 import { getCurrentProfile } from './auth.js';
-import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
+import { zippyAlert, zippyConfirm, zippyDanger } from '../utils/ui-global.js';
 
 let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
@@ -16,7 +16,7 @@ let currentTrackingTripId = null;
 function startGPS(tripId) {
   if (activeWatchId) return; // Ya estamos trackeando
   if (!navigator.geolocation) return console.warn('GPS NO Soportado');
-  
+
   currentTrackingTripId = tripId;
   console.log('Iniciando rastreo GPS para el viaje:', tripId);
 
@@ -24,7 +24,7 @@ function startGPS(tripId) {
     async (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      
+
       // Update DB silently
       await supabase
         .from('viajes')
@@ -64,14 +64,20 @@ function getHandlers() {
  * @param {string} id - Ride UUID.
  */
 async function cancelActiveViaje(id) {
-  if (await zippyConfirm('¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.', '⚠️')) {
+  if (await zippyDanger(
+    '¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.',
+    '🚫',
+    'Cancelar Servicio',
+    { label: 'Sí, cancelar servicio', emoji: '🚫' },
+    { label: 'No, regresar', emoji: '↩️' }
+  )) {
     const { error } = await supabase.from('viajes').update({ estado: 'buscando', conductor_id: null }).eq('id', id);
     if (!error) {
-        activeViajes = activeViajes.filter((v) => v.id !== id);
-        renderViajes(activeViajes, getHandlers());
-        stopGPS();
+      activeViajes = activeViajes.filter((v) => v.id !== id);
+      renderViajes(activeViajes, getHandlers());
+      stopGPS();
     } else {
-        zippyAlert('Error al cancelar: ' + error.message, '❌');
+      zippyAlert('Error al cancelar: ' + error.message, '❌', 'Error técnico');
     }
   }
 }
@@ -143,12 +149,12 @@ export function setupRealtimeChannel() {
 
         // Notificar si recibimos una calificación
         if (payload.new.calificacion && payload.new.calificacion > 0) {
-            const profile = getCurrentProfile();
-            const currentDriver = profile ? profile.id : 'Un Conductor';
-            if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
-                showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
-                misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
-            }
+          const profile = getCurrentProfile();
+          const currentDriver = profile ? profile.id : 'Un Conductor';
+          if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
+            showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
+            misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
+          }
         }
 
         if (validStates.includes(payload.new.estado)) {
@@ -168,8 +174,8 @@ export function setupRealtimeChannel() {
         } else {
           // Remove if finished or cancelled
           if (index !== -1) {
-             activeViajes.splice(index, 1);
-             renderViajes(activeViajes, getHandlers());
+            activeViajes.splice(index, 1);
+            renderViajes(activeViajes, getHandlers());
           }
         }
       }
@@ -202,7 +208,7 @@ async function rejectViaje(id) {
  */
 async function acceptViaje(id, lat, lng) {
   const profile = getCurrentProfile();
-  
+
   if (!profile) {
     zippyAlert('Error de sesión: No se pudo obtener tu perfil de conductor. Por favor refresca la página o inicia sesión de nuevo.', '❌');
     return;
@@ -215,8 +221,8 @@ async function acceptViaje(id, lat, lng) {
   // 1. ACEPTAR VIAJE DE INMEDIATO (Feedback instantáneo)
   const { data, error } = await supabase
     .from('viajes')
-    .update({ 
-      estado: 'aceptado', 
+    .update({
+      estado: 'aceptado',
       conductor_id: conductorId
     })
     .eq('id', id)
@@ -227,8 +233,8 @@ async function acceptViaje(id, lat, lng) {
     console.error('Error de Supabase:', error);
     zippyAlert('Error técnico: ' + error.message, '❌');
     return;
-  } 
-  
+  }
+
   if (data && data.length > 0) {
     console.log('Viaje aceptado con éxito (UI)');
     startGPS(id); // EMPEZAR EL TRACKING CONTINUO
@@ -240,9 +246,9 @@ async function acceptViaje(id, lat, lng) {
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          await supabase.from('viajes').update({ 
-              conductor_lat: lat, 
-              conductor_lng: lng 
+          await supabase.from('viajes').update({
+            conductor_lat: lat,
+            conductor_lng: lng
           }).eq('id', id);
           console.log('GPS inicial enviado en segundo plano');
         },
@@ -273,7 +279,13 @@ async function startViaje(id) {
  * @param {string} id - Ride UUID.
  */
 async function finishViaje(id) {
-  if (await zippyConfirm('¿Estás seguro de finalizar el viaje?', '🏁')) {
+  if (await zippyConfirm(
+    '¿El pasajero pagó y está listo para bajarse?',
+    '🏁',
+    'Finalizar Viaje',
+    { label: 'Sí, finalizar viaje', emoji: '🏁' },
+    { label: 'No, esperar', emoji: '↩️' }
+  )) {
     misViajesFinalizados.push(id);
     const viaje = activeViajes.find(v => v.id === id);
     const clienteNombre = viaje ? (viaje.cliente_nombre || 'Pasajero') : 'Pasajero';
@@ -329,7 +341,7 @@ function showClientRatingModal(viajeId, clienteNombre) {
     if (!selectedRating) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
-    
+
     const { error } = await supabase
       .from('viajes')
       .update({ calificacion_cliente: selectedRating })
