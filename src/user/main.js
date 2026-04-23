@@ -1,5 +1,5 @@
 /**
- * User page entry point — wires all modules together. build:20260406-v8
+ * User page entry point — wires all modules together. build:20260423-v1
  */
 import '../styles/common.css';
 import '../styles/user.css';
