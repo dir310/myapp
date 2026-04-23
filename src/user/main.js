@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('calmovil_cliente_email', data.email);
             localStorage.setItem('calmovil_cliente_telefono', data.telefono);
             localStorage.setItem('calmovil_cliente_cedula', data.cedula);
-            localStorage.setItem('zippy_passenger_status', data.estado || 'activo');
+            localStorage.setItem('zippy_passenger_status', data.estado_validacion || 'activo');
 
             await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
             location.reload();
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const { error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
               foto_frontal: frontRef, foto_trasera: backRef,
-              estado: 'pendiente'
+              estado_validacion: 'pendiente'
             }]);
 
             if (err) throw err;
