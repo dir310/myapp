@@ -1,5 +1,5 @@
 /**
- * User page entry point — wires all modules together. build:20260423-v1
+ * User page entry point — wires all modules together. build:20260423-v2
  */
 import '../styles/common.css';
 import '../styles/user.css';
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const { error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
-              foto_frontal: frontRef, foto_trasera: backRef,
+              foto_frontal_url: frontRef, foto_trasera_url: backRef,
               estado_validacion: 'pendiente'
             }]);
 
