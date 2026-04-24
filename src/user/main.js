@@ -346,8 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const frontRef = `clientes/${Date.now()}_front.jpg`;
             const backRef = `clientes/${Date.now()}_back.jpg`;
 
-            await supabase.storage.from('documents').upload(frontRef, compressedFront);
-            await supabase.storage.from('documents').upload(backRef, compressedBack);
+            await supabase.storage.from('identificaciones').upload(frontRef, compressedFront);
+            await supabase.storage.from('identificaciones').upload(backRef, compressedBack);
 
             btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
 
