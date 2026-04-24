@@ -1,5 +1,5 @@
 /**
- * User page entry point — wires all modules together. build:20260406-v8
+ * User page entry point — wires all modules together. build:20260423-v2
  */
 import '../styles/common.css';
 import '../styles/user.css';
@@ -12,6 +12,7 @@ import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
+import { compressImage } from '../utils/image.js';
 
 let passengerCaptchaAnswer = 0;
 const PASSENGER_MAX_ATTEMPTS = 3;
@@ -324,19 +325,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return zippyAlert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.', '🔞');
           }
 
-          btn.innerHTML = '<span class="spinner"></span> Registrando...';
+          btn.innerHTML = '<span class="spinner"></span> Preparando fotos...';
           btn.disabled = true;
 
           try {
+            const compressedFront = await compressImage(photoFront);
+            const compressedBack = await compressImage(photoBack);
+
+            btn.innerHTML = '<span class="spinner"></span> Subiendo fotos...';
+
             const frontRef = `clientes/${Date.now()}_front.jpg`;
             const backRef = `clientes/${Date.now()}_back.jpg`;
 
-            await supabase.storage.from('documents').upload(frontRef, photoFront);
-            await supabase.storage.from('documents').upload(backRef, photoBack);
+            await supabase.storage.from('documents').upload(frontRef, compressedFront);
+            await supabase.storage.from('documents').upload(backRef, compressedBack);
+
+            btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
 
             const { error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
-              foto_frontal: frontRef, foto_trasera: backRef,
+              foto_frontal_url: frontRef, foto_trasera_url: backRef,
               estado_validacion: 'pendiente'
             }]);
 
