@@ -72,20 +72,23 @@ async function loadClientes() {
         statusTxt.textContent = 'Guardando...';
         statusTxt.className = 'status-txt';
         
-        const { error: updErr } = await supabase
-            .from('clientes')
-            .update({ estado_validacion: newStatus })
-            .eq('id', c.id);
+        try {
+            const { error: updErr } = await supabase
+                .from('clientes')
+                .update({ estado_validacion: newStatus })
+                .eq('id', c.id);
+                
+            if (updErr) throw updErr;
+
+            statusTxt.textContent = check ? 'Aprobado' : 'Pendiente';
+            statusTxt.className = 'status-txt ' + (check ? 'status-aprobado' : 'status-pendiente');
             
-        if (updErr) {
-            console.error('Error updating status:', updErr);
-            zippyAlert('Error guardando estado: ' + updErr.message, '❌');
+        } catch (err) {
+            console.error('Error updating status:', err);
+            await zippyAlert('Error guardando estado: ' + (err.message || 'Error de red'), '❌');
             input.checked = !check; // revert visual
             statusTxt.textContent = !check ? 'Aprobado' : 'Pendiente';
             statusTxt.className = 'status-txt ' + (!check ? 'status-aprobado' : 'status-pendiente');
-        } else {
-            statusTxt.textContent = check ? 'Aprobado' : 'Pendiente';
-            statusTxt.className = 'status-txt ' + (check ? 'status-aprobado' : 'status-pendiente');
         }
     };
 
