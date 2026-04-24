@@ -68,12 +68,21 @@ function checkPassengerAuth() {
           .single()
           .then(({ data, error }) => {
             const banner = document.getElementById('passengerValidationBanner');
+            const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
               localStorage.setItem('zippy_passenger_status', data.estado_validacion);
               if (data.estado_validacion === 'pendiente') {
                 if (banner) banner.style.display = 'block';
+                if (topSearch) {
+                  topSearch.style.pointerEvents = 'none';
+                  topSearch.style.opacity = '0.4';
+                }
               } else {
                 if (banner) banner.style.display = 'none';
+                if (topSearch) {
+                  topSearch.style.pointerEvents = 'auto';
+                  topSearch.style.opacity = '1';
+                }
               }
             }
           });
