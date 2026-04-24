@@ -259,11 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return zippyAlert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).', '📧');
           }
 
-          const passRegex = /^(?=.*[a-z])(?=.*\d).{6,}$/;
-          if (!passRegex.test(password)) {
-            return zippyAlert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).', '🔑');
-          }
-
           btn.innerHTML = '<span class="spinner"></span> Ingresando...';
           btn.disabled = true;
 
@@ -321,6 +316,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return zippyAlert('Por favor llena todos los campos, incluyendo tu edad y las fotos de tu cédula.', '📎');
           }
 
+          const passRegex = /^(?=.*[a-z])(?=.*\d).{6,}$/;
+          if (!passRegex.test(password)) {
+            return zippyAlert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).', '🔑');
+          }
+
           if (edad < 18) {
             return zippyAlert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.', '🔞');
           }
@@ -342,13 +342,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
 
-            const { error: err } = await supabase.from('clientes').insert([{
+            const { data: newUser, error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
               foto_frontal_url: frontRef, foto_trasera_url: backRef,
               estado_validacion: 'pendiente'
-            }]);
+            }]).select().single();
 
             if (err) throw err;
+
+            // Auto-login: guardar datos en memoria local para no volver al formulario
+            localStorage.setItem('calmovil_cliente_id', newUser.id);
+            localStorage.setItem('calmovil_cliente_nombre', newUser.nombre);
+            localStorage.setItem('calmovil_cliente_email', newUser.email);
+            localStorage.setItem('calmovil_cliente_telefono', newUser.telefono);
+            localStorage.setItem('calmovil_cliente_cedula', newUser.cedula);
+            localStorage.setItem('zippy_passenger_status', 'pendiente');
 
             await zippyAlert('¡Registro exitoso! Por seguridad, un administrador validará tus datos en unos minutos. Te avisaremos pronto.', '✅');
             location.reload();
