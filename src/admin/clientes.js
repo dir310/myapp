@@ -150,7 +150,7 @@ async function loadClientes() {
                 return;
             }
             // Si es ruta relativa, sacar la pública de Supabase
-            const { data } = supabase.storage.from('documents').getPublicUrl(path);
+            const { data } = supabase.storage.from('identificaciones').getPublicUrl(path);
             window.open(data.publicUrl, '_blank');
         };
 
