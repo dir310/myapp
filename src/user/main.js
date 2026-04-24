@@ -302,6 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('calmovil_cliente_telefono', data.telefono);
             localStorage.setItem('calmovil_cliente_cedula', data.cedula);
             localStorage.setItem('zippy_passenger_status', data.estado_validacion || 'activo');
+            
+            // Olvidar el tour para que se muestre en cada inicio de sesión
+            localStorage.removeItem('zippy_tour_completed');
 
             await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
             location.reload();
@@ -371,6 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('calmovil_cliente_telefono', newUser.telefono);
             localStorage.setItem('calmovil_cliente_cedula', newUser.cedula);
             localStorage.setItem('zippy_passenger_status', 'pendiente');
+            
+            // Olvidar el tour para que se muestre en este nuevo registro
+            localStorage.removeItem('zippy_tour_completed');
 
             await zippyAlert('¡Registro exitoso! Por seguridad, un administrador validará tus datos en unos minutos. Te avisaremos pronto.', '✅');
             location.reload();
