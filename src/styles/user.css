@@ -901,4 +901,18 @@ body {
     display: block;
     background: #1a1a1a;
 }
+
+/* ── Driver.js Custom Theme (Tour de Bienvenida) ── */
+.driver-popover.zippy-driver-theme {
+  --driver-popover-bg: #1c1c1e;
+  --driver-popover-text: #ffffff;
+  --driver-popover-title-color: #FF6B00;
+  --driver-popover-btn-bg: #FF6B00;
+  --driver-popover-btn-color: #ffffff;
+  --driver-popover-btn-hover-bg: #FF9500;
+  --driver-popover-btn-border-color: #FF6B00;
+  --driver-popover-border-radius: 16px;
+  border: 1px solid rgba(255,107,0,0.3);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
 
