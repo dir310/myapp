@@ -84,6 +84,11 @@ function checkPassengerAuth() {
                   topSearch.style.opacity = '1';
                 }
               }
+              // Iniciar tour si nunca lo ha visto
+              const tourVisto = localStorage.getItem('zippy_tour_completed');
+              if (tourVisto !== 'true') {
+                  setTimeout(iniciarTourPasajero, 1000); // Esperar a que cargue la UI
+              }
             }
           });
 
@@ -635,3 +640,32 @@ restoreActiveRide(state, map);
 
 // ── Pre-warming Supabase (Cold Start Fix) ──
 supabase.from('clientes').select('id').limit(1);
+
+// ── Tour de Bienvenida (Driver.js) ──
+function iniciarTourPasajero() {
+  if (!window.driver) return;
+  const driverObj = window.driver.js.driver({
+    showProgress: true,
+    nextBtnText: 'Siguiente ▶',
+    prevBtnText: '◀ Atrás',
+    doneBtnText: '¡Entendido! ✅',
+    popoverClass: 'zippy-driver-theme',
+    steps: [
+      { element: '#topSearchArea', popover: { title: 'Buscador Inteligente', description: 'Aquí puedes escribir el lugar donde estás y hacia dónde vas.', side: "bottom", align: 'start' }},
+      { element: '#map', popover: { title: 'Toca el Mapa', description: 'También puedes arrastrar el mapa y tocar cualquier calle directamente para seleccionar tu destino al instante.', side: "top", align: 'start' }},
+      { element: '#resetPointsBtn', popover: { title: 'Reiniciar Búsqueda', description: 'Si te equivocas, usa este botón para limpiar las direcciones y empezar de cero.', side: "bottom", align: 'start' }},
+      { element: '#sidebarHeader', popover: { title: 'Tu Perfil y Viajes', description: 'Abre este menú para ver cuántos viajes llevas, tu información y para cerrar sesión.', side: "bottom", align: 'start' }}
+    ],
+    onDestroyStarted: () => {
+      if (!driverObj.hasNextStep() || confirm("¿Seguro que quieres cerrar el tutorial?")) {
+        driverObj.destroy();
+        localStorage.setItem('zippy_tour_completed', 'true');
+      }
+    },
+    onCloseClick: () => {
+        driverObj.destroy();
+        localStorage.setItem('zippy_tour_completed', 'true');
+    }
+  });
+  driverObj.drive();
+}
