@@ -482,6 +482,39 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
     };
   }
+  // --- Botón Verificar Aprobación ---
+  const checkApprovalBtn = document.getElementById('checkApprovalBtn');
+  if (checkApprovalBtn) {
+    checkApprovalBtn.addEventListener('click', async () => {
+      checkApprovalBtn.textContent = '⏳ Revisando...';
+      checkApprovalBtn.disabled = true;
+      
+      const emailStored = localStorage.getItem('calmovil_cliente_email');
+      try {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('estado_validacion')
+          .eq('email', emailStored)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data.estado_validacion === 'pendiente') {
+          zippyAlert('Aún estamos revisando tus datos. Vuelve a intentar en unos minuticos.', '⌛');
+          checkApprovalBtn.textContent = '🔄 Verificar si ya fui aprobado';
+          checkApprovalBtn.disabled = false;
+        } else {
+          localStorage.setItem('zippy_passenger_status', data.estado_validacion);
+          await zippyAlert('¡Felicidades, tu cuenta ha sido aprobada! Ya puedes pedir viajes.', '🎉');
+          location.reload();
+        }
+      } catch (err) {
+        zippyAlert('Error al conectar. Verifica tu internet y vuelve a intentar.', '❌');
+        checkApprovalBtn.textContent = '🔄 Verificar si ya fui aprobado';
+        checkApprovalBtn.disabled = false;
+      }
+    });
+  }
 });
 // ── Initialize Map ──
 const map = createMap('map', LA_CALERA, 13);
