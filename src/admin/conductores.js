@@ -136,6 +136,16 @@ async function loadConductores() {
         { name: 'Rostro', url: c.foto_rostro_url }
     ];
 
+    const openPhoto = (path) => {
+        if (!path) return;
+        if (path.startsWith('http')) {
+            window.open(path, '_blank');
+            return;
+        }
+        const { data } = supabase.storage.from('identificaciones').getPublicUrl(path);
+        window.open(data.publicUrl, '_blank');
+    };
+
     let hasDocs = false;
     docsArr.forEach(d => {
         if (d.url) {
@@ -143,7 +153,7 @@ async function loadConductores() {
             const btn = document.createElement('button');
             btn.textContent = `${d.name} 📷`;
             btn.style.cssText = 'background:rgba(255,107,0,.15); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer; flex: 1 1 40%; text-align:center;';
-            btn.onclick = () => window.open(d.url, '_blank');
+            btn.onclick = () => openPhoto(d.url);
             div.appendChild(btn);
         }
     });
