@@ -56,8 +56,8 @@ body {
 /* ── Top Bar ── */
 .topbar {
   position: fixed;
-  bottom: 25px;
-  left: 15px;
+  bottom: 12px;
+  left: 10px;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -541,7 +541,7 @@ body {
 /* ── Route Info Pill ── */
 .route-pill {
   position: fixed;
-  bottom: 110px;
+  bottom: 25px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 998;
@@ -558,7 +558,7 @@ body {
 
 .confirm-route-btn {
   position: fixed;
-  bottom: 20px;
+  bottom: 75px;
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
@@ -579,7 +579,7 @@ body {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, pulse-btn-attention 2s infinite ease-in-out 0.5s;
 }
 
 .confirm-route-btn:active {
@@ -589,6 +589,12 @@ body {
 @keyframes slideUpBounce {
   from { opacity: 0; transform: translate(-50%, 40px); }
   to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes pulse-btn-attention {
+  0% { transform: translate(-50%, 0) scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.6); }
+  70% { transform: translate(-50%, 0) scale(1.02); box-shadow: 0 0 0 12px rgba(255, 107, 0, 0); }
+  100% { transform: translate(-50%, 0) scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); }
 }
 
 .pill-stat {
@@ -900,5 +906,19 @@ body {
     height: 100%;
     display: block;
     background: #1a1a1a;
+}
+
+/* ── Driver.js Custom Theme (Tour de Bienvenida) ── */
+.driver-popover.zippy-driver-theme {
+  --driver-popover-bg: #1c1c1e;
+  --driver-popover-text: #ffffff;
+  --driver-popover-title-color: #FF6B00;
+  --driver-popover-btn-bg: #FF6B00;
+  --driver-popover-btn-color: #ffffff;
+  --driver-popover-btn-hover-bg: #FF9500;
+  --driver-popover-btn-border-color: #FF6B00;
+  --driver-popover-border-radius: 16px;
+  border: 1px solid rgba(255,107,0,0.3);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 

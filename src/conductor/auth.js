@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { zippyAlert } from '../utils/ui-global.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 import { initRadar } from './ui.js';
+import { compressImage } from '../utils/image.js';
 
 let currentUser = null;
 let currentProfile = null;
@@ -169,6 +170,16 @@ function proceedToApp() {
   setupRealtimeChannel();
   initRadar();
 
+  // Registrar en OneSignal para recibir Push Notifications
+  if (window.OneSignalDeferred && currentProfile && currentProfile.id) {
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.login(currentProfile.id);
+      OneSignal.User.addTag("rol", "conductor");
+      // Pedir permisos de notificación de una vez si no los tiene
+      await OneSignal.Slidedown.promptPush();
+    });
+  }
+
   // Validar el estado del conductor
   const estadoValidacion = currentProfile.estado_validacion || 'pendiente';
   if (estadoValidacion === 'pendiente') {
@@ -308,20 +319,25 @@ async function handleRegisterSubmit() {
       return zippyAlert('Por favor ingresa un correo electrónico válido (ejemplo@correo.com).', '📧');
   }
 
-  btn.textContent = 'Subiendo Imágenes...';
+  btn.textContent = 'Comprimiendo Imágenes...';
 
   try {
       const uploadFile = async (file, prefix) => {
-          const fileName = `${Date.now()}_conductor_${prefix}_${telefono}.png`;
-          const { error } = await supabase.storage.from('identificaciones').upload(fileName, file);
+          const compressed = await compressImage(file);
+          const fileName = `${Date.now()}_conductor_${prefix}_${telefono}.jpg`;
+          const { error } = await supabase.storage.from('identificaciones').upload(fileName, compressed);
           if (error) throw error;
           const { data: { publicUrl } } = supabase.storage.from('identificaciones').getPublicUrl(fileName);
           return publicUrl;
       };
 
+      btn.textContent = 'Subiendo Imágenes (1/4)...';
       const urlProp = await uploadFile(fProp, 'propiedad');
+      btn.textContent = 'Subiendo Imágenes (2/4)...';
       const urlCedF = await uploadFile(fCedF, 'cedula_frontal');
+      btn.textContent = 'Subiendo Imágenes (3/4)...';
       const urlCedT = await uploadFile(fCedT, 'cedula_trasera');
+      btn.textContent = 'Subiendo Imágenes (4/4)...';
       const urlRostro = await uploadFile(fRosto, 'rostro');
 
       btn.textContent = 'Guardando datos...';

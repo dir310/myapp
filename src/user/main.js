@@ -1,5 +1,5 @@
 /**
- * User page entry point — wires all modules together. build:20260406-v8
+ * User page entry point — wires all modules together. build:20260423-v2
  */
 import '../styles/common.css';
 import '../styles/user.css';
@@ -12,6 +12,7 @@ import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
+import { compressImage } from '../utils/image.js';
 
 let passengerCaptchaAnswer = 0;
 const PASSENGER_MAX_ATTEMPTS = 3;
@@ -67,12 +68,30 @@ function checkPassengerAuth() {
           .single()
           .then(({ data, error }) => {
             const banner = document.getElementById('passengerValidationBanner');
+            const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
               localStorage.setItem('zippy_passenger_status', data.estado_validacion);
               if (data.estado_validacion === 'pendiente') {
                 if (banner) banner.style.display = 'block';
+                if (topSearch) {
+                  topSearch.style.pointerEvents = 'none';
+                  topSearch.style.opacity = '0.4';
+                }
               } else {
                 if (banner) banner.style.display = 'none';
+                if (topSearch) {
+                  topSearch.style.pointerEvents = 'auto';
+                  topSearch.style.opacity = '1';
+                }
+                
+                // Iniciar tour si nunca lo ha visto y el manual no está abierto
+                const safetyModal = document.getElementById('passengerSafetyModal');
+                const isSafetyModalOpen = safetyModal && safetyModal.style.display !== 'none';
+                
+                const tourVisto = localStorage.getItem('zippy_tour_completed');
+                if (tourVisto !== 'true' && !isSafetyModalOpen) {
+                    setTimeout(iniciarTourPasajero, 1000); // Esperar a que cargue la UI
+                }
               }
             }
           });
@@ -258,11 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return zippyAlert('⚠️ Por favor ingresa un correo electrónico válido (ejemplo@correo.com).', '📧');
           }
 
-          const passRegex = /^(?=.*[a-z])(?=.*\d).{6,}$/;
-          if (!passRegex.test(password)) {
-            return zippyAlert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).', '🔑');
-          }
-
           btn.innerHTML = '<span class="spinner"></span> Ingresando...';
           btn.disabled = true;
 
@@ -292,6 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('calmovil_cliente_telefono', data.telefono);
             localStorage.setItem('calmovil_cliente_cedula', data.cedula);
             localStorage.setItem('zippy_passenger_status', data.estado_validacion || 'activo');
+            
+            // Olvidar el tour para que se muestre en cada inicio de sesión
+            localStorage.removeItem('zippy_tour_completed');
 
             await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
             location.reload();
@@ -320,27 +337,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return zippyAlert('Por favor llena todos los campos, incluyendo tu edad y las fotos de tu cédula.', '📎');
           }
 
+          const passRegex = /^(?=.*[a-z])(?=.*\d).{6,}$/;
+          if (!passRegex.test(password)) {
+            return zippyAlert('⚠️ Contraseña muy compleja o corta. Pon algo simple: 5 números y 1 letra minúscula (Ej: 12345a).', '🔑');
+          }
+
           if (edad < 18) {
             return zippyAlert('❌ Registro denegado: Debes ser mayor de 18 años para usar ZIPPY.', '🔞');
           }
 
-          btn.innerHTML = '<span class="spinner"></span> Registrando...';
+          btn.innerHTML = '<span class="spinner"></span> Preparando fotos...';
           btn.disabled = true;
 
           try {
+            const compressedFront = await compressImage(photoFront);
+            const compressedBack = await compressImage(photoBack);
+
+            btn.innerHTML = '<span class="spinner"></span> Subiendo fotos...';
+
             const frontRef = `clientes/${Date.now()}_front.jpg`;
             const backRef = `clientes/${Date.now()}_back.jpg`;
 
-            await supabase.storage.from('documents').upload(frontRef, photoFront);
-            await supabase.storage.from('documents').upload(backRef, photoBack);
+            await supabase.storage.from('identificaciones').upload(frontRef, compressedFront);
+            await supabase.storage.from('identificaciones').upload(backRef, compressedBack);
 
-            const { error: err } = await supabase.from('clientes').insert([{
+            btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
+
+            const { data: newUser, error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
-              foto_frontal: frontRef, foto_trasera: backRef,
+              foto_frontal_url: frontRef, foto_trasera_url: backRef,
               estado_validacion: 'pendiente'
-            }]);
+            }]).select().single();
 
             if (err) throw err;
+
+            // Auto-login: guardar datos en memoria local para no volver al formulario
+            localStorage.setItem('calmovil_cliente_id', newUser.id);
+            localStorage.setItem('calmovil_cliente_nombre', newUser.nombre);
+            localStorage.setItem('calmovil_cliente_email', newUser.email);
+            localStorage.setItem('calmovil_cliente_telefono', newUser.telefono);
+            localStorage.setItem('calmovil_cliente_cedula', newUser.cedula);
+            localStorage.setItem('zippy_passenger_status', 'pendiente');
+            
+            // Olvidar el tour para que se muestre en este nuevo registro
+            localStorage.removeItem('zippy_tour_completed');
 
             await zippyAlert('¡Registro exitoso! Por seguridad, un administrador validará tus datos en unos minutos. Te avisaremos pronto.', '✅');
             location.reload();
@@ -455,7 +495,46 @@ document.addEventListener('DOMContentLoaded', () => {
     closePassengerSafetyBtn.onclick = () => {
       document.getElementById('passengerSafetyModal').style.display = 'none';
       sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
+      
+      const status = localStorage.getItem('zippy_passenger_status');
+      const tourVisto = localStorage.getItem('zippy_tour_completed');
+      if (tourVisto !== 'true' && status !== 'pendiente') {
+          setTimeout(iniciarTourPasajero, 500); 
+      }
     };
+  }
+  // --- Botón Verificar Aprobación ---
+  const checkApprovalBtn = document.getElementById('checkApprovalBtn');
+  if (checkApprovalBtn) {
+    checkApprovalBtn.addEventListener('click', async () => {
+      checkApprovalBtn.textContent = '⏳ Revisando...';
+      checkApprovalBtn.disabled = true;
+      
+      const emailStored = localStorage.getItem('calmovil_cliente_email');
+      try {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('estado_validacion')
+          .eq('email', emailStored)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data.estado_validacion === 'pendiente') {
+          zippyAlert('Aún estamos revisando tus datos. Vuelve a intentar en unos minuticos.', '⌛');
+          checkApprovalBtn.textContent = '🔄 Verificar si ya fui aprobado';
+          checkApprovalBtn.disabled = false;
+        } else {
+          localStorage.setItem('zippy_passenger_status', data.estado_validacion);
+          await zippyAlert('¡Felicidades, tu cuenta ha sido aprobada! Ya puedes pedir viajes.', '🎉');
+          location.reload();
+        }
+      } catch (err) {
+        zippyAlert('Error al conectar. Verifica tu internet y vuelve a intentar.', '❌');
+        checkApprovalBtn.textContent = '🔄 Verificar si ya fui aprobado';
+        checkApprovalBtn.disabled = false;
+      }
+    });
   }
 });
 // ── Initialize Map ──
@@ -530,6 +609,92 @@ document.querySelectorAll('.clear-btn').forEach((btn, i) => {
   btn.addEventListener('click', () => boundClearPoint(type));
 });
 
+// ── Lugares Favoritos (Casa / Trabajo) ──
+function initFavorites() {
+  const types = ['Casa', 'Trabajo'];
+  
+  types.forEach(type => {
+    const btn = document.getElementById(`fav${type}Btn`);
+    if (!btn) return;
+    
+    // Configurar estilo si ya existe
+    const storageKey = `zippy_fav_${type.toLowerCase()}`;
+    if (localStorage.getItem(storageKey)) {
+        btn.style.borderColor = 'rgba(48,209,88,0.4)';
+        btn.style.color = '#30D158';
+    }
+
+    btn.addEventListener('click', () => {
+      if (state.currentRideId) return zippyAlert('⚠️ No puedes usar favoritos durante un viaje activo.', '✋');
+      
+      const savedFav = localStorage.getItem(storageKey);
+      if (savedFav) {
+          // Usar el favorito guardado
+          const favData = JSON.parse(savedFav);
+          const target = state.nextClick || 'end'; // default to end si undefined
+          boundPlaceMarker(target, favData.lat, favData.lng, favData.name);
+          
+          // Cambiar foco al otro input para agilizar
+          state.nextClick = target === 'start' ? 'end' : 'start';
+          const nextInput = document.getElementById(state.nextClick + 'Input');
+          if (nextInput) {
+            nextInput.focus();
+            // close suggestions just in case
+            const sugg = document.getElementById(state.nextClick + 'Suggestions');
+            if(sugg) sugg.style.display = 'none';
+          }
+      } else {
+          // Guardar nuevo favorito
+          // Buscar si hay un punto seleccionado activo
+          let activePoint = null;
+          if (state.nextClick === 'start' && state.startMarker) activePoint = { lat: state.startLatLng.lat, lng: state.startLatLng.lng, name: document.getElementById('startInput').value || 'Ubicación seleccionada' };
+          else if (state.nextClick === 'end' && state.endMarker) activePoint = { lat: state.endLatLng.lat, lng: state.endLatLng.lng, name: document.getElementById('endInput').value || 'Ubicación seleccionada' };
+          else if (state.endMarker) activePoint = { lat: state.endLatLng.lat, lng: state.endLatLng.lng, name: document.getElementById('endInput').value || 'Ubicación seleccionada' };
+          else if (state.startMarker) activePoint = { lat: state.startLatLng.lat, lng: state.startLatLng.lng, name: document.getElementById('startInput').value || 'Ubicación seleccionada' };
+
+          if (!activePoint) {
+              return zippyAlert(`Para configurar tu ${type}, primero busca tu dirección en el mapa o escríbela, y luego vuelve a presionar este botón.`, '📌');
+          }
+
+          zippyConfirm(`¿Quieres guardar "${activePoint.name}" como tu ${type}?`, '⭐').then(confirmed => {
+              if (confirmed) {
+                  localStorage.setItem(storageKey, JSON.stringify(activePoint));
+                  btn.style.borderColor = 'rgba(48,209,88,0.4)';
+                  btn.style.color = '#30D158';
+                  zippyAlert(`¡${type} guardada con éxito!`, '✅');
+              }
+          });
+      }
+    });
+  });
+
+  const clearBtn = document.getElementById('favClearBtn');
+  if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+          if (!localStorage.getItem('zippy_fav_casa') && !localStorage.getItem('zippy_fav_trabajo')) {
+              return zippyAlert('No tienes lugares favoritos guardados aún.', 'ℹ️');
+          }
+          zippyConfirm('¿Estás seguro de que deseas borrar tus lugares favoritos (Casa y Trabajo)?', '🗑️').then(confirmed => {
+              if (confirmed) {
+                  localStorage.removeItem('zippy_fav_casa');
+                  localStorage.removeItem('zippy_fav_trabajo');
+                  
+                  // Restaurar estilos originales
+                  ['Casa', 'Trabajo'].forEach(t => {
+                      const b = document.getElementById(`fav${t}Btn`);
+                      if(b) {
+                          b.style.borderColor = 'rgba(255,255,255,0.08)';
+                          b.style.color = 'rgba(255,255,255,0.7)';
+                      }
+                  });
+                  zippyAlert('Tus lugares favoritos han sido borrados.', '🧹');
+              }
+          });
+      });
+  }
+}
+initFavorites();
+
 // Map click — solo activo cuando el usuario eligió explícitamente "Tocar en el mapa"
 map.on('click', (e) => {
   if (state.isLocked) return;            // Ruta ya fijada
@@ -577,3 +742,32 @@ restoreActiveRide(state, map);
 
 // ── Pre-warming Supabase (Cold Start Fix) ──
 supabase.from('clientes').select('id').limit(1);
+
+// ── Tour de Bienvenida (Driver.js) ──
+function iniciarTourPasajero() {
+  if (!window.driver) return;
+  const driverObj = window.driver.js.driver({
+    showProgress: true,
+    nextBtnText: 'Siguiente ▶',
+    prevBtnText: '◀ Atrás',
+    doneBtnText: '¡Entendido! ✅',
+    popoverClass: 'zippy-driver-theme',
+    steps: [
+      { element: '#topSearchArea', popover: { title: 'Buscador Inteligente', description: 'Aquí puedes escribir el lugar donde estás y hacia dónde vas.', side: "bottom", align: 'start' }},
+      { element: '#map', popover: { title: 'Toca el Mapa', description: 'También puedes arrastrar el mapa y tocar cualquier calle directamente para seleccionar tu destino al instante.', side: "top", align: 'start' }},
+      { element: '#resetPointsBtn', popover: { title: 'Reiniciar Búsqueda', description: 'Si te equivocas, usa este botón para limpiar las direcciones y empezar de cero.', side: "bottom", align: 'start' }},
+      { element: '#sidebarHeader', popover: { title: 'Tu Perfil y Viajes', description: 'Abre este menú para ver cuántos viajes llevas, tu información y para cerrar sesión.', side: "bottom", align: 'start' }}
+    ],
+    onDestroyStarted: () => {
+      if (!driverObj.hasNextStep() || confirm("¿Seguro que quieres cerrar el tutorial?")) {
+        driverObj.destroy();
+        localStorage.setItem('zippy_tour_completed', 'true');
+      }
+    },
+    onCloseClick: () => {
+        driverObj.destroy();
+        localStorage.setItem('zippy_tour_completed', 'true');
+    }
+  });
+  driverObj.drive();
+}

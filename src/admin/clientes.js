@@ -72,20 +72,23 @@ async function loadClientes() {
         statusTxt.textContent = 'Guardando...';
         statusTxt.className = 'status-txt';
         
-        const { error: updErr } = await supabase
-            .from('clientes')
-            .update({ estado_validacion: newStatus })
-            .eq('id', c.id);
+        try {
+            const { error: updErr } = await supabase
+                .from('clientes')
+                .update({ estado_validacion: newStatus })
+                .eq('id', c.id);
+                
+            if (updErr) throw updErr;
+
+            statusTxt.textContent = check ? 'Aprobado' : 'Pendiente';
+            statusTxt.className = 'status-txt ' + (check ? 'status-aprobado' : 'status-pendiente');
             
-        if (updErr) {
-            console.error('Error updating status:', updErr);
-            zippyAlert('Error guardando estado: ' + updErr.message, '❌');
+        } catch (err) {
+            console.error('Error updating status:', err);
+            await zippyAlert('Error guardando estado: ' + (err.message || 'Error de red'), '❌');
             input.checked = !check; // revert visual
             statusTxt.textContent = !check ? 'Aprobado' : 'Pendiente';
             statusTxt.className = 'status-txt ' + (!check ? 'status-aprobado' : 'status-pendiente');
-        } else {
-            statusTxt.textContent = check ? 'Aprobado' : 'Pendiente';
-            statusTxt.className = 'status-txt ' + (check ? 'status-aprobado' : 'status-pendiente');
         }
     };
 
@@ -139,18 +142,30 @@ async function loadClientes() {
         div.style.flexDirection = 'column';
         div.style.gap = '4px';
 
+        const openPhoto = (path) => {
+            if (!path) return;
+            // Si ya es una URL completa (http), abrirla directo
+            if (path.startsWith('http')) {
+                window.open(path, '_blank');
+                return;
+            }
+            // Si es ruta relativa, sacar la pública de Supabase
+            const { data } = supabase.storage.from('identificaciones').getPublicUrl(path);
+            window.open(data.publicUrl, '_blank');
+        };
+
         if (c.foto_frontal_url) {
             const btnF = document.createElement('button');
             btnF.textContent = 'Frontal 📷';
             btnF.style.cssText = 'background:rgba(255,107,0,.15); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
-            btnF.onclick = () => window.open(c.foto_frontal_url, '_blank');
+            btnF.onclick = () => openPhoto(c.foto_frontal_url);
             div.appendChild(btnF);
         }
         if (c.foto_trasera_url) {
             const btnT = document.createElement('button');
             btnT.textContent = 'Trasera 📷';
             btnT.style.cssText = 'background:rgba(255,107,0,.15); border:1px solid #FF6B00; color:#FF6B00; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;';
-            btnT.onclick = () => window.open(c.foto_trasera_url, '_blank');
+            btnT.onclick = () => openPhoto(c.foto_trasera_url);
             div.appendChild(btnT);
         }
         tdDocs.appendChild(div);
