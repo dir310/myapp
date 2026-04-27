@@ -372,6 +372,37 @@
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script type="module" src="../src/conductor/main.js?v=silencio-v2"></script>
 
+    <!-- OneSignal Push Notifications SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "d1912f76-c166-43c4-b85b-fc461630445d",
+          notifyButton: {
+            enable: true,
+            text: {
+                'tip.state.unsubscribed': 'Suscribirse a Viajes',
+                'tip.state.subscribed': 'Ya recibes viajes',
+                'tip.state.blocked': 'Has bloqueado las notificaciones'
+            },
+            colors: { // Customize button colors
+                'circle.background': '#FF6B00',
+                'circle.foreground': 'white',
+                'badge.background': '#FF6B00',
+                'badge.foreground': 'white',
+                'badge.bordercolor': 'white',
+                'pulse.color': '#FF6B00',
+                'dialog.button.background.hovering': '#FF9500',
+                'dialog.button.background.active': '#FF9500',
+                'dialog.button.background': '#FF6B00',
+                'dialog.button.foreground': 'white'
+            }
+          },
+        });
+      });
+    </script>
+
     <!-- PWA Install Prompt -->
     <script>
         var _pwaPromptDriver = null;
