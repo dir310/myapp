@@ -609,6 +609,92 @@ document.querySelectorAll('.clear-btn').forEach((btn, i) => {
   btn.addEventListener('click', () => boundClearPoint(type));
 });
 
+// ── Lugares Favoritos (Casa / Trabajo) ──
+function initFavorites() {
+  const types = ['Casa', 'Trabajo'];
+  
+  types.forEach(type => {
+    const btn = document.getElementById(`fav${type}Btn`);
+    if (!btn) return;
+    
+    // Configurar estilo si ya existe
+    const storageKey = `zippy_fav_${type.toLowerCase()}`;
+    if (localStorage.getItem(storageKey)) {
+        btn.style.borderColor = 'rgba(48,209,88,0.4)';
+        btn.style.color = '#30D158';
+    }
+
+    btn.addEventListener('click', () => {
+      if (state.currentRideId) return zippyAlert('⚠️ No puedes usar favoritos durante un viaje activo.', '✋');
+      
+      const savedFav = localStorage.getItem(storageKey);
+      if (savedFav) {
+          // Usar el favorito guardado
+          const favData = JSON.parse(savedFav);
+          const target = state.nextClick || 'end'; // default to end si undefined
+          boundPlaceMarker(target, favData.lat, favData.lng, favData.name);
+          
+          // Cambiar foco al otro input para agilizar
+          state.nextClick = target === 'start' ? 'end' : 'start';
+          const nextInput = document.getElementById(state.nextClick + 'Input');
+          if (nextInput) {
+            nextInput.focus();
+            // close suggestions just in case
+            const sugg = document.getElementById(state.nextClick + 'Suggestions');
+            if(sugg) sugg.style.display = 'none';
+          }
+      } else {
+          // Guardar nuevo favorito
+          // Buscar si hay un punto seleccionado activo
+          let activePoint = null;
+          if (state.nextClick === 'start' && state.startMarker) activePoint = { lat: state.startLatLng.lat, lng: state.startLatLng.lng, name: document.getElementById('startInput').value || 'Ubicación seleccionada' };
+          else if (state.nextClick === 'end' && state.endMarker) activePoint = { lat: state.endLatLng.lat, lng: state.endLatLng.lng, name: document.getElementById('endInput').value || 'Ubicación seleccionada' };
+          else if (state.endMarker) activePoint = { lat: state.endLatLng.lat, lng: state.endLatLng.lng, name: document.getElementById('endInput').value || 'Ubicación seleccionada' };
+          else if (state.startMarker) activePoint = { lat: state.startLatLng.lat, lng: state.startLatLng.lng, name: document.getElementById('startInput').value || 'Ubicación seleccionada' };
+
+          if (!activePoint) {
+              return zippyAlert(`Para configurar tu ${type}, primero busca tu dirección en el mapa o escríbela, y luego vuelve a presionar este botón.`, '📌');
+          }
+
+          zippyConfirm(`¿Quieres guardar "${activePoint.name}" como tu ${type}?`, '⭐').then(confirmed => {
+              if (confirmed) {
+                  localStorage.setItem(storageKey, JSON.stringify(activePoint));
+                  btn.style.borderColor = 'rgba(48,209,88,0.4)';
+                  btn.style.color = '#30D158';
+                  zippyAlert(`¡${type} guardada con éxito!`, '✅');
+              }
+          });
+      }
+    });
+  });
+
+  const clearBtn = document.getElementById('favClearBtn');
+  if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+          if (!localStorage.getItem('zippy_fav_casa') && !localStorage.getItem('zippy_fav_trabajo')) {
+              return zippyAlert('No tienes lugares favoritos guardados aún.', 'ℹ️');
+          }
+          zippyConfirm('¿Estás seguro de que deseas borrar tus lugares favoritos (Casa y Trabajo)?', '🗑️').then(confirmed => {
+              if (confirmed) {
+                  localStorage.removeItem('zippy_fav_casa');
+                  localStorage.removeItem('zippy_fav_trabajo');
+                  
+                  // Restaurar estilos originales
+                  ['Casa', 'Trabajo'].forEach(t => {
+                      const b = document.getElementById(`fav${t}Btn`);
+                      if(b) {
+                          b.style.borderColor = 'rgba(255,255,255,0.08)';
+                          b.style.color = 'rgba(255,255,255,0.7)';
+                      }
+                  });
+                  zippyAlert('Tus lugares favoritos han sido borrados.', '🧹');
+              }
+          });
+      });
+  }
+}
+initFavorites();
+
 // Map click — solo activo cuando el usuario eligió explícitamente "Tocar en el mapa"
 map.on('click', (e) => {
   if (state.isLocked) return;            // Ruta ya fijada
