@@ -83,11 +83,15 @@ function checkPassengerAuth() {
                   topSearch.style.pointerEvents = 'auto';
                   topSearch.style.opacity = '1';
                 }
-              }
-              // Iniciar tour si nunca lo ha visto
-              const tourVisto = localStorage.getItem('zippy_tour_completed');
-              if (tourVisto !== 'true') {
-                  setTimeout(iniciarTourPasajero, 1000); // Esperar a que cargue la UI
+                
+                // Iniciar tour si nunca lo ha visto y el manual no está abierto
+                const safetyModal = document.getElementById('passengerSafetyModal');
+                const isSafetyModalOpen = safetyModal && safetyModal.style.display !== 'none';
+                
+                const tourVisto = localStorage.getItem('zippy_tour_completed');
+                if (tourVisto !== 'true' && !isSafetyModalOpen) {
+                    setTimeout(iniciarTourPasajero, 1000); // Esperar a que cargue la UI
+                }
               }
             }
           });
@@ -491,6 +495,12 @@ document.addEventListener('DOMContentLoaded', () => {
     closePassengerSafetyBtn.onclick = () => {
       document.getElementById('passengerSafetyModal').style.display = 'none';
       sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
+      
+      const status = localStorage.getItem('zippy_passenger_status');
+      const tourVisto = localStorage.getItem('zippy_tour_completed');
+      if (tourVisto !== 'true' && status !== 'pendiente') {
+          setTimeout(iniciarTourPasajero, 500); 
+      }
     };
   }
   // --- Botón Verificar Aprobación ---
