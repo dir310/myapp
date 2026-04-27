@@ -1,3 +1,5 @@
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+
 const CACHE_NAME = 'zippy-conductor-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -41,3 +43,4 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
