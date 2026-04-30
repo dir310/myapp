@@ -13,7 +13,7 @@ import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
 const OS_APP_ID = 'd1912f76-c166-43c4-b85b-fc461630445d';
-const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmceludfjpcsqwteubmh4cnai3yjq2mbqjjwhjxnusnsltbftkkf4dbbj22fipinxd63dhzd6yjt62spwky';
+const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmcelv7voadc7rzexsngbh3qb6fmhcvmghh7zrgiwoskzcr6ginu5zlzs5pj5vogpnizv6xdiuf2uhpx77y';
 
 async function sendPushToDrivers(tarifa, distancia) {
   try {
