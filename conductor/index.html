@@ -379,14 +379,12 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "d1912f76-c166-43c4-b85b-fc461630445d",
-          serviceWorkerParam: { scope: "/conductor/" },
-          serviceWorkerPath: "sw.js",
           notifyButton: {
             enable: true,
             text: {
                 'tip.state.unsubscribed': 'Suscribirse a Viajes',
-                'tip.state.subscribed': 'Ya recibes viajes',
-                'tip.state.blocked': 'Has bloqueado las notificaciones'
+                'tip.state.subscribed': '✅ Ya recibes viajes',
+                'tip.state.blocked': '🔕 Notificaciones bloqueadas'
             },
             colors: {
                 'circle.background': '#FF6B00',
@@ -401,7 +399,10 @@
                 'dialog.button.foreground': 'white'
             }
           },
+          allowLocalhostAsSecureOrigin: true,
         });
+        // Pedir permiso automaticamente al cargar
+        await OneSignal.Slidedown.promptPush({ force: true });
       });
     </script>
 
