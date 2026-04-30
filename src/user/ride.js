@@ -419,12 +419,12 @@ async function showDriverAssigned(driverId, state) {
   const conductorWindowHTML = `
     <div class="zippy-window">
       <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
-        <!-- Código de Viaje (prominente con botón copiar) -->
-        <div style="position:absolute; top:10px; right:12px; text-align:right;">
-          <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Código de Viaje</span>
-          <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
-            <span id="rideCodeDisplay" style="background:rgba(255,107,0,.2); color:#FF6B00; font-size:13px; font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,107,0,.4); letter-spacing:1px;">#${state.rideCode || 'ZIPPY'}</span>
-            <button onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}');var b=document.getElementById('copyCodeBtn');b.textContent='✅';setTimeout(function(){b.textContent='📋';},1500);})()" id="copyCodeBtn" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); color:#FF6B00; font-size:12px; padding:3px 7px; border-radius:6px; cursor:pointer;">📋</button>
+        <!-- Código de Viaje (Diseño Premium) -->
+        <div style="position:absolute; top:8px; right:10px; text-align:right;">
+          <span style="color:rgba(255,255,255,.35); font-size:7px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px;">Código de Viaje</span>
+          <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+            <span style="background:linear-gradient(135deg,rgba(255,107,0,.25),rgba(255,107,0,.1)); color:#FF6B00; font-size:14px; font-weight:900; padding:4px 10px; border-radius:8px; border:1px solid rgba(255,107,0,.5); letter-spacing:2px; text-shadow:0 0 10px rgba(255,107,0,.4);">#${state.rideCode || 'ZIPPY'}</span>
+            <button id="copyCodeBtn" onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}').then(function(){var b=document.getElementById('copyCodeBtn');b.innerHTML='✅';b.style.background='rgba(48,209,88,.2)';b.style.borderColor='rgba(48,209,88,.5)';b.style.color='#30D158';setTimeout(function(){b.innerHTML='📋';b.style.background='rgba(255,107,0,.15)';b.style.borderColor='rgba(255,107,0,.3)';b.style.color='#FF6B00';},2000);})})()" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); color:#FF6B00; font-size:13px; padding:4px 8px; border-radius:8px; cursor:pointer; transition:all .2s; flex-shrink:0;" title="Copiar código">📋</button>
           </div>
         </div>
 
