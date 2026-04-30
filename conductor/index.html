@@ -18,11 +18,17 @@
 
 <body>
 
-    <div class="header" style="justify-content: space-between;">
+    <div class="header" style="justify-content: space-between; gap: 8px;">
         <div class="title">Panel Conductor</div>
-        <button id="profileBtn" class="btn"
-            style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤
-            Mi Perfil</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button id="notifBtn" onclick="activarNotificaciones()"
+                style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:11px; padding:6px 10px; border:1px solid rgba(255,107,0,.3); border-radius:8px; cursor:pointer; display:none;">
+                🔔 Activar Avisos
+            </button>
+            <button id="profileBtn" class="btn"
+                style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤
+                Mi Perfil</button>
+        </div>
     </div>
 
     <!-- Auth Modal -->
@@ -401,7 +407,25 @@
           },
           allowLocalhostAsSecureOrigin: true,
         });
+
+        // Mostrar botón si no tiene permiso aún
+        const notifBtn = document.getElementById('notifBtn');
+        if (notifBtn) {
+          if (Notification.permission !== 'granted') {
+            notifBtn.style.display = 'inline-block';
+          }
+        }
       });
+
+      window.activarNotificaciones = function() {
+        window.OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.Notifications.requestPermission();
+          const notifBtn = document.getElementById('notifBtn');
+          if (Notification.permission === 'granted') {
+            if (notifBtn) notifBtn.style.display = 'none';
+          }
+        });
+      };
     </script>
 
     <!-- PWA Install Prompt -->
