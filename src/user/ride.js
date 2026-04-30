@@ -314,7 +314,7 @@ export function listenForDriver(rideId, state, map) {
         updateETA(lat, lng, state);
       }
     }
-  }, 5000);
+  }, 3000);
 }
 
 /**
@@ -516,7 +516,7 @@ function showSearchingRecovery(state) {
         else if (data.estado === 'en_progreso') showTripStarted(state);
         else if (data.estado === 'finalizado') showRatingScreen(state);
       }
-    }, 5000);
+    }, 3000);
   }
 
   // Show notification

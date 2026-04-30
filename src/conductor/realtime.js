@@ -104,86 +104,90 @@ export async function loadViajes() {
  * Set up real-time channel for new and updated rides.
  */
 export function setupRealtimeChannel() {
-  supabase
-    .channel('viajes-nuevos')
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'viajes' },
-      (payload) => {
-        if (payload.new.estado === 'buscando') {
-          activeViajes.unshift(payload.new);
-          renderViajes(activeViajes, getHandlers());
+  setupRealtimeWithReconnect();
+  // Polling de respaldo cada 4 segundos
+  setInterval(() => loadViajes(), 4000);
+}
 
-          // Visual + audio alert
-          showNewRideBanner();
-          playAlert();
+// Reconexión automática del canal en tiempo real
+function setupRealtimeWithReconnect() {
+  let channel = null;
 
-          // Notificación del Sistema (Background / locked screen) usando Service Worker (más fiable)
-          if (document.visibilityState === 'hidden' && Notification.permission === "granted") {
-            navigator.serviceWorker.ready.then(registration => {
-              registration.showNotification("🚕 ¡Nueva Solicitud ZIPPY!", {
-                body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-192x192.png', // Ícono pequeño para la barra de estado
-                vibrate: [500, 110, 500, 110, 500, 110, 500], // Patrón tipo alarma (más agresivo)
-                tag: 'nuevo-viaje',
-                renotify: true, // Volver a vibrar y sonar si llega otro viaje
-                data: { url: '/' } // Datos para el clic
+  function connect() {
+    if (channel) supabase.removeChannel(channel);
+
+    channel = supabase
+      .channel('viajes-nuevos')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'viajes' },
+        (payload) => {
+          if (payload.new.estado === 'buscando') {
+            activeViajes.unshift(payload.new);
+            renderViajes(activeViajes, getHandlers());
+            showNewRideBanner();
+            playAlert();
+            if (document.visibilityState === 'hidden' && Notification.permission === 'granted') {
+              navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification('🚕 ¡Nueva Solicitud ZIPPY!', {
+                  body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
+                  icon: '/icons/icon-192x192.png',
+                  badge: '/icons/icon-192x192.png',
+                  vibrate: [500, 110, 500, 110, 500, 110, 500],
+                  tag: 'nuevo-viaje',
+                  renotify: true,
+                  data: { url: '/' }
+                });
               });
-            });
+            }
           }
         }
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'viajes' },
-      (payload) => {
-        const index = activeViajes.findIndex((v) => v.id === payload.new.id);
-        const validStates = ['buscando', 'aceptado', 'en_progreso'];
-
-        // Notificar si el cliente canceló un viaje que teníamos activo
-        if (payload.new.estado === 'cancelado' && index !== -1) {
-          showNotification('¡El cliente canceló el servicio!', 'error');
-        }
-
-        // Notificar si recibimos una calificación
-        if (payload.new.calificacion && payload.new.calificacion > 0) {
-          const profile = getCurrentProfile();
-          const currentDriver = profile ? profile.id : 'Un Conductor';
-          if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
-            showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
-            misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'viajes' },
+        (payload) => {
+          const index = activeViajes.findIndex((v) => v.id === payload.new.id);
+          const validStates = ['buscando', 'aceptado', 'en_progreso'];
+          if (payload.new.estado === 'cancelado' && index !== -1) {
+            showNotification('¡El cliente canceló el servicio!', 'error');
           }
-        }
-
-        if (validStates.includes(payload.new.estado)) {
-          let needsRender = false;
-          if (index !== -1) {
-            const oldTrip = activeViajes[index];
-            // Renderizar SOLO si cambió de estado (ej: de buscando a aceptado)
-            if (oldTrip.estado !== payload.new.estado || oldTrip.calificacion !== payload.new.calificacion) {
+          if (payload.new.calificacion && payload.new.calificacion > 0) {
+            const profile = getCurrentProfile();
+            const currentDriver = profile ? profile.id : null;
+            if (payload.new.conductor_id === currentDriver || misViajesFinalizados.includes(payload.new.id)) {
+              showNotification(`¡Recibiste ${payload.new.calificacion} estrellas!`, 'success');
+              misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
+            }
+          }
+          if (validStates.includes(payload.new.estado)) {
+            let needsRender = false;
+            if (index !== -1) {
+              const oldTrip = activeViajes[index];
+              if (oldTrip.estado !== payload.new.estado || oldTrip.calificacion !== payload.new.calificacion) needsRender = true;
+              activeViajes[index] = payload.new;
+            } else {
+              activeViajes.unshift(payload.new);
               needsRender = true;
             }
-            activeViajes[index] = payload.new;
+            if (needsRender) renderViajes(activeViajes, getHandlers());
           } else {
-            activeViajes.unshift(payload.new);
-            needsRender = true;
-          }
-          if (needsRender) renderViajes(activeViajes, getHandlers());
-        } else {
-          // Remove if finished or cancelled
-          if (index !== -1) {
-            activeViajes.splice(index, 1);
-            renderViajes(activeViajes, getHandlers());
+            if (index !== -1) {
+              activeViajes.splice(index, 1);
+              renderViajes(activeViajes, getHandlers());
+            }
           }
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe((status) => {
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn('[ZIPPY] WebSocket caído, reconectando en 3s...');
+          setTimeout(connect, 3000);
+        }
+      });
+  }
 
-  // Polling de respaldo cada 10 segundos por si el WebSocket cae
-  setInterval(() => loadViajes(), 10000);
+  connect();
 }
 
 /**
