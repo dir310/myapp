@@ -226,7 +226,10 @@
         <div id="viajesList">
             <div class="empty-state">
                 <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
-                Cargando radar...
+                <p style="margin-bottom: 20px;">Cargando radar...</p>
+                <button onclick="showMemorama()" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin: 0 auto;">
+                    🎮 Jugar Memorama ZIPPY
+                </button>
             </div>
         </div>
     </div> <!-- End mainAppContent -->
@@ -371,6 +374,31 @@
                 style="width:100%; margin-top:20px; font-weight:900; letter-spacing:1px; height:50px; font-size:15px;">
                 HE LEÍDO Y ACEPTO EL PROTOCOLO
             </button>
+        </div>
+    </div>
+
+    <!-- Memorama Overlay (Juego para el conductor) -->
+    <div id="memoramaOverlay" class="modal-overlay" style="display: none; z-index: 10001; padding:20px;">
+        <div class="auth-container" style="text-align: center; padding: 20px; position:relative; background:#1c1c1e; max-width: 350px;">
+            <button onclick="closeMemorama()" style="position:absolute; top:10px; right:10px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer;">✕</button>
+            
+            <h2 style="color:#FF6B00; margin-bottom:5px; font-size:20px;">Memorama ZIPPY</h2>
+            <p style="color:rgba(255,255,255,.6); font-size:12px; margin-bottom:15px;">¡Encuentra los pares mientras esperas!</p>
+            
+            <div class="memo-stats">
+                <span>Movimientos: <span id="memoMoves">0</span></span>
+                <span>Tiempo: <span id="memoTime">00:00</span></span>
+            </div>
+
+            <div id="memoGrid" class="memo-grid">
+                <!-- Cartas se generan por JS -->
+            </div>
+
+            <div id="memoWinScreen" style="display:none; margin-top:20px; animation: slideIn 0.3s ease;">
+                <h3 style="color:#30d158; margin-bottom:5px;">¡Excelente! 🎉</h3>
+                <p style="font-size:13px; color:white;">Completado en <span id="memoFinalMoves">0</span> movimientos y <span id="memoFinalTime">00:00</span>.</p>
+                <button onclick="initMemorama()" style="margin-top:15px; background:#FF6B00; border:none; color:white; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer; width:100%;">Jugar de nuevo</button>
+            </div>
         </div>
     </div>
 

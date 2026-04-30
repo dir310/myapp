@@ -6,6 +6,7 @@ import '../styles/conductor.css';
 
 import { toggleRadar, playAlert } from './ui.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
+import './game.js';
 
 // ── Event Listeners ──
 document.getElementById('radarBtn').addEventListener('click', toggleRadar);
