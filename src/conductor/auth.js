@@ -175,8 +175,6 @@ function proceedToApp() {
     window.OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.login(currentProfile.id);
       OneSignal.User.addTag("rol", "conductor");
-      // Pedir permisos de notificación de una vez si no los tiene
-      await OneSignal.Slidedown.promptPush();
     });
   }
 
