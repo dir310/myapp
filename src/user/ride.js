@@ -12,7 +12,38 @@ import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
-let driverMarker = null; // Guardará el ícono en vivo de la moto
+const OS_APP_ID = 'd1912f76-c166-43c4-b85b-fc461630445d';
+const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmceludfjpcsqwteubmh4cnai3yjq2mbqjjwhjxnusnsltbftkkf4dbbj22fipinxd63dhzd6yjt62spwky';
+
+async function sendPushToDrivers(tarifa, distancia) {
+  try {
+    await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Key ${OS_API_KEY}`
+      },
+      body: JSON.stringify({
+        app_id: OS_APP_ID,
+        included_segments: ['Total Subscriptions'],
+        headings: { en: '🚕 ¡Nueva Solicitud ZIPPY!', es: '🚕 ¡Nueva Solicitud ZIPPY!' },
+        contents: {
+          en: `Ganancia: $${tarifa.toLocaleString('es-CO')} | ${distancia}`,
+          es: `Ganancia: $${tarifa.toLocaleString('es-CO')} | ${distancia}`
+        },
+        url: 'https://appzippy.com/conductor/',
+        chrome_web_icon: 'https://appzippy.com/icons/icon-192x192.png',
+        priority: 10,
+        ttl: 120
+      })
+    });
+    console.log('[ZIPPY] Push enviado a conductores');
+  } catch (e) {
+    console.log('[ZIPPY] Push silenciado:', e);
+  }
+}
+
+let driverMarker = null;
 let rideChannel = null; // Referencia al canal de Supabase
 
 function playNotificationSound() {
@@ -107,6 +138,9 @@ export async function acceptRide(state, map) {
     state.currentRideId = data[0].id;
     state.rideCode = data[0].codigo_viaje;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
+
+    // Notificar conductores via OneSignal (directo desde el navegador del pasajero)
+    sendPushToDrivers(price, distText);
 
     // Show searching UI with native CSS Radar
     document.getElementById('priceSection').innerHTML = `
