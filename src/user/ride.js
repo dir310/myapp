@@ -419,9 +419,13 @@ async function showDriverAssigned(driverId, state) {
   const conductorWindowHTML = `
     <div class="zippy-window">
       <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
-        <!-- Código de Viaje (Esquina superior derecha) -->
-        <div style="position:absolute; top:12px; right:15px; background:rgba(255,107,0,.15); color:#FF6B00; font-size:9px; font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,107,0,.3); text-transform:uppercase; letter-spacing:0.5px;">
-            #${state.rideCode || 'ZIPPY'}
+        <!-- Código de Viaje (prominente con botón copiar) -->
+        <div style="position:absolute; top:10px; right:12px; text-align:right;">
+          <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Código de Viaje</span>
+          <div style="display:flex; align-items:center; gap:5px; justify-content:flex-end;">
+            <span id="rideCodeDisplay" style="background:rgba(255,107,0,.2); color:#FF6B00; font-size:13px; font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,107,0,.4); letter-spacing:1px;">#${state.rideCode || 'ZIPPY'}</span>
+            <button onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}');var b=document.getElementById('copyCodeBtn');b.textContent='✅';setTimeout(function(){b.textContent='📋';},1500);})()" id="copyCodeBtn" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); color:#FF6B00; font-size:12px; padding:3px 7px; border-radius:6px; cursor:pointer;">📋</button>
+          </div>
         </div>
 
         <div style="margin-bottom:8px;">
