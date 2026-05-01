@@ -57,5 +57,48 @@
 </div>
 
 <script type="module" src="/src/admin/conductores.js"></script>
+
+<!-- SECCIÓN DE PAGOS Y LIQUIDACIONES -->
+<div style="text-align:center; margin: 50px 0 20px 0; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 30px;">
+    <h1 style="margin:0; font-size:1.5rem; color:#fff;">💰 Liquidación de Conductores</h1>
+    <p style="color: rgba(255,255,255,.6); margin-top: 10px; font-size: 14px;">Cuadre de caja (90% Conductor / 10% App)</p>
+</div>
+
+<!-- Panel de Resumen Global -->
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 20px;" id="globalMetrics">
+    <div style="background: rgba(255,255,255,.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,.1); flex: 1;">
+        <div style="font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Viajes Pendientes</div>
+        <div style="font-size: 24px; font-weight: 900;" id="totalTrips">-</div>
+    </div>
+    <div style="background: rgba(255,255,255,.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,.1); flex: 1;">
+        <div style="font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recaudado Wompi</div>
+        <div style="font-size: 24px; font-weight: 900; color: #30D158;" id="totalWompi">-</div>
+    </div>
+    <div style="background: rgba(255,255,255,.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,.1); flex: 1;">
+        <div style="font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recaudado Efectivo</div>
+        <div style="font-size: 24px; font-weight: 900; color: #FFB347;" id="totalCash">-</div>
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Conductor</th>
+                <th>Viajes (No liquidados)</th>
+                <th>Cobrado Efectivo</th>
+                <th>Cobrado Wompi</th>
+                <th>Comisión App</th>
+                <th>Saldo Final</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="pagosList">
+            <tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div><br><br>Calculando finanzas...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="module" src="/src/admin/pagos.js"></script>
 </body>
 </html>
