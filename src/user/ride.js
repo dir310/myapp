@@ -382,6 +382,7 @@ async function showDriverAssigned(driverId, state) {
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
   const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single();
   const tarifa = viajeInfo?.tarifa || 0;
+  const tarifaWompi = Math.round((tarifa * 1.03) + 800); // 3% + 800 COP
   const isPaid = viajeInfo?.pago_wompi === true;
 
   // Fetch rating promedio
@@ -493,8 +494,9 @@ async function showDriverAssigned(driverId, state) {
         ${isPaid ? 
           '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' : 
           `<button id="wompiPayBtn" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
-            💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
-          </button>`
+            💳 Pagar con Wompi ($${tarifaWompi.toLocaleString('es-CO')})
+          </button>
+          <div style="font-size:10px; color:rgba(255,255,255,.4); text-align:center; margin-top:5px;">Incluye tarifa bancaria</div>`
         }
       </div>
 
@@ -515,7 +517,7 @@ async function showDriverAssigned(driverId, state) {
   const wompiBtn = document.getElementById('wompiPayBtn');
   if (wompiBtn) {
     wompiBtn.addEventListener('click', () => {
-      initWompiCheckout(state.currentRideId, tarifa, viajeInfo?.codigo_viaje || 'VIAJE');
+      initWompiCheckout(state.currentRideId, tarifaWompi, viajeInfo?.codigo_viaje || 'VIAJE');
     });
   }
 
@@ -551,6 +553,7 @@ function showTripStarted(state) {
   supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single().then(({data}) => {
     const isPaid = data?.pago_wompi === true;
     const tarifa = data?.tarifa || 0;
+    const tarifaWompi = Math.round((tarifa * 1.03) + 800);
 
     document.getElementById('priceSection').innerHTML = `
       <div style="text-align:center; padding: 15px 0;">
@@ -565,8 +568,9 @@ function showTripStarted(state) {
           ${isPaid ? 
             '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' : 
             `<button id="wompiPayBtnTrip" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
-              💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
-            </button>`
+              💳 Pagar con Wompi ($${tarifaWompi.toLocaleString('es-CO')})
+            </button>
+            <div style="font-size:10px; color:rgba(255,255,255,.4); text-align:center; margin-top:5px;">Incluye tarifa bancaria</div>`
           }
         </div>
       </div>
@@ -575,7 +579,7 @@ function showTripStarted(state) {
     const wompiBtnTrip = document.getElementById('wompiPayBtnTrip');
     if (wompiBtnTrip) {
       wompiBtnTrip.addEventListener('click', () => {
-        initWompiCheckout(state.currentRideId, tarifa, data?.codigo_viaje || 'VIAJE');
+        initWompiCheckout(state.currentRideId, tarifaWompi, data?.codigo_viaje || 'VIAJE');
       });
     }
   });
