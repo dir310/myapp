@@ -143,6 +143,9 @@ export function renderViajes(viajes, handlers) {
       <div class="empty-state">
         <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
         Buscando pasajeros<br>cerca de La Calera...
+        <button onclick="openSemaforo()" style="margin-top:20px; background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin:20px auto 0;">
+          🚦 Jugar Semáforo ZIPPY
+        </button>
       </div>`;
     if (lastRenderedHTML !== emptyHTML) {
       container.innerHTML = emptyHTML;
