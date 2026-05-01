@@ -593,7 +593,7 @@ function initWompiCheckout(viajeId, tarifa, rideCode) {
   var checkout = new WidgetCheckout({
     currency: 'COP',
     amountInCents: tarifa * 100, // Wompi expects cents
-    reference: \`ZIPPY_\${rideCode}_\${Date.now()}\`,
+    reference: `ZIPPY_${rideCode}_${Date.now()}`,
     publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4',
     redirectUrl: '' // No redirect, stays in modal
   });
