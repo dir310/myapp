@@ -378,8 +378,11 @@ async function showDriverAssigned(driverId, state) {
     </div>
   `;
 
-  // Fetch datos reales a base de datos
+  // Fetch datos reales a base de datos (incluyendo datos de pago)
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
+  const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single();
+  const tarifa = viajeInfo?.tarifa || 0;
+  const isPaid = viajeInfo?.pago_wompi === true;
 
   // Fetch rating promedio
   const { data: ratingData } = await supabase
@@ -486,6 +489,15 @@ async function showDriverAssigned(driverId, state) {
         </button>
       </div>
 
+      <div id="wompiContainer" style="margin-bottom: 15px;">
+        ${isPaid ? 
+          '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' : 
+          `<button id="wompiPayBtn" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+            💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
+          </button>`
+        }
+      </div>
+
       <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
@@ -498,6 +510,13 @@ async function showDriverAssigned(driverId, state) {
     openGameBtn.onclick = () => {
       document.getElementById('zippyJumpModal').style.display = 'flex';
     };
+  }
+
+  const wompiBtn = document.getElementById('wompiPayBtn');
+  if (wompiBtn) {
+    wompiBtn.addEventListener('click', () => {
+      initWompiCheckout(state.currentRideId, tarifa, viajeInfo?.codigo_viaje || 'VIAJE');
+    });
   }
 
   // Control del Carrusel (Slide Left)
@@ -527,17 +546,78 @@ function showTripStarted(state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
-  document.getElementById('priceSection').innerHTML = `
-    <div style="text-align:center; padding: 15px 0;">
-      <div style="font-size:40px; margin-bottom: 12px;">✨</div>
-      <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
-      <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
-      <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
-        <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
-        <div style="margin-top:5px; font-size:11px; opacity:0.6; font-weight:900; color:#30D158;">SERVICIO #${state.rideCode || '-'}</div>
+  
+  // Fetch payment status
+  supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single().then(({data}) => {
+    const isPaid = data?.pago_wompi === true;
+    const tarifa = data?.tarifa || 0;
+
+    document.getElementById('priceSection').innerHTML = `
+      <div style="text-align:center; padding: 15px 0;">
+        <div style="font-size:40px; margin-bottom: 12px;">✨</div>
+        <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
+        <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
+        <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
+          <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
+          <div style="margin-top:5px; font-size:11px; opacity:0.6; font-weight:900; color:#30D158;">SERVICIO #${state.rideCode || '-'}</div>
+        </div>
+        <div id="wompiContainerTrip" style="margin-bottom: 15px;">
+          ${isPaid ? 
+            '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' : 
+            `<button id="wompiPayBtnTrip" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+              💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
+            </button>`
+          }
+        </div>
       </div>
-    </div>
-  `;
+    `;
+
+    const wompiBtnTrip = document.getElementById('wompiPayBtnTrip');
+    if (wompiBtnTrip) {
+      wompiBtnTrip.addEventListener('click', () => {
+        initWompiCheckout(state.currentRideId, tarifa, data?.codigo_viaje || 'VIAJE');
+      });
+    }
+  });
+}
+
+/**
+ * Handle Wompi Checkout Widget opening and success callbacks.
+ */
+function initWompiCheckout(viajeId, tarifa, rideCode) {
+  if (typeof WidgetCheckout !== 'function') {
+    zippyAlert('El sistema de pagos no ha cargado aún. Intenta de nuevo.', '⚠️');
+    return;
+  }
+
+  var checkout = new WidgetCheckout({
+    currency: 'COP',
+    amountInCents: tarifa * 100, // Wompi expects cents
+    reference: \`ZIPPY_\${rideCode}_\${Date.now()}\`,
+    publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4',
+    redirectUrl: '' // No redirect, stays in modal
+  });
+
+  checkout.open(function (result) {
+    var transaction = result.transaction;
+    if(transaction.status === 'APPROVED') {
+      // Actualizar en base de datos
+      supabase.from('viajes').update({ pago_wompi: true }).eq('id', viajeId).then(({error}) => {
+        if(!error) {
+           zippyAlert('¡Tu viaje ha sido pagado exitosamente!', '✅');
+           // Ocultar botón y mostrar badge de pagado
+           const btns = [document.getElementById('wompiContainer'), document.getElementById('wompiContainerTrip')];
+           btns.forEach(c => {
+             if(c) c.innerHTML = '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>';
+           });
+        } else {
+           zippyAlert('Pago aprobado, pero hubo un error al sincronizar. Muestra tu comprobante al conductor.', '⚠️');
+        }
+      });
+    } else {
+      zippyAlert('El pago no pudo ser procesado o fue cancelado. (' + transaction.status + ')', '❌');
+    }
+  });
 }
 
 /**
