@@ -422,64 +422,40 @@ body {
     transform: translateX(5px);
 }
 
-/* ── Memorama Game ── */
-.memo-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-top: 15px;
-    perspective: 1000px;
-}
-
-.memo-card {
-    aspect-ratio: 1;
-    border-radius: 12px;
-    cursor: pointer;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.4s;
-}
-
-.memo-card.flipped {
-    transform: rotateY(180deg);
-}
-
-.memo-card.matched {
-    transform: rotateY(180deg) scale(0.95);
-    opacity: 0.8;
-}
-
-.memo-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
+/* ── Semáforo Game ── */
+.sem-circle {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    margin: 20px auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    font-size: 28px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    font-size: 50px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.3s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.sem-circle:active { transform: scale(0.92); }
+.sem-off {
+    background: rgba(255,255,255,0.08);
+    border: 3px solid rgba(255,255,255,0.15);
+}
+.sem-red {
+    background: radial-gradient(circle, #ff3b30 40%, #a81a12);
+    border: 3px solid #ff6b60;
+    box-shadow: 0 0 30px rgba(255,59,48,0.5);
+}
+.sem-green {
+    background: radial-gradient(circle, #30d158 40%, #1a8a35);
+    border: 3px solid #5ee87a;
+    box-shadow: 0 0 30px rgba(48,209,88,0.5);
+    animation: sem-pulse 0.4s infinite alternate;
+}
+@keyframes sem-pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
 }
 
-.memo-front {
-    background: linear-gradient(135deg, #2c2c2e, #1c1c1e);
-    border: 2px solid rgba(255, 107, 0, 0.3);
-    color: #ff6b00;
-}
-
-.memo-back {
-    background: #ff6b00;
-    border: 2px solid #ff9500;
-    transform: rotateY(180deg);
-}
-
-.memo-stats {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
-    font-weight: bold;
-}
 

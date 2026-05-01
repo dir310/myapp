@@ -1,135 +1,88 @@
-// Memorama ZIPPY para el conductor
+// ── Semáforo ZIPPY — Juego de reacción ──
 
-let hasFlippedCard = false;
-let lockBoard = false;
-let firstCard, secondCard;
-let matchCount = 0;
-let moves = 0;
-let timeElapsed = 0;
-let timerInterval = null;
+let greenTime = 0;
+let waiting = false;
+let timeout = null;
+let best = parseInt(localStorage.getItem('zippy_semaforo_best') || '0');
 
-const ICONS = ['🚕', '🏍️', '📦', '🍔', '🛵', '⚡', '📍', '💰']; // 8 pares = 16 cartas
+const $ = (id) => document.getElementById(id);
 
-export function initMemorama() {
-    const grid = document.getElementById('memoGrid');
-    if (!grid) return;
-    
-    // Reset state
-    grid.innerHTML = '';
-    hasFlippedCard = false;
-    lockBoard = false;
-    firstCard = null;
-    secondCard = null;
-    matchCount = 0;
-    moves = 0;
-    timeElapsed = 0;
-    
-    document.getElementById('memoMoves').textContent = moves;
-    document.getElementById('memoTime').textContent = '00:00';
-    document.getElementById('memoWinScreen').style.display = 'none';
-    
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timeElapsed++;
-        const m = String(Math.floor(timeElapsed / 60)).padStart(2, '0');
-        const s = String(timeElapsed % 60).padStart(2, '0');
-        document.getElementById('memoTime').textContent = `${m}:${s}`;
-    }, 1000);
-
-    // Create cards
-    const deck = [...ICONS, ...ICONS].sort(() => 0.5 - Math.random());
-    
-    deck.forEach(icon => {
-        const card = document.createElement('div');
-        card.classList.add('memo-card');
-        card.dataset.icon = icon;
-        
-        card.innerHTML = `
-            <div class="memo-face memo-front">?</div>
-            <div class="memo-face memo-back">${icon}</div>
-        `;
-        
-        card.addEventListener('click', flipCard);
-        grid.appendChild(card);
-    });
+function openSemaforo() {
+  $('semaforoOverlay').style.display = 'flex';
+  $('semBest').textContent = best || '--';
+  resetSemaforo();
 }
 
-function flipCard() {
-    if (lockBoard) return;
-    if (this === firstCard) return;
+function closeSemaforo() {
+  $('semaforoOverlay').style.display = 'none';
+  clearTimeout(timeout);
+  waiting = false;
+}
 
-    this.classList.add('flipped');
+function resetSemaforo() {
+  clearTimeout(timeout);
+  waiting = false;
+  const c = $('semCircle');
+  c.className = 'sem-circle sem-off';
+  c.textContent = '🏍️';
+  $('semMsg').textContent = 'Toca el círculo para empezar';
+  $('semResult').textContent = '';
+}
 
-    if (!hasFlippedCard) {
-        hasFlippedCard = true;
-        firstCard = this;
-        return;
+function handleCircleTap() {
+  const c = $('semCircle');
+  const state = c.dataset.state || 'idle';
+
+  if (state === 'idle') {
+    // Start — show red, wait random time
+    c.className = 'sem-circle sem-red';
+    c.textContent = '🔴';
+    c.dataset.state = 'waiting';
+    $('semMsg').textContent = 'Espera el verde...';
+    $('semResult').textContent = '';
+    const delay = 1500 + Math.random() * 3000; // 1.5s to 4.5s
+    timeout = setTimeout(() => {
+      c.className = 'sem-circle sem-green';
+      c.textContent = '🟢';
+      c.dataset.state = 'green';
+      greenTime = Date.now();
+      $('semMsg').textContent = '¡¡TOCA AHORA!!';
+    }, delay);
+
+  } else if (state === 'waiting') {
+    // Too early!
+    clearTimeout(timeout);
+    c.className = 'sem-circle sem-red';
+    c.textContent = '😬';
+    $('semMsg').textContent = '¡Muy pronto! Espera el verde';
+    $('semResult').textContent = '';
+    c.dataset.state = 'idle';
+
+  } else if (state === 'green') {
+    // Got it — measure reaction
+    const reaction = Date.now() - greenTime;
+    c.className = 'sem-circle sem-off';
+    c.textContent = '🏍️';
+    c.dataset.state = 'idle';
+    $('semMsg').textContent = 'Toca para intentar de nuevo';
+
+    let label = '';
+    if (reaction < 250) label = '⚡ Increíble';
+    else if (reaction < 400) label = '🔥 Muy rápido';
+    else if (reaction < 600) label = '👍 Bien';
+    else label = '🐢 Puedes mejorar';
+
+    $('semResult').innerHTML = `<span style="font-size:28px;font-weight:900;color:#FF6B00;">${reaction}ms</span><br><span style="font-size:13px;">${label}</span>`;
+
+    if (best === 0 || reaction < best) {
+      best = reaction;
+      localStorage.setItem('zippy_semaforo_best', String(best));
+      $('semBest').textContent = best;
+      $('semResult').innerHTML += '<br><span style="color:#30d158;font-size:12px;font-weight:bold;">🏆 ¡Nuevo récord!</span>';
     }
-
-    secondCard = this;
-    moves++;
-    document.getElementById('memoMoves').textContent = moves;
-    
-    checkForMatch();
+  }
 }
 
-function checkForMatch() {
-    let isMatch = firstCard.dataset.icon === secondCard.dataset.icon;
-
-    if (isMatch) {
-        disableCards();
-    } else {
-        unflipCards();
-    }
-}
-
-function disableCards() {
-    firstCard.removeEventListener('click', flipCard);
-    secondCard.removeEventListener('click', flipCard);
-    
-    firstCard.classList.add('matched');
-    secondCard.classList.add('matched');
-
-    resetBoard();
-    
-    matchCount++;
-    if (matchCount === ICONS.length) {
-        clearInterval(timerInterval);
-        setTimeout(() => {
-            document.getElementById('memoWinScreen').style.display = 'block';
-            document.getElementById('memoFinalMoves').textContent = moves;
-            const m = String(Math.floor(timeElapsed / 60)).padStart(2, '0');
-            const s = String(timeElapsed % 60).padStart(2, '0');
-            document.getElementById('memoFinalTime').textContent = `${m}:${s}`;
-        }, 500);
-    }
-}
-
-function unflipCards() {
-    lockBoard = true;
-
-    setTimeout(() => {
-        firstCard.classList.remove('flipped');
-        secondCard.classList.remove('flipped');
-        resetBoard();
-    }, 1000);
-}
-
-function resetBoard() {
-    [hasFlippedCard, lockBoard] = [false, false];
-    [firstCard, secondCard] = [null, null];
-}
-
-export function showMemorama() {
-    document.getElementById('memoramaOverlay').style.display = 'flex';
-    initMemorama();
-}
-
-export function closeMemorama() {
-    document.getElementById('memoramaOverlay').style.display = 'none';
-    clearInterval(timerInterval);
-}
-
-window.showMemorama = showMemorama;
-window.closeMemorama = closeMemorama;
-window.initMemorama = initMemorama;
+window.openSemaforo = openSemaforo;
+window.closeSemaforo = closeSemaforo;
+window.handleCircleTap = handleCircleTap;
