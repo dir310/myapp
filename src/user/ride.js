@@ -593,17 +593,30 @@ function showTripStarted(state) {
 /**
  * Handle Wompi Checkout Widget opening and success callbacks.
  */
-function initWompiCheckout(viajeId, tarifa, rideCode) {
+async function initWompiCheckout(viajeId, tarifa, rideCode) {
   if (typeof WidgetCheckout !== 'function') {
     zippyAlert('El sistema de pagos no ha cargado aún. Intenta de nuevo.', '⚠️');
     return;
   }
 
+  const currency = 'COP';
+  const amountInCents = tarifa * 100; // Wompi expects cents
+  const reference = `ZIPPY_${rideCode}_${Date.now()}`;
+  const secret = 'test_integrity_ESw0LTbced5TdxOxtkBlvPzfaDBFtX5T';
+  
+  // Generar firma de integridad requerida por Wompi
+  const message = reference + amountInCents + currency + secret;
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
   var checkout = new WidgetCheckout({
-    currency: 'COP',
-    amountInCents: tarifa * 100, // Wompi expects cents
-    reference: `ZIPPY_${rideCode}_${Date.now()}`,
-    publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4'
+    currency: currency,
+    amountInCents: amountInCents,
+    reference: reference,
+    publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4',
+    signature: { integrity: hashHex }
   });
 
   checkout.open(function (result) {
