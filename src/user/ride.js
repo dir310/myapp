@@ -419,25 +419,28 @@ async function showDriverAssigned(driverId, state) {
   ];
 
   // Generar HTML de la Ficha del Conductor (Ventana Base)
-  // Nota: Mantenemos el estilo de bloques que el usuario mostró en su imagen
+  // Extract the Code Badge into a standalone clean container at the top
+  const rideCodeBadgeHTML = `
+    <div style="display:flex; justify-content:center; margin-bottom:12px;">
+      <div style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:12px; padding:8px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 15px rgba(255,107,0,0.15);">
+        <div style="text-align:right;">
+          <span style="color:rgba(255,255,255,.5); font-size:9px; text-transform:uppercase; font-weight:800; display:block;">Código del Viaje</span>
+          <span style="color:#FF6B00; font-size:18px; font-weight:900; letter-spacing:2px; text-shadow:0 0 10px rgba(255,107,0,.4);">#${state.rideCode || 'ZIPPY'}</span>
+        </div>
+        <button id="copyCodeBtn" onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}').then(function(){var b=document.getElementById('copyCodeBtn');b.innerHTML='✅';b.style.background='rgba(48,209,88,.2)';b.style.borderColor='rgba(48,209,88,.5)';b.style.color='#30D158';setTimeout(function(){b.innerHTML='📋';b.style.background='rgba(255,255,255,.1)';b.style.borderColor='rgba(255,255,255,.2)';b.style.color='#fff';},2000);})})()" style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:16px; padding:8px; border-radius:8px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center;" title="Copiar código">📋</button>
+      </div>
+    </div>
+  `;
+
   const conductorWindowHTML = `
     <div class="zippy-window">
-      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
-        <!-- Código de Viaje (Diseño Premium) -->
-        <div style="position:absolute; top:8px; right:10px; text-align:right;">
-          <span style="color:rgba(255,255,255,.35); font-size:7px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px;">Código de Viaje</span>
-          <div style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
-            <span style="background:linear-gradient(135deg,rgba(255,107,0,.25),rgba(255,107,0,.1)); color:#FF6B00; font-size:14px; font-weight:900; padding:4px 10px; border-radius:8px; border:1px solid rgba(255,107,0,.5); letter-spacing:2px; text-shadow:0 0 10px rgba(255,107,0,.4);">#${state.rideCode || 'ZIPPY'}</span>
-            <button id="copyCodeBtn" onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}').then(function(){var b=document.getElementById('copyCodeBtn');b.innerHTML='✅';b.style.background='rgba(48,209,88,.2)';b.style.borderColor='rgba(48,209,88,.5)';b.style.color='#30D158';setTimeout(function(){b.innerHTML='📋';b.style.background='rgba(255,107,0,.15)';b.style.borderColor='rgba(255,107,0,.3)';b.style.color='#FF6B00';},2000);})})()" style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); color:#FF6B00; font-size:13px; padding:4px 8px; border-radius:8px; cursor:pointer; transition:all .2s; flex-shrink:0;" title="Copiar código">📋</button>
-          </div>
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:auto; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
+        <div style="margin-bottom:12px;">
+          <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor Asignado</span>
+          <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
+          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
         </div>
-
-        <div style="margin-bottom:8px;">
-          <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
-          <span style="color:#fff; font-size:18px; font-weight:800; display:block;">${driverName}</span>
-          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block;">${driverRating}</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 95%; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 100%;">
           <!-- Bloque Vehículo -->
           <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:8px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
              <span style="color:rgba(255,107,0,.6); font-size:8px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:1px;">Moto</span>
@@ -476,6 +479,8 @@ async function showDriverAssigned(driverId, state) {
     <div style="text-align:center; padding: 5px 0;">
       <h3 style="color:#30D158; margin-bottom:8px; font-weight:800; font-size:16px;">¡Conductor en camino!</h3>
       
+      ${rideCodeBadgeHTML}
+
       <div class="zippy-viewport">
         <div class="zippy-track" id="zippyTrack">
           ${trackHTML}
@@ -484,13 +489,7 @@ async function showDriverAssigned(driverId, state) {
 
       <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 12px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px;">Calculando llegada...</p>
       
-      <div style="margin-bottom: 15px;">
-        <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
-            <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
-        </button>
-      </div>
-
-      <div id="wompiContainer" style="margin-bottom: 15px;">
+      <div id="wompiContainer" style="margin-bottom: 12px;">
         ${isPaid ? 
           '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' : 
           `<button id="wompiPayBtn" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
@@ -498,6 +497,12 @@ async function showDriverAssigned(driverId, state) {
           </button>
           <div style="font-size:10px; color:rgba(255,255,255,.4); text-align:center; margin-top:5px;">Incluye tarifa bancaria</div>`
         }
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
+            <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
+        </button>
       </div>
 
       <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
