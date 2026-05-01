@@ -516,9 +516,9 @@ async function showDriverAssigned(driverId, state) {
 
   const wompiBtn = document.getElementById('wompiPayBtn');
   if (wompiBtn) {
-    wompiBtn.addEventListener('click', () => {
+    wompiBtn.onclick = () => {
       initWompiCheckout(state.currentRideId, tarifaWompi, viajeInfo?.codigo_viaje || 'VIAJE');
-    });
+    };
   }
 
   // Control del Carrusel (Slide Left)
@@ -578,9 +578,9 @@ function showTripStarted(state) {
 
     const wompiBtnTrip = document.getElementById('wompiPayBtnTrip');
     if (wompiBtnTrip) {
-      wompiBtnTrip.addEventListener('click', () => {
+      wompiBtnTrip.onclick = () => {
         initWompiCheckout(state.currentRideId, tarifaWompi, data?.codigo_viaje || 'VIAJE');
-      });
+      };
     }
   });
 }
