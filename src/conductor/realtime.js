@@ -164,7 +164,7 @@ function setupRealtimeWithReconnect() {
             let needsRender = false;
             if (index !== -1) {
               const oldTrip = activeViajes[index];
-              if (oldTrip.estado !== payload.new.estado || oldTrip.calificacion !== payload.new.calificacion) needsRender = true;
+              if (oldTrip.estado !== payload.new.estado || oldTrip.calificacion !== payload.new.calificacion || oldTrip.pago_wompi !== payload.new.pago_wompi) needsRender = true;
               activeViajes[index] = payload.new;
             } else {
               activeViajes.unshift(payload.new);
