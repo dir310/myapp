@@ -167,7 +167,7 @@ function setAuthMode(mode) {
     if(groupEdad) groupEdad.style.display = 'none';
     if(groupFotoFrontal) groupFotoFrontal.style.display = 'none';
     if(groupFotoTrasera) groupFotoTrasera.style.display = 'none';
-    if(captchaCont) captchaCont.style.display = 'none';
+    if(captchaCont) captchaCont.style.display = 'block'; // Captcha obligatorio también en login
     if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'none'; 
   }
@@ -267,9 +267,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value.trim();
         const terms = document.getElementById('authTerms').checked;
+        const captcha = parseInt(document.getElementById('passengerCaptcha').value);
 
         if (!email || !password) return zippyAlert('Por favor llena el correo y la clave.', '📧');
         if (!terms) return zippyAlert('Debes marcar la casilla aceptando los términos y condiciones para continuar.', '🛡️');
+        if (captcha !== passengerCaptchaAnswer) {
+          zippyAlert('Suma de seguridad incorrecta. Inténtalo de nuevo.', '🧩');
+          return;
+        }
 
         if (authMode === 'login') {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -323,12 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const telefono = document.getElementById('authTelefono').value.trim();
           const cedula = document.getElementById('authCedula').value.trim();
           const edad = parseInt(document.getElementById('authEdad').value);
-          const captcha = parseInt(document.getElementById('passengerCaptcha').value);
-
-          if (captcha !== passengerCaptchaAnswer) {
-            zippyAlert('Suma de seguridad incorrecta.', '🧩');
-            return;
-          }
 
           const photoFront = document.getElementById('authFotoFrontal').files[0];
           const photoBack = document.getElementById('authFotoTrasera').files[0];
