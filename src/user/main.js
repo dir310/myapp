@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Olvidar el tour para que se muestre en cada inicio de sesión
             localStorage.removeItem('zippy_tour_completed');
 
-            await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
+            await zippyAlert(`¡Hola, ${data.nombre}! Qué bueno verte.\nEstamos listos para llevarte rápido y seguro por La Calera. ¿A dónde vamos hoy?`, '🚗✨');
             location.reload();
           } catch (err) {
             zippyAlert('Error al ingresar: ' + err.message, '❌');
