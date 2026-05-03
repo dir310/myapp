@@ -736,6 +736,27 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
 }
 
+// ── Wake Lock: Mantener pantalla encendida ──
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('🔆 Pantalla activa (Wake Lock ON)');
+      wakeLock.addEventListener('release', () => {
+        console.log('💤 Wake Lock liberado');
+      });
+    }
+  } catch (err) {
+    console.log('Wake Lock no disponible:', err.message);
+  }
+}
+requestWakeLock();
+// Reactivar al volver a la app (cambio de pestaña o multitarea)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+
 // ── Restaurar viaje activo si existe ──
 restoreActiveRide(state, map);
 
