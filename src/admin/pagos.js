@@ -53,14 +53,11 @@ async function initPagos() {
         saldos[cId].viajesCount++;
         saldos[cId].viajesIds.push(v.id);
 
+        // La tarifa ya incluye la comisión de Wompi desde el momento en que se creó el viaje.
+        // El conductor gana el 90% de la tarifa cobrada al cliente (tanto efectivo como Wompi).
         if (v.pago_wompi) {
-            // En Wompi, el recargo del banco ya está en 'tarifa', pero la ganancia base se calculaba sin recargo.
-            // Para simplificar: tomamos 'tarifa' y quitamos el recargo aproximado ($800 + 3%) o asumimos tarifa real.
-            // Como el conductor gana el 90% del viaje BASE, calculamos la base:
-            // Tarifa Cobrada = Base * 1.03 + 800 => Base = (Tarifa Cobrada - 800) / 1.03
-            const baseTarifa = Math.max(0, Math.round((v.tarifa - 800) / 1.03));
-            saldos[cId].totalWompi += baseTarifa;
-            globalWompi += v.tarifa; // Lo que entró real al banco
+            saldos[cId].totalWompi += v.tarifa;
+            globalWompi += v.tarifa;
         } else {
             saldos[cId].totalEfectivo += v.tarifa;
             globalCash += v.tarifa;
