@@ -491,12 +491,21 @@ async function showDriverAssigned(driverId, state) {
       <div id="wompiContainer" style="margin-bottom: 12px;">
     ${isPaid ?
       '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' :
-      `<button id="wompiPayBtn" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
-            💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
-          </button>
-          <button id="cashPayBtn" class="btn" style="background:rgba(255,255,255,.05); color:#fff; width:100%; border:1px solid rgba(255,255,255,.2); font-weight:700; font-size:13px; padding:10px; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px;">
-            💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
-          </button>`
+      `<style>
+        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+        @keyframes cashPulse{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
+        @keyframes btnEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        #wompiPayBtn{animation:btnEntrance .4s ease forwards, shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+        #wompiPayBtn:hover{transform:scale(1.02);filter:brightness(1.15);}
+        #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
+        #cashPayBtn:hover{transform:scale(1.02);}
+      </style>
+      <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
+        💳 Realizar Pago ($${tarifa.toLocaleString('es-CO')})
+      </button>
+      <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
+        💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
+      </button>`
     }
       </div>
 
@@ -579,9 +588,20 @@ function showTripStarted(state) {
         <div id="wompiContainerTrip" style="margin-bottom: 15px;">
           ${isPaid ?
         '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' :
-        `<button id="wompiPayBtnTrip" class="btn" style="background:#fff; color:#000; width:100%; border:1px solid #ccc; font-weight:800; font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
-              💳 Pagar con Wompi ($${tarifa.toLocaleString('es-CO')})
-            </button>`
+        `<style>
+          @keyframes shimmerTrip{0%{background-position:-200% center}100%{background-position:200% center}}
+          @keyframes cashPulseTrip{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
+          #wompiPayBtnTrip{animation:shimmerTrip 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+          #wompiPayBtnTrip:hover{transform:scale(1.02);filter:brightness(1.15);}
+          #cashPayBtnTrip{animation:cashPulseTrip 2.5s ease infinite;}
+          #cashPayBtnTrip:hover{transform:scale(1.02);}
+        </style>
+        <button id="wompiPayBtnTrip" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .2s,filter .2s;">
+          💳 Realizar Pago ($${tarifa.toLocaleString('es-CO')})
+        </button>
+        <button id="cashPayBtnTrip" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
+          💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
+        </button>`
       }
         </div>
       </div>
