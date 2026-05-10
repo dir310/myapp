@@ -10,7 +10,7 @@ let captchaAnswerRegister = 0;
 let captchaAnswerLogin = 0;
 
 // ── Configuración de seguridad ──
-const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 horas
+const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
 const MAX_LOGIN_ATTEMPTS = 3;
 const LOCK_DURATION_MS = 60 * 1000; // 60 segundos
 const STORAGE_KEY = 'calmovil_driver_session'; // Formato: { id, timestamp }
@@ -31,6 +31,8 @@ export async function initAuth() {
     try {
       const { id, timestamp } = JSON.parse(raw);
       if (id && Date.now() - timestamp < SESSION_DURATION_MS) {
+        // Actualizar timestamp para extender la sesión (ventana deslizante)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, timestamp: Date.now() }));
         handleSession({ user: { id } });
         return;
       } else {
