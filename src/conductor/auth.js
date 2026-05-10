@@ -168,6 +168,40 @@ async function handleSession(session) {
 function proceedToApp() {
   mainAppContent.style.display = 'block';
   profileBtn.style.display = 'block';
+
+  // ── VERIFICAR VALIDACIÓN PRIMERO ──
+  // Si el conductor está pendiente, NO se activa el canal de viajes
+  const estadoValidacion = currentProfile.estado_validacion || 'pendiente';
+  const esPendiente = estadoValidacion === 'pendiente';
+
+  const warning = document.getElementById('validationWarning');
+  const radarBtn = document.getElementById('radarBtn');
+  const viajesList = document.getElementById('viajesList');
+
+  if (esPendiente) {
+    // Mostrar aviso de validación
+    if (warning) warning.style.display = 'block';
+    // Ocultar radar completamente
+    if (radarBtn) radarBtn.style.display = 'none';
+    // Reemplazar lista de viajes con mensaje de espera
+    if (viajesList) {
+      viajesList.innerHTML = `
+        <div style="text-align:center; padding:30px 20px; color:rgba(255,255,255,0.4);">
+          <div style="font-size:40px; margin-bottom:12px;">⏳</div>
+          <p style="font-size:13px; line-height:1.6; margin:0;">
+            Tu cuenta está en validación.<br>
+            Cuando sea aprobada podrás ver y aceptar viajes.
+          </p>
+        </div>`;
+    }
+    // No se llama loadViajes() ni setupRealtimeChannel() — canal bloqueado
+    return;
+  }
+
+  // ── CONDUCTOR APROBADO ── Activar todo normalmente
+  if (warning) warning.style.display = 'none';
+  if (radarBtn) radarBtn.style.display = 'flex';
+
   loadViajes();
   setupRealtimeChannel();
   initRadar();
@@ -178,20 +212,6 @@ function proceedToApp() {
       await OneSignal.login(currentProfile.id);
       OneSignal.User.addTag("rol", "conductor");
     });
-  }
-
-  // Validar el estado del conductor
-  const estadoValidacion = currentProfile.estado_validacion || 'pendiente';
-  if (estadoValidacion === 'pendiente') {
-      const warning = document.getElementById('validationWarning');
-      const radarBtn = document.getElementById('radarBtn');
-      if (warning) warning.style.display = 'block';
-      if (radarBtn) radarBtn.style.display = 'none'; // Ocultar radar, no puede trabajar
-  } else {
-      const warning = document.getElementById('validationWarning');
-      const radarBtn = document.getElementById('radarBtn');
-      if (warning) warning.style.display = 'none';
-      if (radarBtn) radarBtn.style.display = 'flex';
   }
 
   // Mostrar Protocolo de Seguridad una vez por sesión
