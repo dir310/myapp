@@ -876,12 +876,40 @@ map.on('click', (e) => {
   if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
   const { lat, lng } = e.latlng;
-  const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  showStatus('', false);
-  boundPlaceMarker(target, lat, lng, name);
+  showStatus('📍 Obteniendo dirección...', true);
 
-  // Liberar el guard después de un breve periodo para evitar doble-tap en móvil
-  setTimeout(() => { state.mapClickProcessing = false; }, 400);
+  // Intentamos convertir las coordenadas a dirección real con Nominatim
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+    .then(res => res.json())
+    .then(data => {
+      let name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      if (data && data.address) {
+        const addr = data.address;
+        const road = addr.road || addr.pedestrian || addr.footway || '';
+        const house = addr.house_number || '';
+        const neighborhood = addr.neighbourhood || addr.suburb || addr.village || '';
+        
+        if (road) {
+            name = house ? `${road} #${house}` : road;
+            if (neighborhood) name += `, ${neighborhood}`;
+        } else if (neighborhood) {
+            name = neighborhood;
+        } else if (data.display_name) {
+            // Si no hay road, usar las primeras dos partes del display_name
+            name = data.display_name.split(',').slice(0,2).join(',').trim();
+        }
+      }
+      boundPlaceMarker(target, lat, lng, name);
+    })
+    .catch(err => {
+      console.error('[ZIPPY] Error en Reverse Geocoding:', err);
+      // Fallback a coordenadas si falla la red
+      boundPlaceMarker(target, lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    })
+    .finally(() => {
+      showStatus('', false);
+      setTimeout(() => { state.mapClickProcessing = false; }, 400);
+    });
 });
 
 // Price section buttons — delegated since they're rebuilt dynamically
