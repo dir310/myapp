@@ -397,6 +397,15 @@ export function getCurrentProfile() {
   return currentProfile;
 }
 
+/**
+ * Returns true only if the driver has been approved (estado_validacion === 'aprobado').
+ * Used by realtime.js and ui.js to block rides for pending drivers.
+ */
+export function isDriverApproved() {
+  if (!currentProfile) return false;
+  return (currentProfile.estado_validacion || 'pendiente') === 'aprobado';
+}
+
 // Lógica de visualización del Perfil
 async function openProfile() {
   profileSidebar.classList.add('open');
