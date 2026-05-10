@@ -167,7 +167,7 @@ function setAuthMode(mode) {
     if(groupEdad) groupEdad.style.display = 'none';
     if(groupFotoFrontal) groupFotoFrontal.style.display = 'none';
     if(groupFotoTrasera) groupFotoTrasera.style.display = 'none';
-    if(captchaCont) captchaCont.style.display = 'none';
+    if(captchaCont) captchaCont.style.display = 'block'; // Captcha obligatorio también en login
     if(termsLabel) termsLabel.style.display = 'flex';
     if(backBtn) backBtn.style.display = 'none'; 
   }
@@ -267,9 +267,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value.trim();
         const terms = document.getElementById('authTerms').checked;
+        const captcha = parseInt(document.getElementById('passengerCaptcha').value);
 
         if (!email || !password) return zippyAlert('Por favor llena el correo y la clave.', '📧');
         if (!terms) return zippyAlert('Debes marcar la casilla aceptando los términos y condiciones para continuar.', '🛡️');
+        if (captcha !== passengerCaptchaAnswer) {
+          zippyAlert('Suma de seguridad incorrecta. Inténtalo de nuevo.', '🧩');
+          return;
+        }
 
         if (authMode === 'login') {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -310,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Olvidar el tour para que se muestre en cada inicio de sesión
             localStorage.removeItem('zippy_tour_completed');
 
-            await zippyAlert(`¡Bienvenido de nuevo, ${data.nombre}!`, '🚗');
+            await zippyAlert(`¡Hola, ${data.nombre}! Qué bueno verte.\nEstamos listos para llevarte rápido y seguro por La Calera. ¿A dónde vamos hoy?`, '🚗✨');
             location.reload();
           } catch (err) {
             zippyAlert('Error al ingresar: ' + err.message, '❌');
@@ -323,12 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const telefono = document.getElementById('authTelefono').value.trim();
           const cedula = document.getElementById('authCedula').value.trim();
           const edad = parseInt(document.getElementById('authEdad').value);
-          const captcha = parseInt(document.getElementById('passengerCaptcha').value);
-
-          if (captcha !== passengerCaptchaAnswer) {
-            zippyAlert('Suma de seguridad incorrecta.', '🧩');
-            return;
-          }
 
           const photoFront = document.getElementById('authFotoFrontal').files[0];
           const photoBack = document.getElementById('authFotoTrasera').files[0];
@@ -736,6 +735,27 @@ setupSuggestionDismiss();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
 }
+
+// ── Wake Lock: Mantener pantalla encendida ──
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('🔆 Pantalla activa (Wake Lock ON)');
+      wakeLock.addEventListener('release', () => {
+        console.log('💤 Wake Lock liberado');
+      });
+    }
+  } catch (err) {
+    console.log('Wake Lock no disponible:', err.message);
+  }
+}
+requestWakeLock();
+// Reactivar al volver a la app (cambio de pestaña o multitarea)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
 
 // ── Restaurar viaje activo si existe ──
 restoreActiveRide(state, map);

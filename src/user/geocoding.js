@@ -147,21 +147,15 @@ async function geocode(q, type, placeMarkerFn, state) {
     );
     let data = await res.json();
 
-    // 2. Sin bounded pero con Cundinamarca como contexto
+    // 2. Sin bounded pero con Bogotá/Cundinamarca como contexto para evitar resultados de otras ciudades
     if (!data.length) {
       res = await fetch(
-        `${base}?q=${encodeURIComponent(q + ' Cundinamarca Colombia')}&${common}&viewbox=${VIEWBOX}`
+        `${base}?q=${encodeURIComponent(q + ' Bogota Cundinamarca')}&${common}&viewbox=${VIEWBOX}`
       );
       data = await res.json();
     }
 
-    // 3. Búsqueda amplia en Colombia
-    if (!data.length) {
-      res = await fetch(
-        `${base}?q=${encodeURIComponent(q + ' Colombia')}&${common}`
-      );
-      data = await res.json();
-    }
+    // (Eliminada la búsqueda amplia en toda Colombia para asegurar exclusividad en la región)
 
     renderSugg(data, type, placeMarkerFn, state);
   } catch {

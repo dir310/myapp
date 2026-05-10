@@ -27,6 +27,8 @@ function showPrice(distKm, mins) {
   let price = BASE_FARE + (km * PER_KM_FARE) + (mins * PER_MIN_FARE);
   price = Math.round(price / 100) * 100;
   price = Math.max(MIN_FARE, price);
+  // Agregar comisión de Wompi al valor base
+  price = Math.round((price * 1.03) + 800);
   const el = document.getElementById('priceValue');
   if (el) el.textContent = '$' + price.toLocaleString('es-CO');
   return price;
@@ -153,16 +155,21 @@ export function checkRoute(state, map) {
   // 2. PEDIR RUTA REAL A OSRM (Directo preferido por velocidad)
   const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${state.startLatLng.lng},${state.startLatLng.lat};${state.endLatLng.lng},${state.endLatLng.lat}?overview=full&geometries=geojson`;
 
-  // Intentamos directo primero, si falla usamos proxy
+  // Intentamos directo primero, si falla usamos proxy, si falla dibujamos línea recta
   fetch(osrmUrl)
-    .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error('OSRM Direct Fail');
+      return r.json();
+    })
+    .catch(() => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(osrmUrl)}`).then(r => r.json()))
     .then(data => {
-      if (data.code !== 'Ok' || !data.routes?.length) return;
-
+      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('No routes in response');
       const route = data.routes[0];
       const curvyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
       renderRouteOnMap(curvyCoords, state, map);
     })
-    .catch(err => console.error('[ZIPPY] Error en ruteo:', err));
+    .catch(err => {
+      console.error('[ZIPPY] Error en ruteo, dibujando línea recta de respaldo:', err);
+      renderRouteOnMap([state.startLatLng, state.endLatLng], state, map);
+    });
 }

@@ -18,11 +18,17 @@
 
 <body>
 
-    <div class="header" style="justify-content: space-between;">
+    <div class="header" style="justify-content: space-between; gap: 8px;">
         <div class="title">Panel Conductor</div>
-        <button id="profileBtn" class="btn"
-            style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤
-            Mi Perfil</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button id="notifBtn" onclick="activarNotificaciones()"
+                style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:11px; padding:6px 10px; border:1px solid rgba(255,107,0,.3); border-radius:8px; cursor:pointer; display:none;">
+                🔔 Activar Avisos
+            </button>
+            <button id="profileBtn" class="btn"
+                style="background:rgba(255,107,0,.15); color:#FF6B00; font-size:12px; padding:6px 12px; border:1px solid rgba(255,107,0,.3); display:none;">👤
+                Mi Perfil</button>
+        </div>
     </div>
 
     <!-- Auth Modal -->
@@ -220,7 +226,10 @@
         <div id="viajesList">
             <div class="empty-state">
                 <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
-                Cargando radar...
+                <p style="margin-bottom: 20px;">Cargando radar...</p>
+                <button onclick="openSemaforo()" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin:0 auto;">
+                    🚦 Jugar Semáforo ZIPPY
+                </button>
             </div>
         </div>
     </div> <!-- End mainAppContent -->
@@ -242,7 +251,7 @@
             <button id="closeDriverAboutBtn"
                 style="position:absolute; top:15px; right:15px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer; padding:5px;">✕</button>
 
-            <img src="https://i.imgur.com/uyhz6CQ.jpeg" alt="ZIPPY logo"
+            <img src="https://i.imgur.com/UexR6kn.jpeg" alt="ZIPPY logo"
                 style="max-width:70px; height:auto; margin:0 auto 15px auto; display:block; border-radius:12px;" />
             <h2 style="color:#FF6B00; margin:0 0 5px 0; font-size:22px; font-weight:800; letter-spacing:0.5px;">Acerca
                 de ZIPPY</h2>
@@ -368,6 +377,21 @@
         </div>
     </div>
 
+    <!-- Semáforo ZIPPY (Juego de reacción) -->
+    <div id="semaforoOverlay" class="modal-overlay" style="display:none; z-index:10001; padding:20px;">
+        <div class="auth-container" style="text-align:center; padding:25px 20px; position:relative; background:#1c1c1e; max-width:340px;">
+            <button onclick="closeSemaforo()" style="position:absolute; top:10px; right:12px; background:none; border:none; color:rgba(255,255,255,.5); font-size:20px; cursor:pointer;">✕</button>
+
+            <h2 style="color:#FF6B00; margin:0 0 3px 0; font-size:18px;">🚦 Semáforo ZIPPY</h2>
+            <p style="color:rgba(255,255,255,.5); font-size:11px; margin:0 0 5px 0;">Mejor récord: <span id="semBest">--</span>ms</p>
+
+            <div id="semCircle" class="sem-circle sem-off" data-state="idle" onclick="handleCircleTap()">🏍️</div>
+
+            <p id="semMsg" style="color:rgba(255,255,255,.7); font-size:14px; min-height:20px;">Toca el círculo para empezar</p>
+            <div id="semResult" style="min-height:60px; margin-top:10px;"></div>
+        </div>
+    </div>
+
     <!-- Lottie Player for premium animations -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script type="module" src="../src/conductor/main.js?v=silencio-v2"></script>
@@ -401,9 +425,25 @@
           },
           allowLocalhostAsSecureOrigin: true,
         });
-        // Pedir permiso automaticamente al cargar
-        await OneSignal.Slidedown.promptPush({ force: true });
+
+        // Mostrar botón si no tiene permiso aún
+        const notifBtn = document.getElementById('notifBtn');
+        if (notifBtn) {
+          if (Notification.permission !== 'granted') {
+            notifBtn.style.display = 'inline-block';
+          }
+        }
       });
+
+      window.activarNotificaciones = function() {
+        window.OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.Notifications.requestPermission();
+          const notifBtn = document.getElementById('notifBtn');
+          if (Notification.permission === 'granted') {
+            if (notifBtn) notifBtn.style.display = 'none';
+          }
+        });
+      };
     </script>
 
     <!-- PWA Install Prompt -->

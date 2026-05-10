@@ -12,7 +12,38 @@ import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
-let driverMarker = null; // Guardará el ícono en vivo de la moto
+const OS_APP_ID = 'd1912f76-c166-43c4-b85b-fc461630445d';
+const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmcelv7voadc7rzexsngbh3qb6fmhcvmghh7zrgiwoskzcr6ginu5zlzs5pj5vogpnizv6xdiuf2uhpx77y';
+
+async function sendPushToDrivers(tarifa, distancia) {
+  try {
+    await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Key ${OS_API_KEY}`
+      },
+      body: JSON.stringify({
+        app_id: OS_APP_ID,
+        included_segments: ['Total Subscriptions'],
+        headings: { en: '🚕 ¡Nueva Solicitud ZIPPY!', es: '🚕 ¡Nueva Solicitud ZIPPY!' },
+        contents: {
+          en: `Ganancia: $${tarifa.toLocaleString('es-CO')} | ${distancia}`,
+          es: `Ganancia: $${tarifa.toLocaleString('es-CO')} | ${distancia}`
+        },
+        url: 'https://appzippy.com/conductor/',
+        chrome_web_icon: 'https://appzippy.com/icons/icon-192x192.png',
+        priority: 10,
+        ttl: 120
+      })
+    });
+    console.log('[ZIPPY] Push enviado a conductores');
+  } catch (e) {
+    console.log('[ZIPPY] Push silenciado:', e);
+  }
+}
+
+let driverMarker = null;
 let rideChannel = null; // Referencia al canal de Supabase
 
 function playNotificationSound() {
@@ -107,6 +138,9 @@ export async function acceptRide(state, map) {
     state.currentRideId = data[0].id;
     state.rideCode = data[0].codigo_viaje;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
+
+    // Notificar conductores via OneSignal (directo desde el navegador del pasajero)
+    sendPushToDrivers(price, distText);
 
     // Show searching UI with native CSS Radar
     document.getElementById('priceSection').innerHTML = `
@@ -314,7 +348,7 @@ export function listenForDriver(rideId, state, map) {
         updateETA(lat, lng, state);
       }
     }
-  }, 5000);
+  }, 3000);
 }
 
 /**
@@ -344,8 +378,11 @@ async function showDriverAssigned(driverId, state) {
     </div>
   `;
 
-  // Fetch datos reales a base de datos
+  // Fetch datos reales a base de datos (incluyendo datos de pago)
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
+  const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single();
+  const tarifa = viajeInfo?.tarifa || 0;
+  const isPaid = viajeInfo?.pago_wompi === true;
 
   // Fetch rating promedio
   const { data: ratingData } = await supabase
@@ -381,21 +418,28 @@ async function showDriverAssigned(driverId, state) {
   ];
 
   // Generar HTML de la Ficha del Conductor (Ventana Base)
-  // Nota: Mantenemos el estilo de bloques que el usuario mostró en su imagen
+  // Extract the Code Badge into a standalone clean container at the top
+  const rideCodeBadgeHTML = `
+    <div style="display:flex; justify-content:center; margin-bottom:12px;">
+      <div style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:12px; padding:8px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 15px rgba(255,107,0,0.15);">
+        <div style="text-align:right;">
+          <span style="color:rgba(255,255,255,.5); font-size:9px; text-transform:uppercase; font-weight:800; display:block;">Código del Viaje</span>
+          <span style="color:#FF6B00; font-size:18px; font-weight:900; letter-spacing:2px; text-shadow:0 0 10px rgba(255,107,0,.4);">#${state.rideCode || 'ZIPPY'}</span>
+        </div>
+        <button id="copyCodeBtn" onclick="(function(){navigator.clipboard.writeText('${state.rideCode || 'ZIPPY'}').then(function(){var b=document.getElementById('copyCodeBtn');b.innerHTML='✅';b.style.background='rgba(48,209,88,.2)';b.style.borderColor='rgba(48,209,88,.5)';b.style.color='#30D158';setTimeout(function(){b.innerHTML='📋';b.style.background='rgba(255,255,255,.1)';b.style.borderColor='rgba(255,255,255,.2)';b.style.color='#fff';},2000);})})()" style="background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:16px; padding:8px; border-radius:8px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center;" title="Copiar código">📋</button>
+      </div>
+    </div>
+  `;
+
   const conductorWindowHTML = `
     <div class="zippy-window">
-      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:160px; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
-        <!-- Código de Viaje (Esquina superior derecha) -->
-        <div style="position:absolute; top:12px; right:15px; background:rgba(255,107,0,.15); color:#FF6B00; font-size:9px; font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,107,0,.3); text-transform:uppercase; letter-spacing:0.5px;">
-            #${state.rideCode || 'ZIPPY'}
+      <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:auto; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
+        <div style="margin-bottom:12px;">
+          <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor Asignado</span>
+          <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
+          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
         </div>
-
-        <div style="margin-bottom:8px;">
-          <span style="color:rgba(255,255,255,.4); font-size:8px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor</span>
-          <span style="color:#fff; font-size:18px; font-weight:800; display:block;">${driverName}</span>
-          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block;">${driverRating}</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 95%; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 100%;">
           <!-- Bloque Vehículo -->
           <div style="background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.15); padding:8px; border-radius:12px; text-align:left; display:flex; flex-direction:column; justify-content:center;">
              <span style="color:rgba(255,107,0,.6); font-size:8px; display:block; text-transform:uppercase; font-weight:800; margin-bottom:1px;">Moto</span>
@@ -434,6 +478,8 @@ async function showDriverAssigned(driverId, state) {
     <div style="text-align:center; padding: 5px 0;">
       <h3 style="color:#30D158; margin-bottom:8px; font-weight:800; font-size:16px;">¡Conductor en camino!</h3>
       
+      ${rideCodeBadgeHTML}
+
       <div class="zippy-viewport">
         <div class="zippy-track" id="zippyTrack">
           ${trackHTML}
@@ -442,6 +488,27 @@ async function showDriverAssigned(driverId, state) {
 
       <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 12px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px;">Calculando llegada...</p>
       
+      <div id="wompiContainer" style="margin-bottom: 12px;">
+    ${isPaid ?
+      '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' :
+      `<style>
+        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+        @keyframes cashPulse{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
+        @keyframes btnEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        #wompiPayBtn{animation:btnEntrance .4s ease forwards, shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+        #wompiPayBtn:hover{transform:scale(1.02);filter:brightness(1.15);}
+        #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
+        #cashPayBtn:hover{transform:scale(1.02);}
+      </style>
+      <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
+        💳 Realizar Pago ($${tarifa.toLocaleString('es-CO')})
+      </button>
+      <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
+        💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
+      </button>`
+    }
+      </div>
+
       <div style="margin-bottom: 15px;">
         <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
             <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
@@ -459,6 +526,20 @@ async function showDriverAssigned(driverId, state) {
   if (openGameBtn) {
     openGameBtn.onclick = () => {
       document.getElementById('zippyJumpModal').style.display = 'flex';
+    };
+  }
+
+  const wompiBtn = document.getElementById('wompiPayBtn');
+  if (wompiBtn) {
+    wompiBtn.onclick = () => {
+      initWompiCheckout(state.currentRideId, tarifa, viajeInfo?.codigo_viaje || 'VIAJE');
+    };
+  }
+
+  const cashBtn = document.getElementById('cashPayBtn');
+  if (cashBtn) {
+    cashBtn.onclick = () => {
+      document.getElementById('wompiContainer').innerHTML = '<div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:10px; border-radius:10px; border:1px solid rgba(255,179,71,.3);">💵 PAGO EN EFECTIVO AL FINALIZAR</div>';
     };
   }
 
@@ -489,17 +570,108 @@ function showTripStarted(state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
-  document.getElementById('priceSection').innerHTML = `
-    <div style="text-align:center; padding: 15px 0;">
-      <div style="font-size:40px; margin-bottom: 12px;">✨</div>
-      <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
-      <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
-      <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
-        <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
-        <div style="margin-top:5px; font-size:11px; opacity:0.6; font-weight:900; color:#30D158;">SERVICIO #${state.rideCode || '-'}</div>
+
+  // Fetch payment status
+  supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single().then(({ data }) => {
+    const isPaid = data?.pago_wompi === true;
+    const tarifa = data?.tarifa || 0;
+
+    document.getElementById('priceSection').innerHTML = `
+      <div style="text-align:center; padding: 15px 0;">
+        <div style="font-size:40px; margin-bottom: 12px;">✨</div>
+        <h3 style="color:#FF6B00; margin-bottom:10px; font-weight:800;">Viaje en Progreso</h3>
+        <p style="color:rgba(255,255,255,.6); font-size:13px;">Vas camino a tu destino. ¡Disfruta el viaje!</p>
+        <div style="margin-top:20px; padding:10px; background:rgba(255,107,0,.1); border-radius:10px; border:1px solid rgba(255,107,0,.2); margin-bottom:15px;">
+          <span style="color:#FF6B00; font-weight:bold;">Estado:</span> Ya estás en la moto.
+          <div style="margin-top:5px; font-size:11px; opacity:0.6; font-weight:900; color:#30D158;">SERVICIO #${state.rideCode || '-'}</div>
+        </div>
+        <div id="wompiContainerTrip" style="margin-bottom: 15px;">
+          ${isPaid ?
+        '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' :
+        `<style>
+          @keyframes shimmerTrip{0%{background-position:-200% center}100%{background-position:200% center}}
+          @keyframes cashPulseTrip{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
+          #wompiPayBtnTrip{animation:shimmerTrip 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+          #wompiPayBtnTrip:hover{transform:scale(1.02);filter:brightness(1.15);}
+          #cashPayBtnTrip{animation:cashPulseTrip 2.5s ease infinite;}
+          #cashPayBtnTrip:hover{transform:scale(1.02);}
+        </style>
+        <button id="wompiPayBtnTrip" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .2s,filter .2s;">
+          💳 Realizar Pago ($${tarifa.toLocaleString('es-CO')})
+        </button>
+        <button id="cashPayBtnTrip" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
+          💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
+        </button>`
+      }
+        </div>
       </div>
-    </div>
-  `;
+    `;
+
+    const wompiBtnTrip = document.getElementById('wompiPayBtnTrip');
+    if (wompiBtnTrip) {
+      wompiBtnTrip.onclick = () => {
+        initWompiCheckout(state.currentRideId, tarifa, data?.codigo_viaje || 'VIAJE');
+      };
+    }
+
+    const cashBtnTrip = document.getElementById('cashPayBtnTrip');
+    if (cashBtnTrip) {
+      cashBtnTrip.onclick = () => {
+        document.getElementById('wompiContainerTrip').innerHTML = '<div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:10px; border-radius:10px; border:1px solid rgba(255,179,71,.3); text-align:center;">💵 PAGO EN EFECTIVO AL FINALIZAR</div>';
+      };
+    }
+  });
+}
+
+/**
+ * Handle Wompi Checkout Widget opening and success callbacks.
+ */
+async function initWompiCheckout(viajeId, tarifa, rideCode) {
+  if (typeof WidgetCheckout !== 'function') {
+    zippyAlert('El sistema de pagos no ha cargado aún. Intenta de nuevo.', '⚠️');
+    return;
+  }
+
+  const currency = 'COP';
+  const amountInCents = tarifa * 100; // Wompi expects cents
+  const reference = `ZIPPY_${rideCode}_${Date.now()}`;
+  const secret = 'test_integrity_ESw0LTbced5TdxOxtkBlvPzfaDBFtX5T';
+
+  // Generar firma de integridad requerida por Wompi
+  const message = reference + amountInCents + currency + secret;
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  var checkout = new WidgetCheckout({
+    currency: currency,
+    amountInCents: amountInCents,
+    reference: reference,
+    publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4',
+    signature: { integrity: hashHex }
+  });
+
+  checkout.open(function (result) {
+    var transaction = result.transaction;
+    if (transaction.status === 'APPROVED') {
+      // Actualizar en base de datos
+      supabase.from('viajes').update({ pago_wompi: true }).eq('id', viajeId).then(({ error }) => {
+        if (!error) {
+          zippyAlert('¡Tu viaje ha sido pagado exitosamente!', '✅');
+          // Ocultar botón y mostrar badge de pagado
+          const btns = [document.getElementById('wompiContainer'), document.getElementById('wompiContainerTrip')];
+          btns.forEach(c => {
+            if (c) c.innerHTML = '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>';
+          });
+        } else {
+          zippyAlert('Pago aprobado, pero hubo un error al sincronizar. Muestra tu comprobante al conductor.', '⚠️');
+        }
+      });
+    } else {
+      zippyAlert('El pago no pudo ser procesado o fue cancelado. (' + transaction.status + ')', '❌');
+    }
+  });
 }
 
 /**
@@ -516,7 +688,7 @@ function showSearchingRecovery(state) {
         else if (data.estado === 'en_progreso') showTripStarted(state);
         else if (data.estado === 'finalizado') showRatingScreen(state);
       }
-    }, 5000);
+    }, 3000);
   }
 
   // Show notification

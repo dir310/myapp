@@ -143,6 +143,9 @@ export function renderViajes(viajes, handlers) {
       <div class="empty-state">
         <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">⏱️</div>
         Buscando pasajeros<br>cerca de La Calera...
+        <button onclick="openSemaforo()" style="margin-top:20px; background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin:20px auto 0;">
+          🚦 Jugar Semáforo ZIPPY
+        </button>
       </div>`;
     if (lastRenderedHTML !== emptyHTML) {
       container.innerHTML = emptyHTML;
@@ -175,7 +178,7 @@ export function renderViajes(viajes, handlers) {
             <div style="color: #30D158; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 10px;">✨ Viaje en Curso — En Camino</div>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🧭 Navegar a Destino (Punto B)</button>
-            <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%; height: 50px; font-size: 16px;" data-action="finish" data-id="${v.id}">🏁 PAGADO Y FINALIZAR VIAJE</button>
+            <button class="btn btn-finish" style="background: #30D158; box-shadow: 0 4px 15px rgba(48,209,88,.3); width: 100%; height: 50px; font-size: 16px;" data-action="finish" data-id="${v.id}">🏁 ${v.pago_wompi ? 'FINALIZAR VIAJE (YA PAGADO)' : 'COBRAR Y FINALIZAR'}</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       }
@@ -190,7 +193,10 @@ export function renderViajes(viajes, handlers) {
           <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">
             Ganancia <span style="margin-left:8px; background:rgba(255,107,0,.2); color:#FF6B00; padding:1px 6px; border-radius:4px; font-weight:900;">#${v.codigo_viaje || 'ZIPPY'}</span>
           </div>
-          <div class="price">$${v.tarifa.toLocaleString('es-CO')}</div>
+          ${v.pago_wompi ? 
+            `<div class="price" style="color:#30D158; font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; background:rgba(48,209,88,.2); color:#30D158; padding:3px 6px; border-radius:4px; display:inline-block; margin-top:4px;">✅ PAGADO (WOMPI)</span></div>` : 
+            `<div class="price" style="font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; color:rgba(255,255,255,.4); display:inline-block; margin-top:4px;">(Cobrar en efectivo)</span></div>`
+          }
         </div>
         <div style="flex:1; text-align:right;">
           <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">Distancia</div>
