@@ -67,6 +67,109 @@ function iniciarRelojPerfil() {
   setInterval(updateClock, 60000); // Actualizar cada minuto
 }
 
+// ── Historial de Viajes (Pasajero) ──
+async function loadPassengerHistory() {
+  const modal = document.getElementById('passengerHistoryModal');
+  const container = document.getElementById('historyListContainer');
+  if (!modal || !container) return;
+
+  modal.style.display = 'flex';
+  container.innerHTML = `
+    <div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.5);font-size:14px;">
+        <span class="spinner" style="display:inline-block;border-width:3px;height:24px;width:24px;margin-bottom:15px;border-top-color:#FF6B00;"></span><br>
+        Cargando tus viajes...
+    </div>
+  `;
+
+  const telefono = localStorage.getItem('calmovil_cliente_telefono');
+  if (!telefono) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#FF3B30;">Error: No se encontró tu número de teléfono.</div>`;
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('viajes')
+    .select('id, created_at, codigo_viaje, conductor_id, tarifa, estado')
+    .eq('cliente_telefono', telefono)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#FF3B30;">Error al cargar el historial. Intenta más tarde.</div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:50px 20px;">
+        <div style="font-size:50px;margin-bottom:15px;opacity:0.5;">👻</div>
+        <h4 style="color:#fff;margin-bottom:5px;">Aún no tienes viajes</h4>
+        <p style="color:rgba(255,255,255,0.5);font-size:13px;">Tus próximos viajes aparecerán aquí.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const driverIds = [...new Set(data.map(v => v.conductor_id).filter(id => id))];
+  let driverNames = {};
+  if (driverIds.length > 0) {
+      const { data: driversData } = await supabase.from('conductores').select('id, nombre').in('id', driverIds);
+      if (driversData) {
+          driversData.forEach(d => driverNames[d.id] = d.nombre);
+      }
+  }
+
+  let html = '';
+  data.forEach(v => {
+    const isCompleted = v.estado === 'finalizado';
+    const isCanceled = v.estado === 'cancelado';
+    
+    let icon = '🔄';
+    let iconColor = '#FFB347';
+    let statusText = 'En curso';
+    
+    if (isCompleted) {
+        icon = '✅'; iconColor = '#30D158'; statusText = 'Completado';
+    } else if (isCanceled) {
+        icon = '🚫'; iconColor = '#FF3B30'; statusText = 'Cancelado';
+    }
+
+    const dateObj = new Date(v.created_at);
+    const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+    const timeStr = dateObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    const dName = driverNames[v.conductor_id] || (v.estado === 'buscando' ? 'Buscando...' : 'Desconocido');
+
+    html += `
+      <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:18px; border:1px solid ${iconColor}40;">
+                  ${icon}
+              </div>
+              <div>
+                  <div style="color:#fff; font-weight:800; font-size:14px; margin-bottom:2px;">${dateStr}, ${timeStr}</div>
+                  <div style="color:rgba(255,255,255,0.5); font-size:12px; margin-bottom:2px;">🏎️ ${dName}</div>
+                  <div style="color:${iconColor}; font-size:10px; font-weight:700; text-transform:uppercase;">${statusText}</div>
+              </div>
+          </div>
+          <div style="text-align:right;">
+              <div style="color:#FF6B00; font-weight:900; font-size:11px; margin-bottom:4px;">#${v.codigo_viaje || 'ZIPPY'}</div>
+              <div style="color:#fff; font-weight:900; font-size:18px;">$${v.tarifa ? v.tarifa.toLocaleString('es-CO') : '0'}</div>
+          </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+setTimeout(() => {
+    document.getElementById('historyPassengerBtn')?.addEventListener('click', loadPassengerHistory);
+    document.getElementById('closeHistoryBtn')?.addEventListener('click', () => {
+        document.getElementById('passengerHistoryModal').style.display = 'none';
+    });
+}, 1000);
+
 // ── Passenger Auth Logic ──
 function checkPassengerAuth() {
   const email = localStorage.getItem('calmovil_cliente_email');
