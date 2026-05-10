@@ -625,14 +625,12 @@ body {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: url('/background_passenger.png') no-repeat center center;
+  background-size: cover;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 80px 20px;
-  /* Mas espacio para deslizar */
   text-align: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -645,13 +643,15 @@ body {
 }
 
 .rating-card {
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 107, 0, 0.3);
-  border-radius: 24px;
+  background: rgba(28, 28, 30, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 32px;
   padding: 30px;
   max-width: 340px;
   width: 100%;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
 }
 
 .stars {
