@@ -602,14 +602,9 @@
 
     <script>
         function checkTesterModal() {
-            const lastSeen = localStorage.getItem('zippy_tester_msg_date_driver');
-            const today = new Date().toDateString();
-            if (lastSeen !== today) {
-                document.getElementById('testerModal').style.display = 'flex';
-            }
+            document.getElementById('testerModal').style.display = 'flex';
         }
         function closeTesterModal() {
-            localStorage.setItem('zippy_tester_msg_date_driver', new Date().toDateString());
             document.getElementById('testerModal').style.display = 'none';
         }
         document.addEventListener('DOMContentLoaded', checkTesterModal);
