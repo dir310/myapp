@@ -625,7 +625,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: url('/background_passenger.png') no-repeat center center;
+  background: url('/background_passenger.png?v=2') no-repeat center center;
   background-size: cover;
   display: flex;
   flex-direction: column;
