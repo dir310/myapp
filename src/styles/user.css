@@ -561,8 +561,8 @@ body {
   bottom: 75px;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  max-width: 320px;
+  width: 75%;
+  max-width: 260px;
   z-index: 1000;
   background: linear-gradient(135deg, #FF6B00, #FF9500);
   color: #fff;
