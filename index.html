@@ -678,5 +678,35 @@
             </div>
         </div>
     </div>
+    <!-- Modal para Verificadores de Google Play -->
+    <div id="testerModal" style="display:none; position:fixed; inset:0; z-index:9999999; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); align-items:center; justify-content:center; font-family:'Inter',sans-serif; padding:20px;">
+        <div style="background:#151515; border:1px solid rgba(255,107,0,0.3); border-radius:20px; padding:30px; max-width:400px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+            <div style="font-size:40px; margin-bottom:15px;">🛠️</div>
+            <h2 style="color:#FF6B00; font-size:20px; font-weight:900; margin-bottom:10px;">¡Hola Verificador!</h2>
+            <p style="color:rgba(255,255,255,0.8); font-size:14px; line-height:1.5; margin-bottom:20px;">
+                Gracias por ayudarnos en esta fase de prueba oficial. Para que Google apruebe nuestra app, te pedimos un enorme favor:<br><br>
+                👉 Toca los botones y menús.<br>
+                👉 Explora la pantalla.<br>
+                👉 <b>Interactúa al menos 1 minuto.</b><br><br>
+                ¡Tu ayuda es vital para nuestro lanzamiento!
+            </p>
+            <button onclick="closeTesterModal()" style="width:100%; padding:15px; background:linear-gradient(135deg, #FF6B00, #FF8C00); color:white; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(255,107,0,0.3);">Entendido, ¡a probar!</button>
+        </div>
+    </div>
+
+    <script>
+        function checkTesterModal() {
+            const lastSeen = localStorage.getItem('zippy_tester_msg_date');
+            const today = new Date().toDateString();
+            if (lastSeen !== today) {
+                document.getElementById('testerModal').style.display = 'flex';
+            }
+        }
+        function closeTesterModal() {
+            localStorage.setItem('zippy_tester_msg_date', new Date().toDateString());
+            document.getElementById('testerModal').style.display = 'none';
+        }
+        document.addEventListener('DOMContentLoaded', checkTesterModal);
+    </script>
 </body>
 </html>
