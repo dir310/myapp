@@ -113,7 +113,7 @@ body {
   left: 0;
   width: 340px;
   z-index: 1001;
-  background: rgba(28, 28, 30, 0.85);
+  background: linear-gradient(rgba(20,20,24,0.85), rgba(20,20,24,0.92)), url('/background_passenger.png') no-repeat center center / cover;
   backdrop-filter: blur(25px);
   border-radius: 0 32px 32px 0;
   border-right: 1px solid rgba(255, 107, 0, 0.15);
