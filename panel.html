@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo Maestro | ZIPPY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6B00;
+            --primary-hover: #FF9500;
+            --bg-dark: #0a0a0a;
+            --bg-sidebar: rgba(20, 20, 24, 0.95);
+            --text-light: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 107, 0, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 122, 255, 0.03) 0%, transparent 50%);
+        }
+
+        /* Sidebar Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 30px 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header img {
+            height: 42px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            line-height: 1.2;
+        }
+
+        .sidebar-header span {
+            font-size: 11px;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .nav-menu {
+            padding: 24px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 10px 0 5px 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-light);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 107, 0, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(255, 107, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.05);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+        }
+
+        /* Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Iframe container */
+        .iframe-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: var(--bg-dark);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+            z-index: 100;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+            .sidebar.open {
+                transform: translateX(280px);
+            }
+            .mobile-toggle {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.imgur.com/UexR6kn.jpeg" alt="ZIPPY Logo">
+            <div>
+                <h2>ZIPPY</h2>
+                <span>Panel Maestro</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <div class="nav-label">Gestión Principal</div>
+            
+            <a class="nav-link active" data-src="/viajes.html" onclick="loadPage(this)">
+                <span class="nav-icon">🚕</span>
+                Rutas y Viajes
+            </a>
+            
+            <a class="nav-link" data-src="/admin-conductores.html" onclick="loadPage(this)">
+                <span class="nav-icon">👨‍✈️</span>
+                Conductores
+            </a>
+            
+            <a class="nav-link" data-src="/clientes.html" onclick="loadPage(this)">
+                <span class="nav-icon">👥</span>
+                Clientes Registrados
+            </a>
+
+            <div class="nav-label" style="margin-top: 15px;">Finanzas</div>
+            
+            <a class="nav-link" data-src="/admin-pagos.html" onclick="loadPage(this)">
+                <span class="nav-icon">💰</span>
+                Pagos y Recibos
+            </a>
+            
+            <!-- Link externo directo a Supabase por si lo necesitan -->
+            <a class="nav-link" href="https://supabase.com" target="_blank" style="margin-top:auto;">
+                <span class="nav-icon">⚙️</span>
+                Base de Datos
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content (Iframe) -->
+    <main class="main-content">
+        <div class="iframe-container">
+            <iframe id="mainFrame" src="/viajes.html" title="ZIPPY Admin Content"></iframe>
+        </div>
+    </main>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">
+        ☰
+    </button>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainFrame = document.getElementById('mainFrame');
+        const links = document.querySelectorAll('.nav-link[data-src]');
+
+        function loadPage(element) {
+            // Remove active class from all
+            links.forEach(link => link.classList.remove('active'));
+            
+            // Add active class to clicked
+            element.classList.add('active');
+            
+            // Change iframe src
+            mainFrame.src = element.getAttribute('data-src');
+            
+            // Close sidebar on mobile after clicking
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
