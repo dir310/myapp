@@ -5,6 +5,7 @@
 import { getCurrentProfile, isDriverApproved } from './auth.js';
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
+import { zippyToast } from '../utils/ui-global.js';
 
 let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
@@ -360,34 +361,6 @@ export function renderViajes(viajes, handlers) {
  * @param {string} type - 'error' or 'success'.
  */
 export function showNotification(msg, type = 'success') {
-  const banner = document.createElement('div');
-  const color = type === 'error' ? '#FF3B30' : '#30D158';
-  const icon = type === 'error' ? '🚫' : '🌟';
-
-  banner.style.cssText = `
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 400px; padding: 16px; border-radius: 16px;
-    background: rgba(20,20,20,0.95); border: 2px solid ${color};
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 10000;
-    display: flex; align-items: center; gap: 15px; color: #fff;
-    animation: slideInDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-  `;
-
-  banner.innerHTML = `
-    <div style="font-size: 30px;">${icon}</div>
-    <div style="flex:1;">
-      <div style="font-size: 11px; color: ${color}; font-weight: 800; text-transform: uppercase; margin-bottom: 2px;">Notificación</div>
-      <div style="font-size: 15px; font-weight: 600;">${msg}</div>
-    </div>
-  `;
-
-  document.body.appendChild(banner);
+  zippyToast(msg, type);
   playAlert();
-
-  setTimeout(() => {
-    banner.style.opacity = '0';
-    banner.style.transform = 'translateX(-50%) translateY(-20px)';
-    banner.style.transition = 'all 0.5s ease-in';
-    setTimeout(() => banner.remove(), 500);
-  }, 5000);
 }

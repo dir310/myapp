@@ -720,37 +720,50 @@ function showRatingScreen(state) {
   const rideId = state.currentRideId;
   localStorage.removeItem(STORAGE_KEY);
 
+  // Ocultar el precio/búsqueda en el sidebar para limpiarlo visualmente
   const priceSection = document.getElementById('priceSection');
-  priceSection.style.display = 'block';
-  priceSection.innerHTML = `
-    <div style="text-align:center; padding:20px 10px;">
-      <div style="font-size:40px; margin-bottom:8px;">🏁</div>
+  if (priceSection) priceSection.innerHTML = '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'passengerRatingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1c1c1e;border-radius:24px;padding:30px;max-width:340px;width:100%;text-align:center;border:1px solid rgba(255,107,0,.3);box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+      <div style="font-size:45px; margin-bottom:10px;">🏁</div>
       <h3 style="color:#FF6B00; margin-bottom:5px; font-weight:800;">¡Viaje Finalizado!</h3>
       <p style="color:rgba(255,255,255,.6); font-size:13px; margin-bottom:20px;">¿Cómo fue tu experiencia con el conductor?</p>
       <div id="starRatingUser" style="display:flex; justify-content:center; gap:10px; font-size:38px; cursor:pointer; margin-bottom:10px;">
-        <span data-star="1" style="filter:grayscale(1) opacity(.4);">⭐</span>
-        <span data-star="2" style="filter:grayscale(1) opacity(.4);">⭐</span>
-        <span data-star="3" style="filter:grayscale(1) opacity(.4);">⭐</span>
-        <span data-star="4" style="filter:grayscale(1) opacity(.4);">⭐</span>
-        <span data-star="5" style="filter:grayscale(1) opacity(.4);">⭐</span>
+        <span data-star="1" style="filter:grayscale(1) opacity(.4); transition:all 0.2s;">⭐</span>
+        <span data-star="2" style="filter:grayscale(1) opacity(.4); transition:all 0.2s;">⭐</span>
+        <span data-star="3" style="filter:grayscale(1) opacity(.4); transition:all 0.2s;">⭐</span>
+        <span data-star="4" style="filter:grayscale(1) opacity(.4); transition:all 0.2s;">⭐</span>
+        <span data-star="5" style="filter:grayscale(1) opacity(.4); transition:all 0.2s;">⭐</span>
       </div>
       <div id="ratingLabelUser" style="color:#FF6B00; font-weight:bold; font-size:13px; min-height:20px; margin-bottom:15px;"></div>
-      <button id="submitRatingUserBtn" class="btn btn-primary" style="width:100%; font-size:15px; padding:13px; opacity:.5;" disabled>Enviar Calificación</button>
-      <button id="skipRatingUserBtn" class="btn" style="width:100%; margin-top:8px; background:rgba(255,255,255,.05); color:rgba(255,255,255,.4); font-size:12px;">Omitir</button>
+      <button id="submitRatingUserBtn" class="btn btn-primary" style="width:100%; font-size:15px; padding:14px; opacity:.5; border-radius:12px;" disabled>Enviar Calificación</button>
+      <button id="skipRatingUserBtn" class="btn" style="display:block; width:100%; margin-top:12px; background:none; border:none; color:rgba(255,255,255,.4); font-size:13px; padding:8px;">Omitir</button>
     </div>
   `;
+  
+  document.body.appendChild(overlay);
 
   let selectedRating = 0;
-  const stars = document.querySelectorAll('#starRatingUser span');
-  const submitBtn = document.getElementById('submitRatingUserBtn');
-  const label = document.getElementById('ratingLabelUser');
+  const stars = overlay.querySelectorAll('#starRatingUser span');
+  const submitBtn = overlay.querySelector('#submitRatingUserBtn');
+  const label = overlay.querySelector('#ratingLabelUser');
   const texts = ['', 'Muy malo 😞', 'Malo 😕', 'Regular 😐', 'Bueno 😊', 'Excelente 🤩'];
 
   stars.forEach(star => {
     star.addEventListener('click', () => {
       selectedRating = parseInt(star.dataset.star);
       stars.forEach((s, i) => {
-        s.style.filter = i < selectedRating ? 'none' : 'grayscale(1) opacity(.4)';
+        if (i < selectedRating) {
+          s.style.filter = 'none';
+          s.style.transform = 'scale(1.1)';
+        } else {
+          s.style.filter = 'grayscale(1) opacity(.4)';
+          s.style.transform = 'scale(1)';
+        }
       });
       label.textContent = texts[selectedRating];
       submitBtn.disabled = false;
@@ -758,7 +771,7 @@ function showRatingScreen(state) {
     });
   });
 
-  document.getElementById('submitRatingUserBtn').addEventListener('click', async () => {
+  submitBtn.addEventListener('click', async () => {
     if (!selectedRating) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
@@ -772,7 +785,6 @@ function showRatingScreen(state) {
       if (error) {
         console.error('Error al guardar calificación:', error);
         zippyAlert('No se pudo guardar la calificación: ' + (error.message || 'Error de permisos'), '❌');
-        // No recargamos si falló para que el usuario pueda intentar de nuevo o avisar
         submitBtn.disabled = false;
         submitBtn.textContent = 'Reintentar Enviar';
         return;
@@ -783,7 +795,7 @@ function showRatingScreen(state) {
     location.reload();
   });
 
-  document.getElementById('skipRatingUserBtn').addEventListener('click', () => {
+  overlay.querySelector('#skipRatingUserBtn').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
     location.reload();
   });
