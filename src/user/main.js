@@ -662,7 +662,8 @@ document.addEventListener('DOMContentLoaded', () => {
     closePassengerSafetyBtn.onclick = () => {
       // Reproducir sonido de "Zippy" al aceptar
       try {
-          const zippySound = new Audio('https://actions.google.com/sounds/v1/ui/slide_swoosh_1.ogg');
+          // Usamos MP3 porque Safari y algunos iPhones no soportan .ogg
+          const zippySound = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3');
           zippySound.volume = 0.5;
           zippySound.play().catch(e => console.log('Audio autoplay blocked', e));
       } catch (err) {}
