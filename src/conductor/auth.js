@@ -319,11 +319,12 @@ async function handleRegisterSubmit() {
   const fCedF = document.getElementById('fotoCedulaFrontal').files ? document.getElementById('fotoCedulaFrontal').files[0] : null;
   const fCedT = document.getElementById('fotoCedulaTrasera').files ? document.getElementById('fotoCedulaTrasera').files[0] : null;
   const fRosto = document.getElementById('fotoRostro').files ? document.getElementById('fotoRostro').files[0] : null;
+  const fSoat = document.getElementById('fotoSoat').files ? document.getElementById('fotoSoat').files[0] : null;
 
-  if (!n || !p || !c || !d || !m || !fProp || !fCedF || !fCedT || !fRosto) {
+  if (!n || !p || !c || !d || !m || !fProp || !fCedF || !fCedT || !fRosto || !fSoat) {
       btn.textContent = 'Enviar Registro Completado';
       btn.disabled = false;
-      return zippyAlert('Debes llenar todos los datos y subir las 4 imágenes obligatorias de forma correcta.', '📎');
+      return zippyAlert('Debes llenar todos los datos y subir las 5 imágenes obligatorias de forma correcta.', '📎');
   }
 
   // Filtros y validaciones
@@ -346,14 +347,16 @@ async function handleRegisterSubmit() {
           return publicUrl;
       };
 
-      btn.textContent = 'Subiendo Imágenes (1/4)...';
+      btn.textContent = 'Subiendo Imágenes (1/5)...';
       const urlProp = await uploadFile(fProp, 'propiedad');
-      btn.textContent = 'Subiendo Imágenes (2/4)...';
+      btn.textContent = 'Subiendo Imágenes (2/5)...';
       const urlCedF = await uploadFile(fCedF, 'cedula_frontal');
-      btn.textContent = 'Subiendo Imágenes (3/4)...';
+      btn.textContent = 'Subiendo Imágenes (3/5)...';
       const urlCedT = await uploadFile(fCedT, 'cedula_trasera');
-      btn.textContent = 'Subiendo Imágenes (4/4)...';
+      btn.textContent = 'Subiendo Imágenes (4/5)...';
       const urlRostro = await uploadFile(fRosto, 'rostro');
+      btn.textContent = 'Subiendo Imágenes (5/5)...';
+      const urlSoat = await uploadFile(fSoat, 'soat');
 
       btn.textContent = 'Guardando datos...';
       const newId = crypto.randomUUID();
@@ -371,6 +374,7 @@ async function handleRegisterSubmit() {
           foto_cedula_frontal_url: urlCedF,
           foto_cedula_trasera_url: urlCedT,
           foto_rostro_url: urlRostro,
+          foto_soat_url: urlSoat,
           estado_validacion: 'pendiente' // Clave para bloquear el trabajo
       }]);
 
