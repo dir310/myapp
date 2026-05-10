@@ -660,6 +660,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const closePassengerSafetyBtn = document.getElementById('closePassengerSafetyBtn');
   if (closePassengerSafetyBtn) {
     closePassengerSafetyBtn.onclick = () => {
+      // Reproducir sonido de "Zippy" al aceptar
+      try {
+          const zippySound = new Audio('https://actions.google.com/sounds/v1/ui/slide_swoosh_1.ogg');
+          zippySound.volume = 0.5;
+          zippySound.play().catch(e => console.log('Audio autoplay blocked', e));
+      } catch (err) {}
+
       document.getElementById('passengerSafetyModal').style.display = 'none';
       sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
       
