@@ -133,7 +133,8 @@ async function loadConductores() {
         { name: 'Propiedad', url: c.foto_propiedad_url },
         { name: 'C. Frontal', url: c.foto_cedula_frontal_url },
         { name: 'C. Trasera', url: c.foto_cedula_trasera_url },
-        { name: 'Rostro', url: c.foto_rostro_url }
+        { name: 'Rostro', url: c.foto_rostro_url },
+        { name: 'SOAT', url: c.foto_soat_url }
     ];
 
     const openPhoto = (path) => {
