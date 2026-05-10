@@ -154,14 +154,9 @@ async function handleSession(session) {
     profileBtn.style.display = 'none';
     document.querySelector('.fab-whatsapp').style.display = 'flex'; // Mostrar en login
 
-    // Logica: Si hizo logout previamente, mostrar Login; de lo contrario, Registro (Defecto)
-    if (localStorage.getItem('zippy_driver_logged_out') === 'true') {
-        document.getElementById('registerView').style.display = 'none';
-        document.getElementById('loginView').style.display = 'block';
-    } else {
-        document.getElementById('registerView').style.display = 'block';
-        document.getElementById('loginView').style.display = 'none';
-    }
+    // Siempre mostrar Login por defecto
+    document.getElementById('registerView').style.display = 'none';
+    document.getElementById('loginView').style.display = 'block';
   }
 }
 
