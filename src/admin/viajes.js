@@ -93,6 +93,13 @@ async function loadViajes() {
 
         listEl.appendChild(tr);
     });
+
+    // Re-aplicar filtro si ya había algo escrito
+    const searchInput = document.getElementById('searchViajesInput');
+    if (searchInput && searchInput.value) {
+        const event = new Event('input');
+        searchInput.dispatchEvent(event);
+    }
 }
 
 function setupAdminControls() {
@@ -112,6 +119,25 @@ async function init() {
     }
     setupAdminControls();
     loadViajes();
+    
+    // Configurar el buscador
+    const searchInput = document.getElementById('searchViajesInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#viajesList tr');
+            rows.forEach(row => {
+                // Evitar ocultar la fila de "Cargando..." o "Error..." si no tienen celdas reales
+                if (row.cells.length < 8) return; 
+                
+                if (row.textContent.toLowerCase().includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
     
     // Auto-refresh cada 30 segundos si la ventana está activa
     setInterval(() => {
