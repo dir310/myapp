@@ -27,8 +27,12 @@ function showPrice(distKm, mins) {
   let price = BASE_FARE + (km * PER_KM_FARE) + (mins * PER_MIN_FARE);
   price = Math.round(price / 100) * 100;
   price = Math.max(MIN_FARE, price);
-  // Agregar comisión de Wompi al valor base
   price = Math.round((price * 1.03) + 800);
+  window.zippyCurrentBasePrice = price;
+  
+  const bonoCb = document.getElementById('useBonoCheckbox');
+  if (bonoCb) bonoCb.checked = false; // Resetear al calcular nueva ruta
+
   const el = document.getElementById('priceValue');
   if (el) el.textContent = '$' + price.toLocaleString('es-CO');
   return price;

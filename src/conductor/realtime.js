@@ -297,6 +297,21 @@ async function finishViaje(id) {
     const viaje = activeViajes.find(v => v.id === id);
     const clienteNombre = viaje ? (viaje.cliente_nombre || 'Pasajero') : 'Pasajero';
     await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
+    
+    // Bono Frecuente: Dar 2000 COP cada 10 viajes terminados
+    if (viaje && viaje.pasajero_id) {
+       const { count } = await supabase.from('viajes')
+         .select('id', { count: 'exact', head: true })
+         .eq('pasajero_id', viaje.pasajero_id)
+         .eq('estado', 'finalizado');
+         
+       if (count > 0 && count % 10 === 0) {
+           const { data: cData } = await supabase.from('clientes').select('saldo_bono').eq('id', viaje.pasajero_id).single();
+           if (cData) {
+               await supabase.from('clientes').update({ saldo_bono: (cData.saldo_bono || 0) + 2000 }).eq('id', viaje.pasajero_id);
+           }
+       }
+    }
     stopGPS();
     loadViajes();
     showClientRatingModal(id, clienteNombre);

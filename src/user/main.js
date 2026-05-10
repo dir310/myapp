@@ -224,13 +224,21 @@ function checkPassengerAuth() {
 
         supabase
           .from('clientes')
-          .select('estado_validacion')
+          .select('estado_validacion, saldo_bono')
           .eq('email', emailStored)
           .single()
           .then(({ data, error }) => {
             const banner = document.getElementById('passengerValidationBanner');
             const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
+              
+              // Actualizar saldo bono
+              window.zippyCurrentBono = data.saldo_bono || 0;
+              let bonoEl = document.getElementById('displayClientBono');
+              let bonoTextEl = document.getElementById('availableBonoText');
+              if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+              if (bonoTextEl) bonoTextEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+              
               localStorage.setItem('zippy_passenger_status', data.estado_validacion);
               if (data.estado_validacion === 'pendiente') {
                 if (banner) banner.style.display = 'block';
@@ -533,12 +541,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const { data: newUser, error: err } = await supabase.from('clientes').insert([{
               nombre, email, password, telefono, cedula, edad,
               foto_frontal_url: frontRef, foto_trasera_url: backRef,
-              estado_validacion: 'pendiente'
+              estado_validacion: 'pendiente',
+              saldo_bono: 3000
             }]).select().single();
 
             if (err) throw err;
 
             // Auto-login: guardar datos en memoria local para no volver al formulario
+            window.zippyCurrentBono = 3000;
             localStorage.setItem('calmovil_cliente_id', newUser.id);
             localStorage.setItem('calmovil_cliente_nombre', newUser.nombre);
             localStorage.setItem('calmovil_cliente_email', newUser.email);
@@ -966,6 +976,22 @@ restoreActiveRide(state, map);
 
 // ── Pre-warming Supabase (Cold Start Fix) ──
 supabase.from('clientes').select('id').limit(1);
+
+// ── Lógica de Billetera Zippy ──
+const bonoCheckbox = document.getElementById('useBonoCheckbox');
+if (bonoCheckbox) {
+    bonoCheckbox.addEventListener('change', () => {
+        let price = window.zippyCurrentBasePrice || 0;
+        let bonoToUse = 0;
+        if (bonoCheckbox.checked && window.zippyCurrentBono > 0) {
+            bonoToUse = Math.min(price, window.zippyCurrentBono);
+        }
+        let finalPrice = price - bonoToUse;
+        const el = document.getElementById('priceValue');
+        if (el) el.textContent = '$' + finalPrice.toLocaleString('es-CO');
+    });
+}
+
 
 // ── Tour de Bienvenida (Driver.js) ──
 function iniciarTourPasajero() {
