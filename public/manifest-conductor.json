@@ -1,0 +1,25 @@
+{
+  "name": "ZIPPY Conductor",
+  "short_name": "Conductor",
+  "description": "Panel exclusivo para conductores de ZIPPY.",
+  "id": "com.zippy.driver",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#FF6B00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://i.imgur.com/1IoBmEy.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://i.imgur.com/1IoBmEy.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}
