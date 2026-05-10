@@ -3,7 +3,7 @@
  */
 import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
-import { getCurrentProfile } from './auth.js';
+import { getCurrentProfile, isDriverApproved } from './auth.js';
 import { zippyAlert, zippyConfirm, zippyDanger } from '../utils/ui-global.js';
 
 let activeViajes = [];
@@ -86,6 +86,8 @@ async function cancelActiveViaje(id) {
  * Load initial active rides from Supabase.
  */
 export async function loadViajes() {
+  if (!isDriverApproved()) return; // Conductor en validación: no cargar viajes
+
   const { data, error } = await supabase
     .from('viajes')
     .select('*')
@@ -104,9 +106,10 @@ export async function loadViajes() {
  * Set up real-time channel for new and updated rides.
  */
 export function setupRealtimeChannel() {
+  if (!isDriverApproved()) return; // Conductor en validación: no suscribir canal
   setupRealtimeWithReconnect();
   // Polling de respaldo cada 4 segundos
-  setInterval(() => loadViajes(), 4000);
+  setInterval(() => { if (isDriverApproved()) loadViajes(); }, 4000);
 }
 
 // Reconexión automática del canal en tiempo real

@@ -2,7 +2,7 @@
  * Conductor page UI: radar toggle and ride card rendering.
  */
 
-import { getCurrentProfile } from './auth.js';
+import { getCurrentProfile, isDriverApproved } from './auth.js';
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 
@@ -128,6 +128,8 @@ export function showNewRideBanner() {
  * @param {object} handlers - { onAccept, onReject } callback functions.
  */
 export function renderViajes(viajes, handlers) {
+  if (!isDriverApproved()) return; // Conductor en validación: no renderizar viajes
+
   const container = document.getElementById('viajesList');
   const profile = getCurrentProfile();
   const currentConductor = profile ? profile.id : 'Un Conductor';
