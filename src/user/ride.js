@@ -509,6 +509,11 @@ async function showDriverAssigned(driverId, state) {
     }
       </div>
 
+      <!-- Botón Compartir Viaje -->
+      <button id="shareRideBtn" style="width:100%; padding:13px; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.85); transition:all .2s;">
+        🔗 Compartir viaje con familiar
+      </button>
+
       <div style="margin-bottom: 15px;">
         <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
             <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
@@ -554,6 +559,39 @@ async function showDriverAssigned(driverId, state) {
       track.style.transform = `translateX(-${currentIndex * 100}%)`;
     }
   }, 6000); // 6 segundos de exposición por ventana
+
+  // ── Botón Compartir Viaje ──
+  const shareRideBtn = document.getElementById('shareRideBtn');
+  if (shareRideBtn && state.currentRideId) {
+    shareRideBtn.onclick = async () => {
+      const trackUrl = `https://appzippy.com/track.html?id=${state.currentRideId}`;
+      const shareText = `🏍️ Estoy en un viaje con ZIPPY La Calera. Puedes seguirme en tiempo real aquí:\n${trackUrl}`;
+
+      try {
+        if (navigator.share) {
+          // Native share sheet (Android/iOS)
+          await navigator.share({
+            title: 'Sigue mi viaje en ZIPPY',
+            text: shareText,
+            url: trackUrl,
+          });
+        } else {
+          // Fallback: copy to clipboard + open WhatsApp
+          await navigator.clipboard.writeText(trackUrl);
+          shareRideBtn.innerHTML = '✅ ¡Link copiado!';
+          shareRideBtn.style.borderColor = 'rgba(48,209,88,0.5)';
+          shareRideBtn.style.color = '#30D158';
+          setTimeout(() => {
+            shareRideBtn.innerHTML = '🔗 Compartir viaje con familiar';
+            shareRideBtn.style.borderColor = 'rgba(255,255,255,0.12)';
+            shareRideBtn.style.color = 'rgba(255,255,255,0.85)';
+          }, 2500);
+        }
+      } catch (e) {
+        // If share was cancelled, do nothing
+      }
+    };
+  }
 
   // Botón Cancelar (Vinculado a la base de datos para notificar al conductor)
   document.getElementById('cancelRideBtnAction').addEventListener('click', () => {

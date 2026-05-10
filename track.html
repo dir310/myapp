@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento en Vivo — ZIPPY</title>
+  <meta name="description" content="Sigue el viaje de tu familiar en tiempo real con ZIPPY La Calera.">
+  <link rel="icon" href="/icons/icon-192x192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #111;
+      color: #fff;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .track-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(18, 18, 20, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,107,0,0.2);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .track-logo {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(255,107,0,0.4);
+    }
+    .track-brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #FF6B00; }
+    .track-subtitle { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+    /* ── Status chip ── */
+    .status-chip {
+      margin-left: auto;
+      background: rgba(48,209,88,0.15);
+      border: 1px solid rgba(48,209,88,0.35);
+      color: #30D158;
+      border-radius: 30px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      background: #30D158;
+      border-radius: 50%;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── Map ── */
+    #trackMap {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+    }
+
+    /* ── Bottom Card ── */
+    .track-card {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(18,18,20,0.96);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .drag-handle {
+      width: 40px; height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 0 auto 8px;
+    }
+    .track-title {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+    .driver-name-big {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .info-pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pill-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: rgba(255,107,0,0.7);
+      letter-spacing: 0.8px;
+    }
+    .pill-value {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .safety-msg {
+      background: rgba(48,209,88,0.07);
+      border: 1px solid rgba(48,209,88,0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.5;
+    }
+    .safety-msg strong { color: #30D158; }
+
+    /* Loading state */
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: #111;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.5s;
+    }
+    .spinner-big {
+      width: 50px; height: 50px;
+      border: 4px solid rgba(255,107,0,0.2);
+      border-top-color: #FF6B00;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Ride ended */
+    #endedScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      text-align: center;
+      padding: 30px;
+    }
+    .ended-icon { font-size: 60px; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loadingScreen">
+    <img src="https://i.imgur.com/UexR6kn.jpeg" style="width:70px;border-radius:18px;">
+    <div class="spinner-big"></div>
+    <div style="color:rgba(255,255,255,0.6); font-size:13px;">Conectando al viaje...</div>
+  </div>
+
+  <!-- Ended -->
+  <div id="endedScreen">
+    <div class="ended-icon">✅</div>
+    <h2 style="color:#30D158; font-weight:900;">¡Viaje Finalizado!</h2>
+    <p style="color:rgba(255,255,255,0.6); font-size:14px;">Tu familiar llegó a su destino de forma segura.<br>Este enlace ya no está activo.</p>
+    <img src="https://i.imgur.com/UexR6kn.jpeg" style="width:60px;border-radius:14px;margin-top:10px;">
+  </div>
+
+  <!-- Header -->
+  <div class="track-header">
+    <img src="https://i.imgur.com/UexR6kn.jpeg" alt="ZIPPY" class="track-logo">
+    <div>
+      <div class="track-brand">ZIPPY</div>
+      <div class="track-subtitle">Seguimiento en vivo</div>
+    </div>
+    <div class="status-chip">
+      <div class="status-dot"></div>
+      EN VIVO
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="trackMap"></div>
+
+  <!-- Bottom Card -->
+  <div class="track-card">
+    <div class="drag-handle"></div>
+    <div class="track-title">🏍️ Tu familiar está en este viaje</div>
+    <div class="driver-name-big" id="cardDriverName">Cargando...</div>
+    <div class="info-grid">
+      <div class="info-pill">
+        <span class="pill-label">Placa</span>
+        <span class="pill-value" id="cardPlaca">---</span>
+      </div>
+      <div class="info-pill">
+        <span class="pill-label">Código</span>
+        <span class="pill-value" id="cardCodigo" style="color:#FF6B00;">---</span>
+      </div>
+      <div class="info-pill" style="grid-column: span 2;">
+        <span class="pill-label">Moto</span>
+        <span class="pill-value" id="cardVehiculo" style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.8);">---</span>
+      </div>
+    </div>
+    <div class="safety-msg">
+      🛡️ <strong>ZIPPY La Calera</strong> — Este enlace fue compartido por tu familiar para que puedas ver su ubicación en tiempo real. El enlace expira al finalizar el viaje.
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://ypsqnsowgjmqxmsorlsh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwc3Fuc293Z2ptcXhtc29ybHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1MjIxMDIsImV4cCI6MjA1OTA5ODEwMn0.1D8Q6K-1WuHpLqHDRBJ_kXXOEIFtgOtbXYY6e3oaqPY';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Get ride ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const rideId = params.get('id');
+
+    if (!rideId) {
+      document.getElementById('loadingScreen').innerHTML = `
+        <div style="text-align:center; padding:30px;">
+          <div style="font-size:50px; margin-bottom:15px;">🔗</div>
+          <h3 style="color:#FF3B30; margin-bottom:10px;">Enlace inválido</h3>
+          <p style="color:rgba(255,255,255,0.5); font-size:13px;">Este enlace de seguimiento no es válido o ya expiró.</p>
+        </div>
+      `;
+      throw new Error('No ride ID');
+    }
+
+    // Init map
+    const map = L.map('trackMap', {
+      zoomControl: false,
+      attributionControl: false,
+    }).setView([4.72, -73.97], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Moto icon
+    const motoIcon = L.divIcon({
+      className: '',
+      html: `<div style="font-size:28px; filter:drop-shadow(0 2px 6px rgba(255,107,0,0.8));">🏍️</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+
+    let motoMarker = null;
+
+    function animateMarker(marker, newLatLng, duration) {
+      const start = marker.getLatLng();
+      const startTime = performance.now();
+      function step(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const lat = start.lat + (newLatLng[0] - start.lat) * t;
+        const lng = start.lng + (newLatLng[1] - start.lng) * t;
+        marker.setLatLng([lat, lng]);
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function updateMap(lat, lng) {
+      if (!motoMarker) {
+        motoMarker = L.marker([lat, lng], { icon: motoIcon }).addTo(map);
+      } else {
+        animateMarker(motoMarker, [lat, lng], 2000);
+      }
+      map.setView([lat, lng], 15, { animate: true });
+    }
+
+    // Fetch initial ride data
+    async function loadRide() {
+      const { data: viaje, error } = await supabase
+        .from('viajes')
+        .select('estado, conductor_id, conductor_lat, conductor_lng, codigo_viaje')
+        .eq('id', rideId)
+        .single();
+
+      if (error || !viaje) {
+        document.getElementById('loadingScreen').innerHTML = `
+          <div style="text-align:center; padding:30px;">
+            <div style="font-size:50px; margin-bottom:15px;">❌</div>
+            <h3 style="color:#FF3B30; margin-bottom:10px;">Viaje no encontrado</h3>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">El viaje no existe o ya finalizó.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (viaje.estado === 'finalizado' || viaje.estado === 'cancelado') {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('endedScreen').style.display = 'flex';
+        return;
+      }
+
+      // Load driver info
+      if (viaje.conductor_id) {
+        const { data: conductor } = await supabase
+          .from('conductores')
+          .select('nombre, placa, marca_cilindraje_color')
+          .eq('id', viaje.conductor_id)
+          .single();
+
+        document.getElementById('cardDriverName').textContent = conductor?.nombre || 'Conductor ZIPPY';
+        document.getElementById('cardPlaca').textContent = conductor?.placa || '---';
+        document.getElementById('cardVehiculo').textContent = conductor?.marca_cilindraje_color || 'Moto';
+      }
+
+      document.getElementById('cardCodigo').textContent = `#${viaje.codigo_viaje || 'ZIPPY'}`;
+
+      if (viaje.conductor_lat && viaje.conductor_lng) {
+        updateMap(viaje.conductor_lat, viaje.conductor_lng);
+      }
+
+      // Hide loading
+      document.getElementById('loadingScreen').style.opacity = '0';
+      setTimeout(() => document.getElementById('loadingScreen').style.display = 'none', 500);
+
+      // Subscribe to real-time updates
+      supabase.channel('track-' + rideId)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'viajes',
+          filter: `id=eq.${rideId}`,
+        }, (payload) => {
+          const row = payload.new;
+
+          if (row.estado === 'finalizado' || row.estado === 'cancelado') {
+            document.getElementById('endedScreen').style.display = 'flex';
+            return;
+          }
+
+          if (row.conductor_lat && row.conductor_lng) {
+            updateMap(row.conductor_lat, row.conductor_lng);
+          }
+        })
+        .subscribe();
+    }
+
+    loadRide();
+  </script>
+</body>
+</html>
