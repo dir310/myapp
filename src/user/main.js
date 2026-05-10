@@ -34,6 +34,39 @@ const state = {
   mapClickProcessing: false, // Anti-doble-tap: bloquea un segundo clic simultáneo
 };
 
+// ── Reloj del Perfil ──
+function iniciarRelojPerfil() {
+  const greetingEl = document.getElementById('profileGreeting');
+  const dateEl = document.getElementById('profileDate');
+  const timeEl = document.getElementById('profileTime');
+  if (!greetingEl || !dateEl || !timeEl) return;
+
+  function updateClock() {
+    const now = new Date();
+    const hours = now.getHours();
+    
+    // Saludo
+    let saludo = '¡Buenas Noches! 🌙';
+    if (hours >= 5 && hours < 12) saludo = '¡Buenos Días! ☀️';
+    else if (hours >= 12 && hours < 19) saludo = '¡Buenas Tardes! ⛅';
+    greetingEl.textContent = saludo;
+
+    // Fecha
+    const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
+    dateEl.textContent = now.toLocaleDateString('es-CO', opcionesFecha);
+
+    // Hora
+    let h = hours % 12;
+    h = h ? h : 12; // la hora 0 debe ser 12
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const m = now.getMinutes().toString().padStart(2, '0');
+    timeEl.innerHTML = `${h}:${m} <span style="font-size:10px; color:rgba(255,255,255,0.4);">${ampm}</span>`;
+  }
+
+  updateClock();
+  setInterval(updateClock, 60000); // Actualizar cada minuto
+}
+
 // ── Passenger Auth Logic ──
 function checkPassengerAuth() {
   const email = localStorage.getItem('calmovil_cliente_email');
@@ -50,6 +83,8 @@ function checkPassengerAuth() {
     if (overlay) overlay.style.display = 'none';
     if (profileWidget) {
         profileWidget.style.display = 'flex';
+        iniciarRelojPerfil();
+        
         const nombre = localStorage.getItem('calmovil_cliente_nombre') || 'Cliente';
         const telefono = localStorage.getItem('calmovil_cliente_telefono') || '-';
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
