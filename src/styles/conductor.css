@@ -232,7 +232,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: url('/background_conductor.png') no-repeat center center;
+  background: url('/background_conductor.png?v=2') no-repeat center center;
   background-size: cover;
   display: flex;
   flex-direction: column;
