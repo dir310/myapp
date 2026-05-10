@@ -150,3 +150,58 @@ export function zippyDanger(message, icon = '⚠️', title = '¿Estás seguro?'
     backdrop.querySelector('#zippyDangerNo').onclick  = () => handle(false);
   });
 }
+
+/**
+ * Notificación emergente rápida (Toast) que desaparece automáticamente.
+ * @param {string} message - Mensaje a mostrar.
+ * @param {string} type - 'success' (verde) o 'error' (rojo).
+ */
+export function zippyToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  const color = type === 'error' ? '#FF3B30' : '#30D158';
+  const icon = type === 'error' ? '🚫' : '⭐';
+
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(20,20,22,0.95);
+    border: 1px solid ${color};
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 15px ${color}40;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 30px;
+    font-weight: 800;
+    font-size: 14px;
+    z-index: 999999;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+  `;
+
+  toast.innerHTML = `<span style="font-size: 18px;">${icon}</span> <span>${message}</span>`;
+  document.body.appendChild(toast);
+
+  // Animate In
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      toast.style.opacity = '1';
+    }, 10);
+  });
+
+  // Animate Out & Remove
+  setTimeout(() => {
+    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      if (document.body.contains(toast)) document.body.removeChild(toast);
+    }, 400);
+  }, 2500);
+}
+

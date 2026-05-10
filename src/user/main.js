@@ -11,7 +11,7 @@ import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
-import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
+import { zippyAlert, zippyConfirm, zippyToast } from '../utils/ui-global.js';
 import { compressImage } from '../utils/image.js';
 
 let passengerCaptchaAnswer = 0;
@@ -96,6 +96,29 @@ function checkPassengerAuth() {
 
         // --- Verificación de Aprobación Administrativa ---
         const emailStored = localStorage.getItem('calmovil_cliente_email');
+        const clienteId = localStorage.getItem('calmovil_cliente_id');
+
+        // Configurar Escucha (Listener) para Calificación del Conductor
+        if (clienteId && !state.ratingListenerActive) {
+          state.ratingListenerActive = true;
+          supabase.channel('mis-viajes-updates')
+            .on('postgres_changes', {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'viajes',
+              filter: `pasajero_id=eq.${clienteId}`
+            }, (payload) => {
+              if (payload.new.calificacion_cliente && payload.new.calificacion_cliente > 0) {
+                const notified = JSON.parse(localStorage.getItem('zippy_notified_ratings') || '[]');
+                if (!notified.includes(payload.new.id)) {
+                  zippyToast(`¡El conductor te calificó con ${payload.new.calificacion_cliente} estrellas! ⭐`);
+                  notified.push(payload.new.id);
+                  localStorage.setItem('zippy_notified_ratings', JSON.stringify(notified));
+                }
+              }
+            }).subscribe();
+        }
+
         supabase
           .from('clientes')
           .select('estado_validacion')
