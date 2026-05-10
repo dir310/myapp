@@ -201,6 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
   checkPassengerAuth();
   generatePassengerCaptcha();
 
+  // Re-verificar auth si el usuario vuelve usando el botón de Atrás del navegador (bfcache)
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+      checkPassengerAuth();
+    }
+  });
+
   const btn = document.getElementById('savePassengerAuthBtn');
   const errorEl = document.getElementById('passengerAuthError');
 
@@ -465,8 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
               // Limpieza total agresiva
               localStorage.clear(); 
               sessionStorage.clear();
-              // Redirección forzada para limpiar memoria del navegador
-              window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+              // Usamos replace para no generar un nuevo historial y evitar que el botón atrás regrese al mapa
+              window.location.replace(window.location.origin + window.location.pathname);
           }
       });
   }
