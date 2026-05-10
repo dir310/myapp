@@ -138,6 +138,11 @@ export function renderViajes(viajes, handlers) {
     return v.conductor_id === currentConductor;
   });
 
+  // Verificar si el conductor ya tiene un viaje activo (aceptado o en_progreso)
+  const hasActiveTrip = filteredViajes.some(
+    (v) => v.conductor_id === currentConductor && (v.estado === 'aceptado' || v.estado === 'en_progreso')
+  );
+
   if (filteredViajes.length === 0) {
     const emptyHTML = `
       <div class="empty-state">
@@ -158,11 +163,21 @@ export function renderViajes(viajes, handlers) {
     .map((v) => {
       let actions = '';
       if (v.estado === 'buscando') {
-        actions = `
+        if (hasActiveTrip) {
+          // El conductor ya tiene un viaje activo: bloquear aceptación
+          actions = `
+          <div style="background: rgba(255,59,48,.08); border: 1.5px dashed rgba(255,59,48,.5); padding: 12px 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
+            <div style="font-size: 20px; margin-bottom: 4px;">🔒</div>
+            <p style="color: rgba(255,59,48,.9); font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 0 0 4px;">Viaje en curso</p>
+            <p style="color: rgba(255,255,255,.4); font-size: 11px; margin: 0;">Finaliza tu viaje activo para poder aceptar uno nuevo.</p>
+          </div>`;
+        } else {
+          actions = `
           <div class="actions-row">
             <button class="btn btn-reject" data-action="reject" data-id="${v.id}">❌ RECHAZAR</button>
             <button class="btn btn-accept" data-action="accept" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">✅ ACEPTAR</button>
           </div>`;
+        }
       } else if (v.estado === 'aceptado') {
         actions = `
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
