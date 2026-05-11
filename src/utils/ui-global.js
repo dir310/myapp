@@ -205,3 +205,61 @@ export function zippyToast(message, type = 'success') {
   }, 2500);
 }
 
+/**
+ * Modal de entrada de texto / valor.
+ * @param {string} message      - Mensaje o instrucción.
+ * @param {string} placeholder  - Texto de fondo del input.
+ * @param {string} icon         - Emoji central.
+ * @param {string} title        - Título.
+ * @param {string} inputType    - Tipo de input (text, number, etc).
+ * @returns {Promise<string|null>}
+ */
+export function zippyPrompt(message, placeholder = '', icon = '⌨️', title = '', inputType = 'text') {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'zippy-modal-backdrop';
+
+    const titleHTML = title ? `<div class="zippy-modal-title">${title}</div>` : '';
+
+    backdrop.innerHTML = `
+      <div class="zippy-modal-container">
+        <div class="zippy-modal-body">
+          <span class="zippy-modal-icon">${icon}</span>
+          ${titleHTML}
+          <div class="zippy-modal-message" style="margin-bottom:15px;">${message}</div>
+          <input type="${inputType}" id="zippyPromptInput" placeholder="${placeholder}" 
+            style="width:100%; padding:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; font-family:Inter,sans-serif; font-size:16px; margin-bottom:20px; outline:none; text-align:center; box-sizing:border-box;">
+          <div class="zippy-modal-divider"></div>
+          <div class="zippy-modal-actions">
+            <button class="zippy-modal-btn zippy-modal-btn-primary" id="zippyPromptOk">
+              <span>✅</span> Confirmar
+            </button>
+            <button class="zippy-modal-btn zippy-modal-btn-secondary" id="zippyPromptCancel">
+              <span>↩️</span> Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(backdrop);
+    const input = backdrop.querySelector('#zippyPromptInput');
+    setTimeout(() => {
+        backdrop.classList.add('show');
+        input.focus();
+    }, 10);
+
+    const handle = (val) => {
+      backdrop.classList.remove('show');
+      setTimeout(() => { backdrop.remove(); resolve(val); }, 280);
+    };
+
+    backdrop.querySelector('#zippyPromptOk').onclick = () => handle(input.value);
+    backdrop.querySelector('#zippyPromptCancel').onclick = () => handle(null);
+    
+    input.onkeydown = (e) => {
+        if (e.key === 'Enter') handle(input.value);
+        if (e.key === 'Escape') handle(null);
+    };
+  });
+}

@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { isAdminAuthenticated, showAdminPinOverlay, logoutAdmin } from './auth-admin.js';
-import { zippyAlert } from '../utils/ui-global.js';
+import { zippyAlert, zippyPrompt, zippyToast } from '../utils/ui-global.js';
 
 /**
  * Escapa texto para prevenir XSS — convierte caracteres especiales a entidades HTML.
@@ -136,11 +136,50 @@ async function loadClientes() {
 
     // 4.5 Billetera (Saldo Bono)
     const tdBilletera = document.createElement('td');
-    const saldo = c.saldo_bono || 0;
-    tdBilletera.innerHTML = `<div style="background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px 12px; display:inline-block;">
-        <span style="color:rgba(255,255,255,0.4); font-size:10px; text-transform:uppercase; display:block; margin-bottom:2px;">Saldo Actual</span>
-        <span style="color:#3498DB; font-weight:900; font-size:16px;">$${saldo.toLocaleString('es-CO')}</span>
-    </div>`;
+    let saldo = c.saldo_bono || 0;
+    
+    const bonoContainer = document.createElement('div');
+    bonoContainer.style.cssText = 'background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px 12px; display:inline-block;';
+    
+    const saldoSpan = document.createElement('span');
+    saldoSpan.style.cssText = 'color:#3498DB; font-weight:900; font-size:16px; display:block;';
+    saldoSpan.textContent = `$${saldo.toLocaleString('es-CO')}`;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.style.cssText = 'color:rgba(255,255,255,0.4); font-size:10px; text-transform:uppercase; display:block; margin-bottom:2px;';
+    labelSpan.textContent = 'Saldo Actual';
+
+    const giftBtn = document.createElement('button');
+    giftBtn.textContent = '🎁 Bono';
+    giftBtn.style.cssText = 'margin-top:8px; background:#3498DB; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; width:100%;';
+    
+    giftBtn.onclick = async () => {
+        const val = await zippyPrompt(`¿Cuánto saldo quieres regalarle a ${c.nombre}?`, 'Ej: 5000', '🎁', 'Regalar Bono', 'number');
+        if (val !== null && val !== '') {
+            const extra = parseInt(val, 10);
+            if (isNaN(extra)) return;
+
+            const finalSaldo = saldo + extra;
+            giftBtn.textContent = 'Cargando...';
+            giftBtn.disabled = true;
+
+            const { error: bonoErr } = await supabase.from('clientes').update({ saldo_bono: finalSaldo }).eq('id', c.id);
+            if (!bonoErr) {
+                saldo = finalSaldo;
+                saldoSpan.textContent = `$${saldo.toLocaleString('es-CO')}`;
+                zippyToast(`¡Se cargaron $${extra.toLocaleString('es-CO')} a ${c.nombre}!`);
+            } else {
+                zippyAlert('Error al cargar bono: ' + bonoErr.message, '❌');
+            }
+            giftBtn.textContent = '🎁 Bono';
+            giftBtn.disabled = false;
+        }
+    };
+
+    bonoContainer.appendChild(labelSpan);
+    bonoContainer.appendChild(saldoSpan);
+    bonoContainer.appendChild(giftBtn);
+    tdBilletera.appendChild(bonoContainer);
     tr.appendChild(tdBilletera);
 
     // 5. Documentos (Fotos)
