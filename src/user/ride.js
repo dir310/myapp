@@ -77,8 +77,14 @@ export async function acceptRide(state, map) {
 
   const originName = sanitizeHTML(document.getElementById('startInput').value || 'Punto de Inicio', 120);
   const destName = sanitizeHTML(document.getElementById('endInput').value || 'Destino', 120);
-  const priceStr = document.getElementById('priceValue').textContent.replace(/[^0-9]/g, '');
-  const price = parseInt(priceStr, 10);
+  const basePrice = window.zippyCurrentBasePrice || parseInt(document.getElementById('priceValue').textContent.replace(/[^0-9]/g, ''), 10);
+  
+  let bonoUsado = 0;
+  const bonoCb = document.getElementById('useBonoCheckbox');
+  if (bonoCb && bonoCb.checked && window.zippyCurrentBono > 0) {
+      bonoUsado = Math.min(basePrice, window.zippyCurrentBono);
+  }
+
   const distText = document.getElementById('routeDistance').textContent + ' km';
 
   const btn = document.getElementById('acceptRideBtn');
@@ -92,7 +98,7 @@ export async function acceptRide(state, map) {
     const cTelefono = sanitizeHTML(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
 
     // Validar que el precio sea un número válido
-    if (isNaN(price) || price <= 0) {
+    if (isNaN(basePrice) || basePrice <= 0) {
       throw new Error('Tarifa inválida. Por favor recalcula la ruta.');
     }
 
@@ -106,7 +112,8 @@ export async function acceptRide(state, map) {
       destino_nombre: destName,
       destino_lat: state.endLatLng.lat,
       destino_lng: state.endLatLng.lng,
-      tarifa: price,
+      tarifa: basePrice,
+      bono_usado: bonoUsado,
       distancia_km: distText,
       estado: 'buscando',
       cliente_nombre: cNombre,
@@ -135,12 +142,34 @@ export async function acceptRide(state, map) {
     }
 
     if (error) throw error;
+    
+    if (bonoUsado > 0) {
+        // Actualizar UI local
+        window.zippyCurrentBono -= bonoUsado;
+        let bonoEl = document.getElementById('displayClientBono');
+        let bonoTextEl = document.getElementById('availableBonoText');
+        if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+        if (bonoTextEl) bonoTextEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+        let bonoContainer = document.getElementById('bonoContainer');
+        if (window.zippyCurrentBono <= 0 && bonoContainer) {
+            bonoContainer.style.display = 'none';
+        }
+        
+        // Descontar en backend
+        const passengerId = localStorage.getItem('calmovil_cliente_id');
+        if (passengerId) {
+            supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
+        }
+    }
+
     state.currentRideId = data[0].id;
     state.rideCode = data[0].codigo_viaje;
     localStorage.setItem(STORAGE_KEY, state.currentRideId);
 
     // Notificar conductores via OneSignal (directo desde el navegador del pasajero)
-    sendPushToDrivers(price, distText);
+    sendPushToDrivers(basePrice, distText);
+
+    let finalPriceToPay = basePrice - bonoUsado;
 
     // Show searching UI with native CSS Radar
     document.getElementById('priceSection').innerHTML = `
@@ -150,7 +179,8 @@ export async function acceptRide(state, map) {
         </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
         <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
-        <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${price.toLocaleString('es-CO')}</div>
+        <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${finalPriceToPay.toLocaleString('es-CO')}</div>
+        ${bonoUsado > 0 ? `<div style="color:#3498DB; font-size:12px; font-weight:bold;">(Bono aplicado: -$${bonoUsado.toLocaleString('es-CO')})</div>` : ''}
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
     `;
