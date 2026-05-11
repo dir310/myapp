@@ -134,6 +134,15 @@ async function loadClientes() {
     tdIden.innerHTML = `<span style="font-weight:bold;">${esc(c.cedula)}</span><br><span style="font-size:11px; opacity:0.6;">Edad: ${c.edad} años</span>`;
     tr.appendChild(tdIden);
 
+    // 4.5 Billetera (Saldo Bono)
+    const tdBilletera = document.createElement('td');
+    const saldo = c.saldo_bono || 0;
+    tdBilletera.innerHTML = `<div style="background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px 12px; display:inline-block;">
+        <span style="color:rgba(255,255,255,0.4); font-size:10px; text-transform:uppercase; display:block; margin-bottom:2px;">Saldo Actual</span>
+        <span style="color:#3498DB; font-weight:900; font-size:16px;">$${saldo.toLocaleString('es-CO')}</span>
+    </div>`;
+    tr.appendChild(tdBilletera);
+
     // 5. Documentos (Fotos)
     const tdDocs = document.createElement('td');
     if (c.foto_frontal_url || c.foto_trasera_url) {
