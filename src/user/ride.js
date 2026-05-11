@@ -450,7 +450,55 @@ async function showDriverAssigned(driverId, state) {
   ];
 
   // Generar HTML de la Ficha del Conductor (Ventana Base)
-  // Extract the Code Badge into a standalone clean container at the top
+  const renderPaymentOptions = () => {
+    const container = document.getElementById('wompiContainer');
+    if (!container) return;
+
+    if (isPaid) {
+      container.innerHTML = '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <style>
+        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+        @keyframes cashPulse{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
+        @keyframes btnEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        #wompiPayBtn{animation:btnEntrance .4s ease forwards, shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+        #wompiPayBtn:hover{transform:scale(1.02);filter:brightness(1.15);}
+        #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
+        #cashPayBtn:hover{transform:scale(1.02);}
+      </style>
+      
+      ${bono > 0 ? `
+        <div style="background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px; margin-bottom:10px; font-size:11px; color:#3498DB; font-weight:700;">
+          🎁 Bono aplicado: -$${bono.toLocaleString('es-CO')}
+        </div>
+      ` : ''}
+
+      <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
+        💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
+      </button>
+      <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
+        💵 Pagar en Efectivo ($${saldoFinal.toLocaleString('es-CO')})
+      </button>
+    `;
+
+    document.getElementById('wompiPayBtn').onclick = () => {
+      initWompiCheckout(state.currentRideId, saldoFinal, viajeInfo?.codigo_viaje || 'VIAJE');
+    };
+
+    document.getElementById('cashPayBtn').onclick = () => {
+      container.innerHTML = `
+        <div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:12px; border-radius:12px; border:1px solid rgba(255,179,71,.3); display:flex; flex-direction:column; gap:8px;">
+          <span>💵 PAGO EN EFECTIVO AL FINALIZAR ($${saldoFinal.toLocaleString('es-CO')})</span>
+          <button id="changePaymentBtn" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; text-decoration:underline; cursor:pointer; font-weight:600;">🔄 Cambiar método de pago</button>
+        </div>
+      `;
+      document.getElementById('changePaymentBtn').onclick = renderPaymentOptions;
+    };
+  };
+
   const rideCodeBadgeHTML = `
     <div style="display:flex; justify-content:center; margin-bottom:12px;">
       <div style="background:rgba(255,107,0,.15); border:1px solid rgba(255,107,0,.3); border-radius:12px; padding:8px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 4px 15px rgba(255,107,0,0.15);">
@@ -520,32 +568,7 @@ async function showDriverAssigned(driverId, state) {
 
       <p id="etaText" style="color:#FFB347; font-size:14px; font-weight:bold; margin: 12px 0; background:rgba(255,255,255,.05); padding:10px; border-radius:12px;">Calculando llegada...</p>
       
-      <div id="wompiContainer" style="margin-bottom: 12px;">
-    ${isPaid ?
-      '<div style="color:#30D158; font-weight:bold; background:rgba(48,209,88,.1); padding:10px; border-radius:10px; border:1px solid rgba(48,209,88,.3);">✅ PAGADO POR WOMPI</div>' :
-      `<style>
-        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
-        @keyframes cashPulse{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
-        @keyframes btnEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        #wompiPayBtn{animation:btnEntrance .4s ease forwards, shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
-        #wompiPayBtn:hover{transform:scale(1.02);filter:brightness(1.15);}
-        #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
-        #cashPayBtn:hover{transform:scale(1.02);}
-      </style>
-      ${bono > 0 ? `
-        <div style="background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px; margin-bottom:10px; font-size:11px; color:#3498DB; font-weight:700;">
-          🎁 Bono aplicado: -$${bono.toLocaleString('es-CO')}
-        </div>
-      ` : ''}
-
-      <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
-        💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
-      </button>
-      <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
-        💵 Pagar en Efectivo ($${saldoFinal.toLocaleString('es-CO')})
-      </button>`
-    }
-      </div>
+      <div id="wompiContainer" style="margin-bottom: 12px;"></div>
 
       <!-- Botón Compartir Viaje -->
       <button id="shareRideBtn" style="width:100%; padding:13px; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.85); transition:all .2s;">
@@ -562,6 +585,8 @@ async function showDriverAssigned(driverId, state) {
     </div>
   `;
 
+  renderPaymentOptions();
+
   // Init game listeners
   initGame();
 
@@ -569,20 +594,6 @@ async function showDriverAssigned(driverId, state) {
   if (openGameBtn) {
     openGameBtn.onclick = () => {
       document.getElementById('zippyJumpModal').style.display = 'flex';
-    };
-  }
-
-  const wompiBtn = document.getElementById('wompiPayBtn');
-  if (wompiBtn) {
-    wompiBtn.onclick = () => {
-      initWompiCheckout(state.currentRideId, tarifa, viajeInfo?.codigo_viaje || 'VIAJE');
-    };
-  }
-
-  const cashBtn = document.getElementById('cashPayBtn');
-  if (cashBtn) {
-    cashBtn.onclick = () => {
-      document.getElementById('wompiContainer').innerHTML = '<div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:10px; border-radius:10px; border:1px solid rgba(255,179,71,.3);">💵 PAGO EN EFECTIVO AL FINALIZAR</div>';
     };
   }
 
