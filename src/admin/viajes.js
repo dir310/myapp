@@ -79,13 +79,21 @@ async function loadViajes() {
         `;
         tr.appendChild(tdRuta);
 
-        // 7. Valor
+        // 7. Bono
+        const tdBono = document.createElement('td');
+        const bono = v.bono_usado || 0;
+        tdBono.innerHTML = bono > 0 ? 
+            `<span style="color:#3498DB; font-weight:700;">-$${bono.toLocaleString('es-CO')}</span>` : 
+            '<span style="opacity:0.2;">$0</span>';
+        tr.appendChild(tdBono);
+
+        // 8. Valor Total
         const tdValor = document.createElement('td');
         tdValor.className = 'price-text';
         tdValor.textContent = `$${v.tarifa.toLocaleString('es-CO')}`;
         tr.appendChild(tdValor);
 
-        // 8. Rating
+        // 9. Rating
         const tdRating = document.createElement('td');
         tdRating.style.textAlign = 'center';
         tdRating.innerHTML = v.calificacion ? `<span style="color:#FFD700; font-weight:900;">${v.calificacion}</span>` : '-';
@@ -128,7 +136,7 @@ async function init() {
             const rows = document.querySelectorAll('#viajesList tr');
             rows.forEach(row => {
                 // Evitar ocultar la fila de "Cargando..." o "Error..." si no tienen celdas reales
-                if (row.cells.length < 8) return; 
+                if (row.cells.length < 9) return; 
                 
                 if (row.textContent.toLowerCase().includes(filter)) {
                     row.style.display = '';
