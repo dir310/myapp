@@ -214,8 +214,8 @@ export function renderViajes(viajes, handlers) {
           ${v.pago_wompi ? 
             `<div class="price" style="color:#30D158; font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; background:rgba(48,209,88,.2); color:#30D158; padding:3px 6px; border-radius:4px; display:inline-block; margin-top:4px;">✅ PAGADO (WOMPI)</span></div>` : 
             (v.bono_usado && v.bono_usado > 0 ? 
-            `<div class="price" style="font-size:20px; color:#30D158;">$${(v.tarifa - v.bono_usado).toLocaleString('es-CO')} <br><span style="font-size:10px; color:#3498DB; font-weight:bold; display:inline-block; margin-top:4px;">Efectivo (Zippy debe $${v.bono_usado.toLocaleString('es-CO')})</span></div>` :
-            `<div class="price" style="font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; color:rgba(255,255,255,.4); display:inline-block; margin-top:4px;">(Cobrar en efectivo)</span></div>`)
+            `<div class="price" style="font-size:24px; color:#30D158; font-weight:900;">$${(v.tarifa - v.bono_usado).toLocaleString('es-CO')} <br><span style="font-size:11px; background:rgba(52,152,219,0.2); color:#3498DB; padding:4px 8px; border-radius:6px; font-weight:bold; display:inline-block; margin-top:4px; border:1px solid rgba(52,152,219,0.3);">💰 COBRAR EN EFECTIVO</span><br><span style="font-size:10px; color:rgba(255,255,255,0.5); display:block; margin-top:2px;">(Zippy paga el bono de $${v.bono_usado.toLocaleString('es-CO')})</span></div>` :
+            `<div class="price" style="font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; color:rgba(255,255,255,.4); display:inline-block; margin-top:4px;">💵 Cobrar en efectivo</span></div>`)
           }
         </div>
         <div style="flex:1; text-align:right;">

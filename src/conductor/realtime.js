@@ -126,6 +126,10 @@ function setupRealtimeWithReconnect() {
         { event: 'INSERT', schema: 'public', table: 'viajes' },
         (payload) => {
           if (payload.new.estado === 'buscando') {
+            const bono = payload.new.bono_usado || 0;
+            const cash = payload.new.tarifa - bono;
+            const cashMsg = bono > 0 ? `💰 COBRAR: $${cash.toLocaleString('es-CO')} (BONO: $${bono.toLocaleString('es-CO')})` : `💵 Ganancia: $${cash.toLocaleString('es-CO')}`;
+
             activeViajes.unshift(payload.new);
             renderViajes(activeViajes, getHandlers());
             showNewRideBanner();
@@ -133,7 +137,7 @@ function setupRealtimeWithReconnect() {
             if (document.visibilityState === 'hidden' && Notification.permission === 'granted') {
               navigator.serviceWorker.ready.then(reg => {
                 reg.showNotification('🚕 ¡Nueva Solicitud ZIPPY!', {
-                  body: `Ganancia: $${payload.new.tarifa.toLocaleString('es-CO')} | ${payload.new.distancia_km}`,
+                  body: `${cashMsg} | ${payload.new.distancia_km}`,
                   icon: '/icons/icon-192x192.png',
                   badge: '/icons/icon-192x192.png',
                   vibrate: [500, 110, 500, 110, 500, 110, 500],
