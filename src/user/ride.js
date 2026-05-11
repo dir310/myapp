@@ -410,9 +410,11 @@ async function showDriverAssigned(driverId, state) {
 
   // Fetch datos reales a base de datos (incluyendo datos de pago)
   const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
-  const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje').eq('id', state.currentRideId).single();
+  const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje, bono_usado').eq('id', state.currentRideId).single();
   const tarifa = viajeInfo?.tarifa || 0;
   const isPaid = viajeInfo?.pago_wompi === true;
+  const bono = viajeInfo?.bono_usado || 0;
+  const saldoFinal = tarifa - bono;
 
   // Fetch rating promedio
   const { data: ratingData } = await supabase
@@ -530,11 +532,17 @@ async function showDriverAssigned(driverId, state) {
         #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
         #cashPayBtn:hover{transform:scale(1.02);}
       </style>
+      ${bono > 0 ? `
+        <div style="background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px; margin-bottom:10px; font-size:11px; color:#3498DB; font-weight:700;">
+          🎁 Bono aplicado: -$${bono.toLocaleString('es-CO')}
+        </div>
+      ` : ''}
+
       <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
-        💳 Realizar Pago ($${tarifa.toLocaleString('es-CO')})
+        💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
       </button>
       <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
-        💵 Pagar en Efectivo ($${tarifa.toLocaleString('es-CO')})
+        💵 Pagar en Efectivo ($${saldoFinal.toLocaleString('es-CO')})
       </button>`
     }
       </div>
