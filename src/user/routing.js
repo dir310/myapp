@@ -31,7 +31,16 @@ function showPrice(distKm, mins) {
   window.zippyCurrentBasePrice = price;
   
   const bonoCb = document.getElementById('useBonoCheckbox');
+  const bonoContainer = document.getElementById('bonoContainer');
   if (bonoCb) bonoCb.checked = false; // Resetear al calcular nueva ruta
+  
+  if (bonoContainer) {
+      if (window.zippyCurrentBono && window.zippyCurrentBono > 0) {
+          bonoContainer.style.display = 'flex';
+      } else {
+          bonoContainer.style.display = 'none';
+      }
+  }
 
   const el = document.getElementById('priceValue');
   if (el) el.textContent = '$' + price.toLocaleString('es-CO');
