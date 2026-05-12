@@ -496,6 +496,8 @@ async function showDriverAssigned(driverId, state) {
         </div>
       `;
       document.getElementById('changePaymentBtn').onclick = renderPaymentOptions;
+      // Notificar al conductor que el pasajero eligió efectivo
+      supabase.from('viajes').update({ pago_efectivo_confirmado: true }).eq('id', state.currentRideId).then();
     };
   };
 

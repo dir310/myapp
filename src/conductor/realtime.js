@@ -4,7 +4,7 @@
 import { supabase } from '../config/supabase.js';
 import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
 import { getCurrentProfile, isDriverApproved } from './auth.js';
-import { zippyAlert, zippyConfirm, zippyDanger } from '../utils/ui-global.js';
+import { zippyAlert, zippyConfirm, zippyDanger, zippyPaymentToast } from '../utils/ui-global.js';
 
 let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
@@ -167,6 +167,15 @@ function setupRealtimeWithReconnect() {
               misViajesFinalizados = misViajesFinalizados.filter(id => id !== payload.new.id);
             }
           }
+          // ── Notificación de método de pago ──
+          const oldTrip = activeViajes.find(v => v.id === payload.new.id);
+          if (oldTrip) {
+            const wompiAcabaDePagar = !oldTrip.pago_wompi && payload.new.pago_wompi === true;
+            const efectivoConfirmado = !oldTrip.pago_efectivo_confirmado && payload.new.pago_efectivo_confirmado === true;
+            if (wompiAcabaDePagar) zippyPaymentToast('wompi');
+            else if (efectivoConfirmado) zippyPaymentToast('efectivo');
+          }
+
           if (validStates.includes(payload.new.estado)) {
             let needsRender = false;
             if (index !== -1) {

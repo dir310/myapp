@@ -152,6 +152,73 @@ export function zippyDanger(message, icon = '⚠️', title = '¿Estás seguro?'
 }
 
 /**
+ * Toast visual de método de pago — notifica al conductor cómo pagó el pasajero.
+ * @param {'wompi'|'efectivo'} method - Método de pago del pasajero.
+ */
+export function zippyPaymentToast(method) {
+  const isWompi = method === 'wompi';
+  const color   = isWompi ? '#30D158' : '#FF9500';
+  const glow    = isWompi ? 'rgba(48,209,88,0.35)' : 'rgba(255,149,0,0.35)';
+  const icon    = isWompi ? '💳' : '💵';
+  const label   = isWompi ? '¡Pagado por Wompi!' : 'Paga en Efectivo';
+  const sub     = isWompi ? 'El pasajero ya realizó el pago digital' : 'El pasajero pagará al llegar';
+
+  // Evitar duplicados
+  const existing = document.getElementById('zippy-payment-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'zippy-payment-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(15,15,25,0.97);
+    border: 2px solid ${color};
+    box-shadow: 0 0 0 1px ${color}30, 0 20px 60px rgba(0,0,0,0.6), 0 0 40px ${glow};
+    color: #fff;
+    padding: 28px 36px;
+    border-radius: 24px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    z-index: 9999999;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    min-width: 220px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  `;
+  toast.innerHTML = `
+    <span style="font-size:52px;line-height:1;filter:drop-shadow(0 0 12px ${color});">${icon}</span>
+    <span style="font-size:20px;color:${color};letter-spacing:-0.3px;">${label}</span>
+    <span style="font-size:12px;color:rgba(255,255,255,0.55);font-weight:600;">${sub}</span>
+  `;
+  document.body.appendChild(toast);
+
+  // Entrada
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translate(-50%, -50%) scale(1)';
+    }, 10);
+  });
+
+  // Salida tras 2 segundos visibles
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translate(-50%, -50%) scale(0.85)';
+    setTimeout(() => { if (document.body.contains(toast)) toast.remove(); }, 350);
+  }, 2350);
+}
+
+/**
  * Notificación emergente rápida (Toast) que desaparece automáticamente.
  * @param {string} message - Mensaje a mostrar.
  * @param {string} type - 'success' (verde) o 'error' (rojo).
