@@ -87,9 +87,12 @@ export async function acceptRide(state, map) {
 
   const distText = document.getElementById('routeDistance').textContent + ' km';
 
-  const btn = document.getElementById('acceptRideBtn');
-  btn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo viaje...';
-  btn.disabled = true;
+  const btnW = document.getElementById('payWompiBtn');
+  const btnE = document.getElementById('payEfectivoBtn');
+  if (btnW) btnW.disabled = true;
+  if (btnE) btnE.disabled = true;
+  const activeBtn = state.selectedPaymentMethod === 'wompi' ? btnW : btnE;
+  if (activeBtn) activeBtn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo...';
 
   try {
     // Sanitizar datos del cliente antes de enviar
@@ -119,7 +122,8 @@ export async function acceptRide(state, map) {
       cliente_nombre: cNombre,
       cliente_cedula: cCedula,
       cliente_telefono: cTelefono,
-      pasajero_id: localStorage.getItem('calmovil_cliente_id') || null
+      pasajero_id: localStorage.getItem('calmovil_cliente_id') || null,
+      pago_efectivo_confirmado: state.selectedPaymentMethod === 'efectivo'
     };
 
     let data, error;
@@ -136,7 +140,7 @@ export async function acceptRide(state, map) {
 
       console.warn(`Intento ${attempts} fallido (Cold Start?). Reintentando...`, error);
       if (attempts < MAX_ATTEMPTS) {
-        btn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Conectando...';
+        if (activeBtn) activeBtn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Conectando...';
         await new Promise(r => setTimeout(r, 1500 * attempts)); // Espera incremental
       }
     }
@@ -194,8 +198,8 @@ export async function acceptRide(state, map) {
     listenForDriver(state.currentRideId, state, map);
   } catch (err) {
     showStatus('❌ Falló la conexión. Intenta pedir el viaje de nuevo.', true);
-    btn.innerHTML = '🏍️ Pedir Viaje';
-    btn.disabled = false;
+    if (btnW) { btnW.innerHTML = '💳 Wompi'; btnW.disabled = false; }
+    if (btnE) { btnE.innerHTML = '💵 Efectivo'; btnE.disabled = false; }
     console.error(err);
   }
 }
@@ -459,15 +463,26 @@ async function showDriverAssigned(driverId, state) {
       return;
     }
 
+    let buttonsHtml = '';
+    if (state.selectedPaymentMethod === 'wompi') {
+      buttonsHtml = `
+        <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
+          💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
+        </button>
+      `;
+    } else {
+      buttonsHtml = `
+        <div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:12px; border-radius:12px; border:1px solid rgba(255,179,71,.3); display:flex; flex-direction:column; gap:8px;">
+          <span>💵 PAGO EN EFECTIVO AL FINALIZAR ($${saldoFinal.toLocaleString('es-CO')})</span>
+        </div>
+      `;
+    }
+
     container.innerHTML = `
       <style>
         @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
-        @keyframes cashPulse{0%,100%{box-shadow:0 4px 15px rgba(48,209,88,0.2)}50%{box-shadow:0 4px 30px rgba(48,209,88,0.55)}}
-        @keyframes btnEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        #wompiPayBtn{animation:btnEntrance .4s ease forwards, shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
+        #wompiPayBtn{animation:shimmer 2.5s linear infinite;background:linear-gradient(90deg,#1a1a2e,#6c47ff,#c850c0,#6c47ff,#1a1a2e);background-size:300% auto;color:#fff;border:none;}
         #wompiPayBtn:hover{transform:scale(1.02);filter:brightness(1.15);}
-        #cashPayBtn{animation:btnEntrance .5s ease .1s both, cashPulse 2.5s ease infinite;}
-        #cashPayBtn:hover{transform:scale(1.02);}
       </style>
       
       ${bono > 0 ? `
@@ -476,29 +491,15 @@ async function showDriverAssigned(driverId, state) {
         </div>
       ` : ''}
 
-      <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
-        💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
-      </button>
-      <button id="cashPayBtn" style="width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;background:rgba(48,209,88,.12);border:1.5px solid rgba(48,209,88,.35);color:#30D158;transition:transform .2s;">
-        💵 Pagar en Efectivo ($${saldoFinal.toLocaleString('es-CO')})
-      </button>
+      ${buttonsHtml}
     `;
 
-    document.getElementById('wompiPayBtn').onclick = () => {
-      initWompiCheckout(state.currentRideId, saldoFinal, viajeInfo?.codigo_viaje || 'VIAJE');
-    };
-
-    document.getElementById('cashPayBtn').onclick = () => {
-      container.innerHTML = `
-        <div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:12px; border-radius:12px; border:1px solid rgba(255,179,71,.3); display:flex; flex-direction:column; gap:8px;">
-          <span>💵 PAGO EN EFECTIVO AL FINALIZAR ($${saldoFinal.toLocaleString('es-CO')})</span>
-          <button id="changePaymentBtn" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:10px; text-decoration:underline; cursor:pointer; font-weight:600;">🔄 Cambiar método de pago</button>
-        </div>
-      `;
-      document.getElementById('changePaymentBtn').onclick = renderPaymentOptions;
-      // Notificar al conductor que el pasajero eligió efectivo
-      supabase.from('viajes').update({ pago_efectivo_confirmado: true }).eq('id', state.currentRideId).then();
-    };
+    const wompiBtn = document.getElementById('wompiPayBtn');
+    if (wompiBtn) {
+      wompiBtn.onclick = () => {
+        initWompiCheckout(state.currentRideId, saldoFinal, viajeInfo?.codigo_viaje || 'VIAJE');
+      };
+    }
   };
 
   const rideCodeBadgeHTML = `
