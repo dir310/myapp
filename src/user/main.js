@@ -935,7 +935,11 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
   const target = e.target.closest('button');
   if (!target) return;
 
-  if (target.id === 'acceptRideBtn') {
+  if (target.id === 'payEfectivoBtn') {
+    state.selectedPaymentMethod = 'efectivo';
+    acceptRide(state, map);
+  } else if (target.id === 'payWompiBtn') {
+    state.selectedPaymentMethod = 'wompi';
     acceptRide(state, map);
   } else if (target.id === 'cancelRideBtn' || target.id === 'cancelSearchBtn') {
     cancelRide(state, map);

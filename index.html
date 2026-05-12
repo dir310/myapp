@@ -270,10 +270,13 @@
                         <label for="useBonoCheckbox" style="color:#3498DB; font-size:13px; font-weight:800; cursor:pointer;">Usar bono (<span id="availableBonoText">$0</span>)</label>
                     </div>
                 </div>
-                <div class="actions">
-                    <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); flex:0.4;"
-                        id="cancelRideBtn">Cancelar</button>
-                    <button class="btn btn-primary" id="acceptRideBtn">🏍️ Pedir Viaje</button>
+                <div class="actions" id="bookingActions" style="flex-direction:column; gap:10px;">
+                    <div style="color:rgba(255,255,255,0.7); font-size:12px; text-align:center; font-weight:bold;">¿Cómo vas a pagar este viaje?</div>
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <button class="btn" id="payEfectivoBtn" style="flex:1; background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.2); font-size:13px;">💵 Efectivo</button>
+                        <button class="btn" id="payWompiBtn" style="flex:1; background:linear-gradient(135deg, #30D158, #28b84d); color:#000; border:none; font-weight:800; font-size:13px;">💳 Wompi</button>
+                    </div>
+                    <button class="btn" id="cancelRideBtn" style="width:100%; background:none; color:rgba(255,255,255,.5); font-size:12px; margin-top:5px; border:none;">Cancelar Ruta</button>
                 </div>
             </div>
 
