@@ -923,11 +923,42 @@ export async function cancelRide(state, map) {
 
   stopListening(state);
   if (state.currentRideId) {
+    // ── Devolver bono si el viaje tenía uno aplicado ──
+    try {
+      const { data: viaje } = await supabase
+        .from('viajes')
+        .select('bono_usado, pasajero_id')
+        .eq('id', state.currentRideId)
+        .single();
+
+      if (viaje?.bono_usado > 0 && viaje?.pasajero_id) {
+        const { data: cliente } = await supabase
+          .from('clientes')
+          .select('saldo_bono')
+          .eq('id', viaje.pasajero_id)
+          .single();
+
+        const saldoRestaurado = (cliente?.saldo_bono || 0) + viaje.bono_usado;
+
+        await supabase
+          .from('clientes')
+          .update({ saldo_bono: saldoRestaurado })
+          .eq('id', viaje.pasajero_id);
+
+        // Actualizar UI local también
+        window.zippyCurrentBono = saldoRestaurado;
+        console.log(`[ZIPPY] Bono devuelto: $${viaje.bono_usado.toLocaleString('es-CO')}`);
+      }
+    } catch (e) {
+      console.warn('[ZIPPY] No se pudo devolver el bono al cancelar:', e);
+    }
+
     localStorage.removeItem(STORAGE_KEY);
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
   }
   location.reload();
 }
+
 
 /**
  * Restores an active ride after page refresh.
