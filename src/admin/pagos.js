@@ -53,14 +53,20 @@ async function initPagos() {
         saldos[cId].viajesCount++;
         saldos[cId].viajesIds.push(v.id);
 
-        // La tarifa ya incluye la comisión de Wompi desde el momento en que se creó el viaje.
-        // El conductor gana el 90% de la tarifa cobrada al cliente (tanto efectivo como Wompi).
+        const bono = v.bono_usado || 0;
+        const cobroReal = v.tarifa - bono;
+
+        // Guardamos la tarifa original para poder sacar el 10% de comisión correctamente
+        saldos[cId].tarifaBrutaTotal = (saldos[cId].tarifaBrutaTotal || 0) + v.tarifa;
+        saldos[cId].totalBono = (saldos[cId].totalBono || 0) + bono;
+
+        // La tarifa cobrada (sea Wompi o Efectivo) es la tarifa menos el bono
         if (v.pago_wompi) {
-            saldos[cId].totalWompi += v.tarifa;
-            globalWompi += v.tarifa;
+            saldos[cId].totalWompi += cobroReal;
+            globalWompi += cobroReal;
         } else {
-            saldos[cId].totalEfectivo += v.tarifa;
-            globalCash += v.tarifa;
+            saldos[cId].totalEfectivo += cobroReal;
+            globalCash += cobroReal;
         }
     });
 
@@ -73,9 +79,9 @@ async function initPagos() {
     let html = '';
     for (const cId in saldos) {
         const s = saldos[cId];
-        const totalBase = s.totalEfectivo + s.totalWompi;
-        const comisionApp = Math.round(totalBase * 0.10);
-        const gananciaConductor = totalBase - comisionApp;
+        const tarifaBruta = s.tarifaBrutaTotal || 0;
+        const comisionApp = Math.round(tarifaBruta * 0.10);
+        const gananciaConductor = tarifaBruta - comisionApp;
         
         // El conductor ya tiene en su bolsillo s.totalEfectivo
         // Saldo = Lo que debería tener (Ganancia) - Lo que ya tiene (Efectivo)
@@ -92,13 +98,19 @@ async function initPagos() {
             saldoHtml = `<span style="color:rgba(255,255,255,.5);font-weight:900;">A Paz y Salvo ($0)</span>`;
         }
 
+        // Mostrar indicador sutil si hubo bono, en el mismo color que pides (naranja/gris)
+        let comisionHtml = `<span style="color:rgba(255,255,255,.6);">$${comisionApp.toLocaleString('es-CO')}</span>`;
+        if (s.totalBono && s.totalBono > 0) {
+            comisionHtml += `<br><span style="font-size:10px;color:#FFB347;background:rgba(255,179,71,0.1);padding:2px 6px;border-radius:4px;border:1px solid rgba(255,179,71,0.3);">🎁 Incluye Bono de $${s.totalBono.toLocaleString('es-CO')}</span>`;
+        }
+
         html += `
             <tr>
                 <td><b>${s.nombre}</b></td>
                 <td>${s.viajesCount}</td>
                 <td style="color:#FFB347;">$${s.totalEfectivo.toLocaleString('es-CO')}</td>
                 <td style="color:#30D158;">$${s.totalWompi.toLocaleString('es-CO')}</td>
-                <td style="color:rgba(255,255,255,.6);">$${comisionApp.toLocaleString('es-CO')}</td>
+                <td>${comisionHtml}</td>
                 <td>${saldoHtml}</td>
                 <td>
                     <button class="btn-liquidar" data-cid="${cId}" data-ids='${JSON.stringify(s.viajesIds)}'>
