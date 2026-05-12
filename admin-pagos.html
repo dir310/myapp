@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,100 +8,29 @@
     <link rel="stylesheet" href="/src/styles/common.css">
     <link rel="stylesheet" href="/src/styles/conductor.css">
     <style>
-        body {
-            padding: 20px;
-            text-align: left;
-            background: #111;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-        }
+        body { padding: 20px; text-align: left; background: #111; color: #fff; font-family: 'Inter', sans-serif; }
+        .table-container { width: 100%; overflow-x: auto; margin-top: 30px; }
+        table { width: 100%; min-width: 800px; border-collapse: collapse; background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; }
+        th { background: #FF6B00; color: white; text-align: left; padding: 15px; font-size: 13px; text-transform: uppercase; font-weight: 800; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        
+        .metric-box { background: rgba(255,255,255,.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,.1); flex: 1; }
+        .metric-title { font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .metric-val { font-size: 24px; font-weight: 900; }
 
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 30px;
-        }
-
-        table {
-            width: 100%;
-            min-width: 800px;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        th {
-            background: #FF6B00;
-            color: white;
-            text-align: left;
-            padding: 15px;
-            font-size: 13px;
-            text-transform: uppercase;
-            font-weight: 800;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 14px;
-            vertical-align: middle;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        .metric-box {
-            background: rgba(255, 255, 255, .05);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, .1);
-            flex: 1;
-        }
-
-        .metric-title {
-            font-size: 11px;
-            color: rgba(255, 255, 255, .5);
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .metric-val {
-            font-size: 24px;
-            font-weight: 900;
-        }
-
-        .btn-liquidar {
-            background: #30D158;
-            color: #000;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .btn-liquidar:disabled {
-            background: rgba(255, 255, 255, .2);
-            color: rgba(255, 255, 255, .4);
-            cursor: not-allowed;
-        }
+        .btn-liquidar { background: #30D158; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-liquidar:disabled { background: rgba(255,255,255,.2); color: rgba(255,255,255,.4); cursor: not-allowed; }
     </style>
 </head>
-
 <body>
     <div style="text-align:center; margin:20px 0; position:relative; width: 100%;">
         <img src="https://i.imgur.com/uyhz6CQ.jpeg" alt="ZIPPY logo" style="max-width:150px; height:auto;" />
     </div>
-
+    
     <div style="text-align:center; margin:20px 0;">
         <h1 style="margin:0; font-size:1.5rem; color:#fff;">💰 Liquidación de Conductores</h1>
-        <p style="color: rgba(255,255,255,.6); margin-top: 10px; font-size: 14px;">Cuadre de caja (90% Conductor / 10%
-            App)</p>
+        <p style="color: rgba(255,255,255,.6); margin-top: 10px; font-size: 14px;">Cuadre de caja (90% Conductor / 10% App)</p>
     </div>
 
     <!-- Panel de Resumen Global (Opcional, futuro) -->
@@ -119,10 +47,6 @@
             <div class="metric-title">Recaudado Efectivo</div>
             <div class="metric-val" id="totalCash" style="color: #FFB347;">-</div>
         </div>
-        <div class="metric-box" style="border-color:rgba(52,152,219,0.4);">
-            <div class="metric-title" style="color:#3498DB;">Total Bonos a Dar</div>
-            <div class="metric-val" id="totalBonos" style="color:#3498DB;">-</div>
-        </div>
     </div>
 
     <div class="table-container">
@@ -133,23 +57,17 @@
                     <th>Viajes (No liquidados)</th>
                     <th>Cobrado en Efectivo</th>
                     <th>Cobrado por Wompi</th>
-                    <th style="background:#1a4a6b;">🎁 Bono a Dar</th>
                     <th>Comisión App (10%)</th>
                     <th>Saldo Final</th>
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="pagosList">
-                <tr>
-                    <td colspan="8" style="text-align:center; padding:30px;">
-                        <div class="spinner"></div><br><br>Calculando finanzas...
-                    </td>
-                </tr>
+                <tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div><br><br>Calculando finanzas...</td></tr>
             </tbody>
         </table>
     </div>
 
     <script type="module" src="/src/admin/pagos.js"></script>
 </body>
-
 </html>
