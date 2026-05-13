@@ -935,12 +935,64 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
   const target = e.target.closest('button');
   if (!target) return;
 
-  if (target.id === 'payEfectivoBtn') {
-    state.selectedPaymentMethod = 'efectivo';
+  // ── Seleccionar método de pago ──
+  if (target.id === 'payEfectivoBtn' || target.id === 'payWompiBtn') {
+    const isWompi = target.id === 'payWompiBtn';
+    state.selectedPaymentMethod = isWompi ? 'wompi' : 'efectivo';
+
+    const btnW = document.getElementById('payWompiBtn');
+    const btnE = document.getElementById('payEfectivoBtn');
+    if (btnW && btnE) {
+      // Resaltar seleccionado, atenuar el otro
+      btnW.style.opacity   = isWompi ? '1' : '0.4';
+      btnW.style.transform = isWompi ? 'scale(1.05)' : 'scale(1)';
+      btnW.style.boxShadow = isWompi ? '0 0 0 2.5px #30D158' : 'none';
+      btnW.innerHTML       = isWompi ? '✅ Wompi' : '💳 Wompi';
+
+      btnE.style.opacity   = isWompi ? '0.4' : '1';
+      btnE.style.transform = isWompi ? 'scale(1)' : 'scale(1.05)';
+      btnE.style.boxShadow = isWompi ? 'none' : '0 0 0 2.5px rgba(255,255,255,.5)';
+      btnE.innerHTML       = isWompi ? '💵 Efectivo' : '✅ Efectivo';
+    }
+
+    // Mostrar "Cambiar método"
+    const changeRow = document.getElementById('changePaymentRow');
+    if (changeRow) changeRow.style.display = 'block';
+
+    // Habilitar "Pedir Viaje"
+    const pedirBtn = document.getElementById('pedirViajeBtn');
+    if (pedirBtn) {
+      pedirBtn.disabled = false;
+      pedirBtn.style.opacity = '1';
+      pedirBtn.style.cursor = 'pointer';
+      pedirBtn.innerHTML = `🏍️ Pedir Viaje &nbsp;·&nbsp; ${isWompi ? '💳 Wompi' : '💵 Efectivo'}`;
+    }
+
+  // ── Cambiar método de pago ──
+  } else if (target.id === 'changePaymentBtn') {
+    state.selectedPaymentMethod = null;
+
+    const btnW = document.getElementById('payWompiBtn');
+    const btnE = document.getElementById('payEfectivoBtn');
+    if (btnW) { btnW.style.opacity='1'; btnW.style.transform='scale(1)'; btnW.style.boxShadow='none'; btnW.innerHTML='💳 Wompi'; }
+    if (btnE) { btnE.style.opacity='1'; btnE.style.transform='scale(1)'; btnE.style.boxShadow='none'; btnE.innerHTML='💵 Efectivo'; }
+
+    const changeRow = document.getElementById('changePaymentRow');
+    if (changeRow) changeRow.style.display = 'none';
+
+    const pedirBtn = document.getElementById('pedirViajeBtn');
+    if (pedirBtn) {
+      pedirBtn.disabled = true;
+      pedirBtn.style.opacity = '0.35';
+      pedirBtn.style.cursor = 'not-allowed';
+      pedirBtn.innerHTML = '🏍️ Pedir Viaje';
+    }
+
+  // ── PEDIR VIAJE (inicia la búsqueda) ──
+  } else if (target.id === 'pedirViajeBtn') {
+    if (!state.selectedPaymentMethod) return;
     acceptRide(state, map);
-  } else if (target.id === 'payWompiBtn') {
-    state.selectedPaymentMethod = 'wompi';
-    acceptRide(state, map);
+
   } else if (target.id === 'cancelRideBtn' || target.id === 'cancelSearchBtn') {
     cancelRide(state, map);
   }
