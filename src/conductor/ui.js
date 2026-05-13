@@ -38,10 +38,34 @@ function releaseWakeLock() {
 }
 
 /**
+ * Play a short radar toggle sound.
+ * @param {'on'|'off'} mode - Pitch style: 'on' = upbeat, 'off' = low.
+ */
+function playToggleSound(mode) {
+  try {
+    alertSound.pause();
+    alertSound.currentTime = 0;
+    // ON → pitch ligeramente alto (energético); OFF → pitch bajo (apagado)
+    alertSound.playbackRate = mode === 'on' ? 1.4 : 0.65;
+    alertSound.volume = 0.85;
+    alertSound.play().catch(() => {});
+    // Detener después de ~900ms para que no suene completo
+    setTimeout(() => {
+      alertSound.pause();
+      alertSound.currentTime = 0;
+      alertSound.playbackRate = 1.0; // Restaurar para las alertas normales
+      alertSound.volume = 1.0;
+    }, 900);
+  } catch (e) {
+    console.log('Toggle sound error:', e);
+  }
+}
+
+/**
  * Toggle the radar (sound alerts) on/off.
  */
 export function toggleRadar(isAutoClick = false) {
-  // Check if it's a manual click by checking event type or our explicit flag
+  // isManual = true cuando viene de un click real del usuario
   const isManual = isAutoClick instanceof Event || isAutoClick === undefined;
 
   if (isManual) {
@@ -60,33 +84,31 @@ export function toggleRadar(isAutoClick = false) {
     btn.className = 'radar-toggle radar-on';
     txt.innerText = 'RADAR ENCENDIDO';
 
-    requestWakeLock(); // Activar bloqueo de pantalla
+    requestWakeLock();
 
-    // Forzar petición de permisos GPS y Notificaciones explícitamente 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => console.log('✅ Permiso de GPS concedido por el conductor.'),
-        (err) => console.log('⚠️ Permiso GPS revisado o denegado.')
+        () => console.log('⚠️ Permiso GPS revisado o denegado.')
       );
     }
 
-    if ("Notification" in window) {
+    if ('Notification' in window) {
       Notification.requestPermission().then(permission => {
         console.log(`✅ Permiso de notificaciones: ${permission}`);
       });
     }
 
-    // Touch sound to unlock browser audio policy — ONLY if manual interaction (avoids "beep" on entry)
-    if (isManual) {
-      alertSound.play().then(() => {
-        alertSound.pause();
-        alertSound.currentTime = 0;
-      }).catch((e) => console.log('Audio unlock deferred until interaction'));
-    }
+    // Sonido de encendido solo en interacción manual
+    if (isManual) playToggleSound('on');
+
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
-    releaseWakeLock(); // Liberar bloqueo de pantalla
+    releaseWakeLock();
+
+    // Sonido de apagado solo en interacción manual
+    if (isManual) playToggleSound('off');
   }
 }
 
