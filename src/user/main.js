@@ -193,9 +193,8 @@ function checkPassengerAuth() {
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
 
-        // Inicial del nombre en el avatar circular
-        const avatarEl = document.getElementById('profileAvatar');
-        if (avatarEl) avatarEl.firstChild.textContent = nombre.charAt(0).toUpperCase();
+        // Avatar fijo (emoji de persona, sin inicial)
+        // El avatar muestra 👤 siempre — definido en el HTML
 
         // --- Verificación de Aprobación Administrativa ---
         const emailStored = localStorage.getItem('calmovil_cliente_email');
