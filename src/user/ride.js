@@ -573,18 +573,29 @@ async function showDriverAssigned(driverId, state) {
       
       <div id="wompiContainer" style="margin-bottom: 12px;"></div>
 
-      <!-- Botón Compartir Viaje -->
-      <button id="shareRideBtn" style="width:100%; padding:13px; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.85); transition:all .2s;">
-        🔗 Compartir viaje con familiar
+      <!-- Botón Compartir Viaje (rediseñado) -->
+      <button id="shareRideBtn" style="width:100%; padding:13px; border-radius:16px; font-weight:800; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px; background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(168,85,247,0.18)); border:1.5px solid rgba(139,92,246,0.45); color:#c084fc; transition:all .2s; box-shadow:0 4px 15px rgba(139,92,246,0.12);">
+        🔗 Compartir Viaje
       </button>
 
+      <!-- Botón Cancelar Servicio (rojo pulsante, encima del juego) -->
+      <style>
+        @keyframes cancelServicePulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.45); }
+          60%      { box-shadow: 0 0 0 9px rgba(255,59,48,0); }
+        }
+        #cancelRideBtnAction { animation: cancelServicePulse 2s ease-in-out infinite; }
+      </style>
+      <button class="btn" id="cancelRideBtnAction" style="width:100%; font-size:13px; font-weight:900; background:rgba(255,59,48,0.12); color:#FF3B30; border:1.5px solid rgba(255,59,48,0.4); border-radius:14px; padding:13px; margin-bottom:10px; letter-spacing:0.4px;">
+        🚫 Cancelar Servicio
+      </button>
+
+      <!-- Botón Juego -->
       <div style="margin-bottom: 15px;">
         <button id="openGameBtn" class="btn" style="background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; width: 100%; border: none; font-weight: 800; font-size: 13px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(255,107,0,0.3);">
             <span>🎮</span> ¿Aburrido esperando? JUEGA ZIPPY
         </button>
       </div>
-
-      <button class="btn" style="background:rgba(255,255,255,.03); color:rgba(255,255,255,.5); width:100%; font-size:12px; border: 1px solid rgba(255,255,255,0.05);" id="cancelRideBtnAction">Cancelar Servicio</button>
     </div>
   `;
 
