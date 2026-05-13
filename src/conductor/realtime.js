@@ -2,7 +2,7 @@
  * Conductor realtime: Supabase subscriptions, ride accept/reject.
  */
 import { supabase } from '../config/supabase.js';
-import { renderViajes, showNewRideBanner, playAlert, showNotification } from './ui.js';
+import { renderViajes, showNewRideBanner, playAlert, showNotification, isRadarEnabled } from './ui.js';
 import { getCurrentProfile, isDriverApproved } from './auth.js';
 import { zippyAlert, zippyConfirm, zippyDanger, zippyPaymentToast } from '../utils/ui-global.js';
 
@@ -88,6 +88,9 @@ async function cancelActiveViaje(id) {
 export async function loadViajes() {
   if (!isDriverApproved()) return; // Conductor en validación: no cargar viajes
 
+  const profile = getCurrentProfile();
+  const currentConductor = profile ? profile.id : null;
+
   const { data, error } = await supabase
     .from('viajes')
     .select('*')
@@ -95,7 +98,15 @@ export async function loadViajes() {
     .order('created_at', { ascending: false });
 
   if (!error && data) {
-    activeViajes = data;
+    if (isRadarEnabled()) {
+      // Radar activo: mostrar todo normalmente
+      activeViajes = data;
+    } else {
+      // Radar apagado: mantener solo los viajes activos propios (aceptado/en_progreso)
+      activeViajes = data.filter(
+        (v) => v.conductor_id === currentConductor && (v.estado === 'aceptado' || v.estado === 'en_progreso')
+      );
+    }
     renderViajes(activeViajes, getHandlers());
   }
 }
@@ -108,8 +119,8 @@ export async function loadViajes() {
 export function setupRealtimeChannel() {
   if (!isDriverApproved()) return; // Conductor en validación: no suscribir canal
   setupRealtimeWithReconnect();
-  // Polling de respaldo cada 4 segundos
-  setInterval(() => { if (isDriverApproved()) loadViajes(); }, 4000);
+  // Polling de respaldo cada 4 segundos — solo si el radar está activo
+  setInterval(() => { if (isDriverApproved() && isRadarEnabled()) loadViajes(); }, 4000);
 }
 
 // Reconexión automática del canal en tiempo real
@@ -126,6 +137,9 @@ function setupRealtimeWithReconnect() {
         { event: 'INSERT', schema: 'public', table: 'viajes' },
         (payload) => {
           if (payload.new.estado === 'buscando') {
+            // ── Radar apagado: ignorar solicitudes nuevas completamente ──
+            if (!isRadarEnabled()) return;
+
             const bono = payload.new.bono_usado || 0;
             const cash = payload.new.tarifa - bono;
             const cashMsg = bono > 0 ? `💰 COBRAR: $${cash.toLocaleString('es-CO')} (BONO: $${bono.toLocaleString('es-CO')})` : `💵 Ganancia: $${cash.toLocaleString('es-CO')}`;
