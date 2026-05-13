@@ -10,6 +10,22 @@ import { zippyToast } from '../utils/ui-global.js';
 let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
 
+// ── Inyectar animaciones de badge de pago (una sola vez) ──
+(function injectPaymentAnimations() {
+  if (document.getElementById('zippy-pay-anim')) return;
+  const s = document.createElement('style');
+  s.id = 'zippy-pay-anim';
+  s.textContent = `
+    @keyframes payPulseGreen  { 0%,100%{ box-shadow:0 0 0 0 rgba(48,209,88,0.55); } 60%{ box-shadow:0 0 0 10px rgba(48,209,88,0); } }
+    @keyframes payPulseBlue   { 0%,100%{ box-shadow:0 0 0 0 rgba(52,152,219,0.55); } 60%{ box-shadow:0 0 0 10px rgba(52,152,219,0); } }
+    @keyframes payPulseOrange { 0%,100%{ box-shadow:0 0 0 0 rgba(255,149,0,0.55);  } 60%{ box-shadow:0 0 0 10px rgba(255,149,0,0);  } }
+    .pay-badge-wompi { animation: payPulseGreen  1.6s ease-in-out infinite; }
+    .pay-badge-cash  { animation: payPulseOrange 1.6s ease-in-out infinite; }
+    .pay-badge-bono  { animation: payPulseBlue   1.6s ease-in-out infinite; }
+  `;
+  document.head.appendChild(s);
+})();
+
 let radarEnabled = false;
 let wakeLock = null;
 const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -231,13 +247,13 @@ export function renderViajes(viajes, handlers) {
       <div class="card-header" style="padding-bottom: 8px;">
         <div style="flex:1;">
           <div style="font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; margin-bottom:2px;">
-            Ganancia <span style="margin-left:8px; background:rgba(255,107,0,.2); color:#FF6B00; padding:1px 6px; border-radius:4px; font-weight:900;">#${v.codigo_viaje || 'ZIPPY'}</span>
+            Valor de viaje <span style="margin-left:8px; background:rgba(255,107,0,.2); color:#FF6B00; padding:1px 6px; border-radius:4px; font-weight:900;">#${v.codigo_viaje || 'ZIPPY'}</span>
           </div>
-          ${v.pago_wompi ? 
-            `<div class="price" style="color:#30D158; font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; background:rgba(48,209,88,.2); color:#30D158; padding:3px 6px; border-radius:4px; display:inline-block; margin-top:4px;">✅ PAGADO (WOMPI)</span></div>` : 
-            (v.bono_usado && v.bono_usado > 0 ? 
-            `<div class="price" style="font-size:24px; color:#30D158; font-weight:900;">$${(v.tarifa - v.bono_usado).toLocaleString('es-CO')} <br><span style="font-size:11px; background:rgba(52,152,219,0.2); color:#3498DB; padding:4px 8px; border-radius:6px; font-weight:bold; display:inline-block; margin-top:4px; border:1px solid rgba(52,152,219,0.3);">💰 COBRAR EN EFECTIVO</span><br><span style="font-size:10px; color:rgba(255,255,255,0.5); display:block; margin-top:2px;">(Zippy paga el bono de $${v.bono_usado.toLocaleString('es-CO')})</span></div>` :
-            `<div class="price" style="font-size:20px;">$${v.tarifa.toLocaleString('es-CO')} <br><span style="font-size:10px; color:rgba(255,255,255,.4); display:inline-block; margin-top:4px;">💵 Cobrar en efectivo</span></div>`)
+          ${v.pago_wompi ?
+            `<div class="price" style="color:#30D158; font-size:22px;">$${v.tarifa.toLocaleString('es-CO')} <br><span class="pay-badge-wompi" style="font-size:14px; background:rgba(48,209,88,.18); color:#30D158; padding:7px 14px; border-radius:10px; display:inline-block; margin-top:10px; font-weight:900; border:1.5px solid rgba(48,209,88,.5); letter-spacing:0.5px;">✅ YA PAGÓ · WOMPI</span></div>` :
+            (v.bono_usado && v.bono_usado > 0 ?
+            `<div class="price" style="font-size:24px; color:#30D158; font-weight:900;">$${(v.tarifa - v.bono_usado).toLocaleString('es-CO')} <br><span class="pay-badge-bono" style="font-size:14px; background:rgba(52,152,219,.18); color:#3498DB; padding:7px 14px; border-radius:10px; font-weight:900; display:inline-block; margin-top:10px; border:1.5px solid rgba(52,152,219,.5); letter-spacing:0.5px;">💰 COBRAR EN EFECTIVO</span><br><span style="font-size:11px; color:rgba(255,255,255,0.5); display:block; margin-top:5px;">(Zippy cubre el bono de $${v.bono_usado.toLocaleString('es-CO')})</span></div>` :
+            `<div class="price" style="font-size:22px;">$${v.tarifa.toLocaleString('es-CO')} <br><span class="pay-badge-cash" style="font-size:14px; background:rgba(255,149,0,.15); color:#FF9500; padding:7px 14px; border-radius:10px; display:inline-block; margin-top:10px; font-weight:900; border:1.5px solid rgba(255,149,0,.4); letter-spacing:0.5px;">💵 COBRAR EN EFECTIVO</span></div>`)
           }
         </div>
         <div style="flex:1; text-align:right;">
