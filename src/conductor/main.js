@@ -6,6 +6,7 @@ import '../styles/conductor.css';
 
 import { toggleRadar, playAlert } from './ui.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
+import { zippyDanger } from '../utils/ui-global.js';
 import './game.js';
 
 
@@ -44,3 +45,61 @@ if (closeDriverAboutBtn) {
     if (driverAboutOverlay) driverAboutOverlay.style.display = 'none';
   });
 }
+
+// ── Swipe derecha para cerrar el sidebar del perfil ──
+(function initSwipeToCloseProfile() {
+  const sidebar = document.getElementById('profileSidebar');
+  if (!sidebar) return;
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 60; // px mínimos hacia la derecha para cerrar
+  const ANGLE_THRESHOLD = 35; // grados max de desviación vertical
+
+  sidebar.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  sidebar.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    const angle = Math.atan2(dy, Math.abs(dx)) * (180 / Math.PI);
+
+    // Swipe hacia la derecha, suficientemente horizontal
+    if (dx > SWIPE_THRESHOLD && angle < ANGLE_THRESHOLD) {
+      sidebar.classList.remove('open');
+    }
+  }, { passive: true });
+})();
+
+// ── Botón "Atrás" del teléfono pide confirmación para salir ──
+(function initBackButtonGuard() {
+  // Empujar un estado extra para poder interceptar el "atrás"
+  history.pushState({ zippy: true }, '');
+
+  let isConfirming = false;
+
+  window.addEventListener('popstate', async (e) => {
+    if (isConfirming) return;
+    isConfirming = true;
+
+    // Volver a empujar el estado para que el botón atrás siga funcionando
+    history.pushState({ zippy: true }, '');
+
+    const salir = await zippyDanger(
+      '¿Deseas salir de ZIPPY? El radar se apagará.',
+      '🚪',
+      'Salir de la App',
+      { label: 'Sí, salir', emoji: '🚪' },
+      { label: 'No, quedarme', emoji: '↩️' }
+    );
+
+    isConfirming = false;
+
+    if (salir) {
+      // Dejar que el navegador salga normalmente
+      history.go(-2);
+    }
+  });
+})();
