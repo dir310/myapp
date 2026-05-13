@@ -206,7 +206,7 @@
                     </div>
 
                     <!-- Avatar circular con inicial -->
-                    <div id="profileAvatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:32px;font-weight:900;color:#fff;box-shadow:0 8px 30px rgba(255,107,0,0.5);letter-spacing:0;flex-shrink:0;position:relative;">?
+                    <div id="profileAvatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:42px;font-weight:900;color:#fff;box-shadow:0 8px 30px rgba(255,107,0,0.5);letter-spacing:0;flex-shrink:0;position:relative;">👤
                         <!-- Anillo exterior -->
                         <div style="position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(255,107,0,0.4);"></div>
                     </div>
@@ -240,12 +240,17 @@
                             ✏️ Editar
                         </button>
                         <button id="logoutPassengerBtn"
-                            style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:14px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
-                            ↪ Salir
+                            style="flex:1;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.4);border-radius:14px;color:#FF6B00;font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
+                            🔐 Cerrar Sesión
                         </button>
                     </div>
 
                     <!-- Botón Historial de Viajes -->
+                    <!-- Badge Tarifa Mínima -->
+                    <div style="background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.22);border-radius:12px;padding:7px 12px;text-align:center;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <span style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tarifa mínima</span>
+                        <span style="color:#FF6B00;font-size:15px;font-weight:900;">$4.600</span>
+                    </div>
                     <button id="historyPassengerBtn"
                         style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;">
                         ⏱️ Mi Historial de Viajes
