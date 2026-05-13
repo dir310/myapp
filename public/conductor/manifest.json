@@ -7,7 +7,7 @@
   "scope": "/conductor/",
   "display": "standalone",
   "background_color": "#111111",
-  "theme_color": "#FF6B00",
+  "theme_color": "#388E3C",
   "orientation": "portrait",
   "icons": [
     {
