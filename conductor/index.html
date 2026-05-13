@@ -63,6 +63,24 @@
             from { transform: translateY(12px); opacity: 0; }
             to   { transform: translateY(0);    opacity: 1; }
         }
+        /* WhatsApp support button animation */
+        @keyframes waSupportFloat {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-5px); }
+        }
+        @keyframes waSupportGlow {
+            0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.4), 0 0 0 0 rgba(37,211,102,0.45); }
+            60%       { box-shadow: 0 8px 30px rgba(37,211,102,0.7), 0 0 0 10px rgba(37,211,102,0); }
+        }
+        .fab-whatsapp {
+            animation: waSupportFloat 2.8s ease-in-out infinite, waSupportGlow 2.8s ease-in-out infinite !important;
+        }
+        .fab-whatsapp:hover {
+            animation: none !important;
+            transform: scale(1.08) !important;
+            box-shadow: 0 10px 35px rgba(37,211,102,0.8) !important;
+            transition: all .2s ease !important;
+        }
     </style>
 
     <script>
@@ -174,6 +192,10 @@
                     <input type="password" id="loginPassword" class="driver-name" placeholder="Clave de conductor">
                     <span class="password-toggle" onclick="togglePassword('loginPassword', this)">👁️</span>
                 </div>
+                <div style="background:rgba(255,107,0,.07); border:1px solid rgba(255,107,0,.2); border-radius:8px; padding:8px 12px; margin-top:8px; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:15px;">🔑</span>
+                    <span style="color:rgba(255,255,255,.55); font-size:11px; line-height:1.4;">Tu clave: <b style="color:#FF6B00;">1 letra mayúscula</b> + <b style="color:#FF6B00;">5 números</b> &nbsp;—&nbsp; Ej: <span style="color:#FF9500; font-weight:900; letter-spacing:1.5px;">A12345</span></span>
+                </div>
 
                 <div id="loginCaptchaContainer" style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; margin-top:10px; border:1px solid rgba(255,255,255,.1);">
                     <p style="font-size:11px; text-align:center; margin-bottom:8px; color:rgba(255,255,255,0.6);">Seguridad: Resuelve la suma</p>
@@ -185,7 +207,7 @@
 
                 <label style="display:flex; align-items:flex-start; margin-top:15px; color:rgba(255,255,255,.4); font-size:11px; line-height:1.4; cursor:pointer;">
                     <input type="checkbox" id="loginTerms" style="margin-right:10px; margin-top:2px; transform: scale(1.2);">
-                    <span>Al iniciar sesión, acepto usar la plataforma bajo mi responsabilidad.</span>
+                    <span>Al iniciar sesión, acepto la <a href="/privacy.html" target="_blank" style="color:#FF6B00; text-decoration:underline; font-weight:bold;">Política de Privacidad</a> y declaro que ZIPPY es únicamente un puente tecnológico entre pasajeros y conductores independientes.</span>
                 </label>
 
                 <button id="loginSubmitBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar al Panel</button>
@@ -320,9 +342,10 @@
     </a>
 
     <!-- WhatsApp Support Floating Button -->
-    <a href="https://wa.me/573107935858" target="_blank" class="fab-whatsapp" title="Soporte Técnico">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
-        <span>Soporte Técnico</span>
+    <a href="https://wa.me/573107935858" target="_blank" class="fab-whatsapp" title="Soporte Técnico"
+        style="background:linear-gradient(135deg,#25D366,#128C7E); border:2px solid rgba(255,255,255,0.15); gap:7px; padding: 10px 16px; font-weight:800; letter-spacing:0.3px; font-size:13px;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:22px; height:22px; filter: brightness(0) invert(1);">
+        <span>💬 Soporte Técnico</span>
     </a>
 
     <!-- Overlay Acerca de ZIPPY (Conductor) -->
