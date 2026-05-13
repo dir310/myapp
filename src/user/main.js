@@ -282,7 +282,7 @@ function checkPassengerAuth() {
           });
         
         // --- Trigger Safety Modal (Solo una vez por sesión) ---
-        if (!sessionStorage.getItem('zippy_passenger_safety_shown')) {
+        if (!localStorage.getItem('zippy_passenger_safety_shown')) {
           const safetyModal = document.getElementById('passengerSafetyModal');
           if (safetyModal) safetyModal.style.display = 'flex';
         }
@@ -679,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (err) {}
 
       document.getElementById('passengerSafetyModal').style.display = 'none';
-      sessionStorage.setItem('zippy_passenger_safety_shown', 'true');
+      localStorage.setItem('zippy_passenger_safety_shown', 'true');
       
       const status = localStorage.getItem('zippy_passenger_status');
       const tourVisto = localStorage.getItem('zippy_tour_completed');

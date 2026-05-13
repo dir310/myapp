@@ -111,7 +111,7 @@ function setupUIEvents() {
   if (closeSafetyBtn) {
     closeSafetyBtn.onclick = () => {
       document.getElementById('safetyRulesModal').style.display = 'none';
-      sessionStorage.setItem('zippy_safety_shown', 'true');
+      localStorage.setItem('zippy_safety_shown', 'true');
     };
   }
 }
@@ -218,7 +218,7 @@ function proceedToApp() {
   }
 
   // Mostrar Protocolo de Seguridad una vez por sesión
-  if (!sessionStorage.getItem('zippy_safety_shown')) {
+  if (!localStorage.getItem('zippy_safety_shown')) {
     const safetyModal = document.getElementById('safetyRulesModal');
     if (safetyModal) safetyModal.style.display = 'flex';
   }
