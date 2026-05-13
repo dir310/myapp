@@ -273,9 +273,15 @@
                 <div class="actions" id="bookingActions" style="flex-direction:column; gap:10px;">
                     <div style="color:rgba(255,255,255,0.7); font-size:12px; text-align:center; font-weight:bold;">¿Cómo vas a pagar este viaje?</div>
                     <div style="display:flex; gap:10px; width:100%;">
-                        <button class="btn" id="payEfectivoBtn" style="flex:1; background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.2); font-size:13px;">💵 Efectivo</button>
-                        <button class="btn" id="payWompiBtn" style="flex:1; background:linear-gradient(135deg, #30D158, #28b84d); color:#000; border:none; font-weight:800; font-size:13px;">💳 Wompi</button>
+                        <button class="btn" id="payEfectivoBtn" style="flex:1; background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.2); font-size:13px; transition:all .2s;">💵 Efectivo</button>
+                        <button class="btn" id="payWompiBtn" style="flex:1; background:linear-gradient(135deg, #30D158, #28b84d); color:#000; border:none; font-weight:800; font-size:13px; transition:all .2s;">💳 Wompi</button>
                     </div>
+                    <!-- Cambiar método de pago (aparece tras seleccionar uno) -->
+                    <div id="changePaymentRow" style="display:none; text-align:center; margin:-2px 0;">
+                        <button id="changePaymentBtn" style="background:none; border:none; color:#FF9500; font-size:12px; font-weight:700; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:3px;">🔄 Cambiar método de pago</button>
+                    </div>
+                    <!-- Botón pedir viaje: bloqueado hasta elegir pago -->
+                    <button class="btn btn-primary" id="pedirViajeBtn" disabled style="width:100%; font-size:15px; font-weight:900; opacity:0.35; cursor:not-allowed; margin-top:2px; letter-spacing:0.3px;">🏍️ Pedir Viaje</button>
                     <button class="btn" id="cancelRideBtn" style="width:100%; background:none; color:rgba(255,255,255,.5); font-size:12px; margin-top:5px; border:none;">Cancelar Ruta</button>
                 </div>
             </div>
