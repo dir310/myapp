@@ -1,5 +1,5 @@
 import { supabase } from '../config/supabase.js';
-import { zippyAlert } from '../utils/ui-global.js';
+import { zippyAlert, zippyDanger } from '../utils/ui-global.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 import { initRadar } from './ui.js';
 import { compressImage } from '../utils/image.js';
@@ -89,9 +89,17 @@ function setupUIEvents() {
   profileBtn.onclick = openProfile;
   document.getElementById('closeProfileBtn').onclick = () => profileSidebar.classList.remove('open');
   document.getElementById('logoutBtn').onclick = async () => {
+    const confirmed = await zippyDanger(
+      '¿Seguro que quieres cerrar sesión? Tendrás que volver a ingresar tu clave.',
+      '🚪',
+      'Cerrar Sesión',
+      { label: 'Sí, cerrar sesión', emoji: '🚪' },
+      { label: 'No, quedarme', emoji: '↩️' }
+    );
+    if (!confirmed) return;
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem('calmovil_driver_id'); // compatibilidad con sesión anterior
-    localStorage.setItem('zippy_driver_logged_out', 'true'); // Bandera para mostrar login al volver
+    localStorage.removeItem('calmovil_driver_id');
+    localStorage.setItem('zippy_driver_logged_out', 'true');
     window.location.reload();
   };
 
