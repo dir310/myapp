@@ -65,11 +65,11 @@ function getHandlers() {
  */
 async function cancelActiveViaje(id) {
   if (await zippyDanger(
-    '¿Estás seguro de cancelar este servicio activo? Volverá a estar disponible para otros conductores.',
-    '🚫',
+    '⚠️ Esta cancelación queda registrada en tu historial. Cancelaciones frecuentes pueden resultar en la SUSPENSIÓN de tu cuenta de conductor. ¿Deseas continuar?',
+    '⚠️',
     'Cancelar Servicio',
-    { label: 'Sí, cancelar servicio', emoji: '🚫' },
-    { label: 'No, regresar', emoji: '↩️' }
+    { label: 'Sí, cancelar igual', emoji: '🚫' },
+    { label: 'No, continuar el viaje', emoji: '↩️' }
   )) {
     const { error } = await supabase.from('viajes').update({ estado: 'buscando', conductor_id: null }).eq('id', id);
     if (!error) {
