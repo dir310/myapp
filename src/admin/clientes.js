@@ -139,7 +139,7 @@ async function loadClientes() {
     let saldo = c.saldo_bono || 0;
     
     const bonoContainer = document.createElement('div');
-    bonoContainer.style.cssText = 'background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px 12px; display:inline-block;';
+    bonoContainer.style.cssText = 'background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:10px; padding:8px 12px; width: 100px; box-sizing: border-box;';
     
     const saldoSpan = document.createElement('span');
     saldoSpan.style.cssText = 'color:#3498DB; font-weight:900; font-size:16px; display:block;';
@@ -176,11 +176,15 @@ async function loadClientes() {
         }
     };
 
+    bonoContainer.appendChild(labelSpan);
+    bonoContainer.appendChild(saldoSpan);
+    bonoContainer.appendChild(giftBtn);
+
     // Multa (Deuda)
     let multa = c.multa_pendiente || 0;
     
     const multaContainer = document.createElement('div');
-    multaContainer.style.cssText = 'background:rgba(255,69,58,0.08); border:1px solid rgba(255,69,58,0.2); border-radius:10px; padding:8px 12px; width: 100px;';
+    multaContainer.style.cssText = 'background:rgba(255,69,58,0.08); border:1px solid rgba(255,69,58,0.2); border-radius:10px; padding:8px 12px; width: 100px; box-sizing: border-box;';
     
     const multaSpan = document.createElement('span');
     multaSpan.style.cssText = 'color:#FF453A; font-weight:900; font-size:16px; display:block;';
