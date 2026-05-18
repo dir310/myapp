@@ -143,7 +143,7 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
     const inner = el.querySelector('.moto-rotate');
     if (inner) {
       inner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-      inner.style.transform = \`rotate(\${brng}deg)\`;
+      inner.style.transform = `rotate(${brng}deg)`;
     }
   }
 
