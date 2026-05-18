@@ -351,6 +351,10 @@ export function listenForDriver(rideId, state, map) {
               map.removeLayer(driverMarker);
               driverMarker = null;
             }
+            if (driverRouteLayer && map) {
+              map.removeLayer(driverRouteLayer);
+              driverRouteLayer = null;
+            }
           } else if (payload.new.estado === 'cancelado') {
             playNotificationSound();
             zippyAlert('⚠️ El conductor ha cancelado el servicio.', '🚫');
@@ -508,7 +512,7 @@ async function showDriverAssigned(driverId, state) {
     if (state.selectedPaymentMethod === 'wompi') {
       buttonsHtml = `
         <button id="wompiPayBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:.3px;transition:transform .2s,filter .2s;">
-          💳 Pagar Restante ($${saldoFinal.toLocaleString('es-CO')})
+          💳 Total a Pagar ($${saldoFinal.toLocaleString('es-CO')})
         </button>
       `;
     } else {
@@ -963,6 +967,12 @@ export function stopListening(state, map) {
     driverMarker = null;
     console.log('[ZIPPY] Limpiando marcador de conductor.');
   }
+
+  if (driverRouteLayer && map) {
+    map.removeLayer(driverRouteLayer);
+    driverRouteLayer = null;
+    console.log('[ZIPPY] Limpiando ruta del conductor.');
+  }
 }
 
 /**
@@ -974,7 +984,7 @@ export async function cancelRide(state, map) {
   // Solo pedir confirmación si realmente se está cancelando activamente
   // (Si viene de un alert de "conductor canceló", ya se llamó stopListening)
 
-  stopListening(state);
+  stopListening(state, map);
   if (state.currentRideId) {
     // ── Devolver bono si el viaje tenía uno aplicado ──
     try {
