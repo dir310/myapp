@@ -763,6 +763,8 @@ function showTripStarted(state) {
     const cashBtnTrip = document.getElementById('cashPayBtnTrip');
     if (cashBtnTrip) {
       cashBtnTrip.onclick = () => {
+        // Registrar en BD que pagó en efectivo
+        supabase.from('viajes').update({ pago_efectivo_confirmado: true }).eq('id', state.currentRideId).then();
         document.getElementById('wompiContainerTrip').innerHTML = '<div style="color:#FFB347; font-weight:bold; background:rgba(255,179,71,.1); padding:10px; border-radius:10px; border:1px solid rgba(255,179,71,.3); text-align:center;">💵 PAGO EN EFECTIVO AL FINALIZAR</div>';
       };
     }

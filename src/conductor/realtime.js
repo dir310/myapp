@@ -323,7 +323,13 @@ async function finishViaje(id) {
     misViajesFinalizados.push(id);
     const viaje = activeViajes.find(v => v.id === id);
     const clienteNombre = viaje ? (viaje.cliente_nombre || 'Pasajero') : 'Pasajero';
-    await supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id);
+
+    // Si no pagó por Wompi ni estaba marcado como efectivo → cobró en efectivo al finalizar
+    const updates = { estado: 'finalizado' };
+    if (viaje && !viaje.pago_wompi && !viaje.pago_efectivo_confirmado) {
+      updates.pago_efectivo_confirmado = true;
+    }
+    await supabase.from('viajes').update(updates).eq('id', id);
     
     // Bono Frecuente: Dar 2000 COP cada 10 viajes terminados
     if (viaje && viaje.pasajero_id) {
