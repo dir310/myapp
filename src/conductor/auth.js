@@ -444,7 +444,7 @@ async function openProfile() {
     if (!error && viajesTerminados) {
       document.getElementById('statTrips').textContent = viajesTerminados.length;
 
-      const ganancias = viajesTerminados.reduce((acc, current) => acc + (current.tarifa || 0), 0);
+      const ganancias = viajesTerminados.reduce((acc, current) => acc + Math.round((current.tarifa || 0) * 0.9), 0);
       document.getElementById('statEarnings').textContent = `$${ganancias.toLocaleString('es-CO')}`;
 
       // Promedio de calificación pública
@@ -465,7 +465,7 @@ async function openProfile() {
       } else {
         const historyHTML = viajesTerminados.slice(0, 5).map(v => `
           <div style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; font-size:12px;">
-            <div style="color:#30D158; font-weight:bold; margin-bottom:4px;">$${v.tarifa.toLocaleString('es-CO')}</div>
+            <div style="color:#30D158; font-weight:bold; margin-bottom:4px;">$${Math.round((v.tarifa || 0) * 0.9).toLocaleString('es-CO')}</div>
             <div style="color:rgba(255,255,255,.8);">${v.origen_nombre} ➔ ${v.destino_nombre}</div>
           </div>
         `).join('');
