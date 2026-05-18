@@ -31,17 +31,17 @@ function showPrice(distKm, mins) {
   price = price - 600; // Reducción total de $600 pesos en la tarifa
   price = Math.max(4000, price); // Garantizar que la tarifa mínima NUNCA baje de 4000
   window.zippyCurrentBasePrice = price;
-  
+
   const bonoCb = document.getElementById('useBonoCheckbox');
   const bonoContainer = document.getElementById('bonoContainer');
   if (bonoCb) bonoCb.checked = false; // Resetear al calcular nueva ruta
-  
+
   if (bonoContainer) {
-      if (window.zippyCurrentBono && window.zippyCurrentBono > 0) {
-          bonoContainer.style.display = 'flex';
-      } else {
-          bonoContainer.style.display = 'none';
-      }
+    if (window.zippyCurrentBono && window.zippyCurrentBono > 0) {
+      bonoContainer.style.display = 'flex';
+    } else {
+      bonoContainer.style.display = 'none';
+    }
   }
 
   const el = document.getElementById('priceValue');
@@ -161,7 +161,7 @@ export function checkRoute(state, map) {
   document.getElementById('priceSection').style.display = 'block';
 
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
-  
+
   const confirmBtn = document.getElementById('confirmRouteBtn');
   if (confirmBtn) confirmBtn.style.display = 'flex';
 
