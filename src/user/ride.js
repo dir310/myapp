@@ -83,9 +83,9 @@ function updateDriverMap(lat, lng, state, map) {
         if (driverRouteLayer) map.removeLayer(driverRouteLayer);
         driverRouteLayer = L.polyline(coords, {
           color: '#007AFF',
-          weight: 4,
-          opacity: 0.75,
-          dashArray: '10, 7'
+          weight: 5,
+          opacity: 0.85,
+          className: 'animated-driver-route'
         }).addTo(map);
       }
     })

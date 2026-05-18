@@ -921,4 +921,14 @@ body {
   border: 1px solid rgba(255,107,0,0.3);
   box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
-
+
+/* --- ANIMACION RUTA CONDUCTOR --- */
+.animated-driver-route {
+  stroke-dasharray: 12 10 !important;
+  animation: driverRouteFlow 1s linear infinite;
+}
+@keyframes driverRouteFlow {
+  from { stroke-dashoffset: 22; }
+  to { stroke-dashoffset: 0; }
+}
+
