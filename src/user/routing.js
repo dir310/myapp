@@ -28,7 +28,8 @@ function showPrice(distKm, mins) {
   price = Math.round(price / 100) * 100;
   price = Math.max(MIN_FARE, price);
   price = Math.round((price * 1.03) + 800);
-  price = price - 300; // Reducción de $300 en todas las tarifas
+  price = price - 600; // Reducción total de $600 pesos en la tarifa
+  price = Math.max(4000, price); // Garantizar que la tarifa mínima NUNCA baje de 4000
   window.zippyCurrentBasePrice = price;
   
   const bonoCb = document.getElementById('useBonoCheckbox');
