@@ -65,14 +65,35 @@ export function pinIcon(color, label) {
       iconAnchor: [12, 12],
     });
   } else {
-    // Uber-style End: Sleek Black Square with colored center
+    // Premium End: Animated Finish Flag with Pulsing Base
     return L.divIcon({
       className: 'premium-end-pin',
-      html: `<div style="width:18px; height:18px; background:#111; border:2px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.6);">
-               <div style="width:6px; height:6px; background:${color};"></div>
-             </div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
+      html: `
+        <div style="position:relative; width:36px; height:42px;">
+          <!-- Mastil -->
+          <div style="position:absolute; bottom:6px; left:16px; width:4px; height:24px; background:#1A1A1E; border-radius:2px; box-shadow: 2px 2px 4px rgba(0,0,0,0.5); z-index:2;"></div>
+          
+          <!-- Animated Flag -->
+          <div style="position:absolute; bottom:14px; left:18px; width:22px; height:16px; background:${color}; border-radius:0 6px 6px 0; transform-origin: left center; animation: zippy-flag-wave 0.6s infinite alternate ease-in-out; box-shadow: 2px 2px 5px rgba(0,0,0,0.4); overflow:hidden; z-index:3;">
+             <div style="width:100%; height:100%; background-image: linear-gradient(45deg, rgba(255,255,255,0.25) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.25) 75%, rgba(255,255,255,0.25)), linear-gradient(45deg, rgba(255,255,255,0.25) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.25) 75%, rgba(255,255,255,0.25)); background-size: 8px 8px; background-position: 0 0, 4px 4px;"></div>
+          </div>
+
+          <!-- Pulsing Target at Base -->
+          <div style="position:absolute; bottom:0; left:6px; width:24px; height:12px; background:${color}; border-radius:50%; animation: zippy-target-pulse 2s infinite; z-index:1;"></div>
+        </div>
+        <style>
+          @keyframes zippy-flag-wave {
+            0% { transform: scaleX(1) skewY(-3deg); }
+            100% { transform: scaleX(0.85) skewY(3deg); }
+          }
+          @keyframes zippy-target-pulse {
+            0% { transform: scale(0.6); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+          }
+        </style>
+      `,
+      iconSize: [36, 42],
+      iconAnchor: [18, 36],
     });
   }
 }
