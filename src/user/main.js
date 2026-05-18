@@ -11,7 +11,7 @@ import { placeMarker, clearPoint, checkRoute } from './routing.js';
 import { acceptRide, cancelRide, stopListening, restoreActiveRide } from './ride.js';
 import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
-import { zippyAlert, zippyConfirm, zippyToast } from '../utils/ui-global.js';
+import { zippyAlert, zippyConfirm, zippyToast, zippyDanger } from '../utils/ui-global.js';
 import { compressImage } from '../utils/image.js';
 
 let passengerCaptchaAnswer = 0;
@@ -1076,3 +1076,41 @@ function iniciarTourPasajero() {
   });
   driverObj.drive();
 }
+
+// ── Botón "Atrás" del teléfono — Confirmación de salida (Pasajero) ──
+(function initBackButtonGuard() {
+  let isGuarding = false;
+  let isExiting  = false;
+
+  window.addEventListener('load', function () {
+    history.pushState({ zippyGuard: true }, '');
+
+    window.addEventListener('popstate', async function () {
+      if (isExiting) return;
+
+      if (isGuarding) {
+        history.pushState({ zippyGuard: true }, '');
+        return;
+      }
+
+      isGuarding = true;
+      history.pushState({ zippyGuard: true }, '');
+
+      const salir = await zippyDanger(
+        '¿Deseas salir de ZIPPY?',
+        '🚶',
+        'Salir de la App',
+        { label: 'Sí, salir', emoji: '🚶' },
+        { label: 'No, quedarme', emoji: '↩️' }
+      );
+
+      isGuarding = false;
+
+      if (salir) {
+        isExiting = true;
+        try { window.close(); } catch (_) {}
+        setTimeout(() => history.go(-history.length), 300);
+      }
+    });
+  });
+})();
