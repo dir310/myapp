@@ -220,22 +220,13 @@ export function renderViajes(viajes, handlers) {
           </div>`;
         }
       } else if (v.estado === 'aceptado') {
-        // ── Ventana de gracia: cancelar solo en los primeros 2 minutos ──
-        const _acceptedAt = parseInt(localStorage.getItem('zippy_ride_accepted_at') || '0');
-        const _acceptedId = localStorage.getItem('zippy_ride_accepted_id');
-        const _elapsed = Date.now() - _acceptedAt;
-        const _withinGrace = (_acceptedId === v.id) && (_elapsed < 2 * 60 * 1000);
-        const _secsLeft = Math.max(0, Math.round((2 * 60 * 1000 - _elapsed) / 1000));
-        const _cancelBtn = _withinGrace
-          ? `<button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.7; font-size:12px;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio (${_secsLeft}s restantes)</button>`
-          : `<div style="font-size:10px; color:rgba(255,255,255,0.22); margin-top:8px; font-style:italic;">⏱ Tiempo de cancelación vencido</div>`;
         actions = `
           <div style="background: rgba(48,209,88,.1); border: 1.5px dashed #30D158; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger (Punto A)</button>
             <button class="btn btn-accept" style="width:100%; background: #007AFF; box-shadow: 0 4px 15px rgba(0,122,255,.3);" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🚖 PASAJERO RECOGIDO — IR AL DESTINO</button>
-            ${_cancelBtn}
+            <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
           </div>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
@@ -325,9 +316,6 @@ export function renderViajes(viajes, handlers) {
 
   container.querySelectorAll('[data-action="accept"]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      // Guardar momento de aceptación para ventana de gracia de cancelación (2 min)
-      localStorage.setItem('zippy_ride_accepted_at', Date.now().toString());
-      localStorage.setItem('zippy_ride_accepted_id', btn.dataset.id);
       handlers.onAccept(btn.dataset.id, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng));
     });
   });
