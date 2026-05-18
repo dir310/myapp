@@ -73,33 +73,47 @@ if (closeDriverAboutBtn) {
   }, { passive: true });
 })();
 
-// ── Botón "Atrás" del teléfono pide confirmación para salir ──
+// ── Botón "Atrás" del teléfono — Confirmación de salida ──
 (function initBackButtonGuard() {
-  // Empujar un estado extra para poder interceptar el "atrás"
-  history.pushState({ zippy: true }, '');
+  let isGuarding = false;
+  let isExiting  = false;
 
-  let isConfirming = false;
+  // Inicializar en 'load' para que auth y otros módulos
+  // terminen de inicializarse antes de empujar el estado de guarda.
+  window.addEventListener('load', function () {
+    history.pushState({ zippyGuard: true }, '');
 
-  window.addEventListener('popstate', async (e) => {
-    if (isConfirming) return;
-    isConfirming = true;
+    window.addEventListener('popstate', async function () {
+      // Si estamos en proceso de salida, no interceptar
+      if (isExiting) return;
 
-    // Volver a empujar el estado para que el botón atrás siga funcionando
-    history.pushState({ zippy: true }, '');
+      // Si ya hay un diálogo abierto, re-empujar y esperar
+      if (isGuarding) {
+        history.pushState({ zippyGuard: true }, '');
+        return;
+      }
 
-    const salir = await zippyDanger(
-      '¿Deseas salir de ZIPPY? El radar se apagará.',
-      '🚪',
-      'Salir de la App',
-      { label: 'Sí, salir', emoji: '🚪' },
-      { label: 'No, quedarme', emoji: '↩️' }
-    );
+      isGuarding = true;
+      // Re-empujar ANTES del diálogo (async) para mantener el control
+      history.pushState({ zippyGuard: true }, '');
 
-    isConfirming = false;
+      const salir = await zippyDanger(
+        '¿Deseas salir de ZIPPY? El radar se apagará.',
+        '🚪',
+        'Salir de la App',
+        { label: 'Sí, salir', emoji: '🚪' },
+        { label: 'No, quedarme', emoji: '↩️' }
+      );
 
-    if (salir) {
-      // Dejar que el navegador salga normalmente
-      history.go(-2);
-    }
+      isGuarding = false;
+
+      if (salir) {
+        isExiting = true;
+        // Intento 1: cerrar ventana (funciona en TWA / Chrome Desktop)
+        try { window.close(); } catch (_) {}
+        // Intento 2: vaciar historial → Android cierra la PWA
+        setTimeout(() => history.go(-history.length), 300);
+      }
+    });
   });
 })();
