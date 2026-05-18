@@ -10,7 +10,7 @@ import { sanitizeHTML } from '../utils/security.js';
 const BASE_FARE = 2700;
 const PER_KM_FARE = 1000;
 const PER_MIN_FARE = 120;
-const MIN_FARE = 3700;
+const MIN_FARE = 3400;
 
 function haversineKm(a, b) {
   const R = 6371;
@@ -28,6 +28,7 @@ function showPrice(distKm, mins) {
   price = Math.round(price / 100) * 100;
   price = Math.max(MIN_FARE, price);
   price = Math.round((price * 1.03) + 800);
+  price = price - 300; // Reducción de $300 en todas las tarifas
   window.zippyCurrentBasePrice = price;
   
   const bonoCb = document.getElementById('useBonoCheckbox');
