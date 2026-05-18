@@ -10,20 +10,26 @@ let activeViajes = [];
 let misViajesFinalizados = []; // Track trips finished by this driver to ensure rating delivery
 
 // Tracker GPS
-let activeWatchId = null;
+let isTrackingGPS = false;
 let currentTrackingTripId = null;
 
-function startGPS(tripId) {
-  if (activeWatchId) return; // Ya estamos trackeando
+async function startGPS(tripId) {
+  if (isTrackingGPS) return; // Ya estamos trackeando
   if (!navigator.geolocation) return console.warn('GPS NO Soportado');
 
+  isTrackingGPS = true;
   currentTrackingTripId = tripId;
-  console.log('Iniciando rastreo GPS para el viaje:', tripId);
+  console.log('Iniciando rastreo GPS intensivo cada 2s para el viaje:', tripId);
 
-  activeWatchId = navigator.geolocation.watchPosition(
-    async (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+  const getPos = () => new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+  });
+
+  while (isTrackingGPS && currentTrackingTripId === tripId) {
+    try {
+      const pos = await getPos();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
 
       // Update DB silently
       await supabase
@@ -31,19 +37,19 @@ function startGPS(tripId) {
         .update({ conductor_lat: lat, conductor_lng: lng })
         .eq('id', tripId)
         .in('estado', ['aceptado', 'en_progreso']);
-    },
-    (err) => console.error('GPS Error:', err.message),
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-  );
+    } catch (err) {
+      console.error('GPS Error:', err.message);
+    }
+    
+    // Esperar exactamente 2 segundos antes del siguiente pulso
+    await new Promise(r => setTimeout(r, 2000));
+  }
 }
 
 function stopGPS() {
-  if (activeWatchId && navigator.geolocation) {
-    navigator.geolocation.clearWatch(activeWatchId);
-    activeWatchId = null;
-    currentTrackingTripId = null;
-    console.log('Rastreo GPS detenido.');
-  }
+  isTrackingGPS = false;
+  currentTrackingTripId = null;
+  console.log('Rastreo GPS detenido.');
 }
 
 /**

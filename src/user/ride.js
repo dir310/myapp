@@ -427,7 +427,7 @@ export function listenForDriver(rideId, state, map) {
         updateETA(lat, lng, state);
       }
     }
-  }, 3000);
+  }, 2000);
 }
 
 /**
