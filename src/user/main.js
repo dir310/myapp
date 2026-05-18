@@ -223,7 +223,7 @@ function checkPassengerAuth() {
 
         supabase
           .from('clientes')
-          .select('estado_validacion, saldo_bono')
+          .select('estado_validacion, saldo_bono, multa_pendiente')
           .eq('email', emailStored)
           .single()
           .then(({ data, error }) => {
@@ -231,8 +231,9 @@ function checkPassengerAuth() {
             const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
               
-              // Actualizar saldo bono
+              // Actualizar saldo bono y multa
               window.zippyCurrentBono = data.saldo_bono || 0;
+              window.zippyCurrentMulta = data.multa_pendiente || 0;
               let bonoEl = document.getElementById('displayClientBono');
               let bonoTextEl = document.getElementById('availableBonoText');
               if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
