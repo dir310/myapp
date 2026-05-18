@@ -44,7 +44,53 @@ async function sendPushToDrivers(tarifa, distancia) {
 }
 
 let driverMarker = null;
-let rideChannel = null; // Referencia al canal de Supabase
+let driverRouteLayer = null;   // Polyline de ruta conductor → Punto A
+let driverMapFocused = false;  // Bandera: primer foco ya hecho
+let lastRouteFetch = 0;        // Throttle peticiones OSRM
+let rideChannel = null;        // Referencia al canal de Supabase
+
+/**
+ * Centra el mapa en el conductor y dibuja la ruta hacia el Punto A.
+ * Primera vez: fitBounds para dar contexto. Siguientes: panTo suave.
+ */
+function updateDriverMap(lat, lng, state, map) {
+  if (!map) return;
+
+  // ── Foco del mapa ──
+  if (!driverMapFocused && state.startLatLng) {
+    map.fitBounds(L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.5), { animate: true });
+    driverMapFocused = true;
+  } else {
+    map.panTo([lat, lng], { animate: true, duration: 1.2 });
+  }
+
+  // ── Ruta conductor → Punto A (throttle: 1 petición cada 15s) ──
+  if (!state.startLatLng) return;
+  const now = Date.now();
+  if (now - lastRouteFetch < 15000) return;
+  lastRouteFetch = now;
+
+  const pickupLat = state.startLatLng.lat;
+  const pickupLng = state.startLatLng.lng;
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${pickupLng},${pickupLat}?overview=full&geometries=geojson`;
+
+  fetch(osrmUrl)
+    .catch(() => fetch(`https://corsproxy.io/?${encodeURIComponent(osrmUrl)}`))
+    .then(r => r.json())
+    .then(data => {
+      if (data.code === 'Ok' && data.routes?.length) {
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        if (driverRouteLayer) map.removeLayer(driverRouteLayer);
+        driverRouteLayer = L.polyline(coords, {
+          color: '#007AFF',
+          weight: 4,
+          opacity: 0.75,
+          dashArray: '10, 7'
+        }).addTo(map);
+      }
+    })
+    .catch(() => {});
+}
 
 function playNotificationSound() {
   const audio = document.getElementById('notificationSound');
@@ -78,11 +124,11 @@ export async function acceptRide(state, map) {
   const originName = sanitizeHTML(document.getElementById('startInput').value || 'Punto de Inicio', 120);
   const destName = sanitizeHTML(document.getElementById('endInput').value || 'Destino', 120);
   const basePrice = window.zippyCurrentBasePrice || parseInt(document.getElementById('priceValue').textContent.replace(/[^0-9]/g, ''), 10);
-  
+
   let bonoUsado = 0;
   const bonoCb = document.getElementById('useBonoCheckbox');
   if (bonoCb && bonoCb.checked && window.zippyCurrentBono > 0) {
-      bonoUsado = Math.min(basePrice, window.zippyCurrentBono);
+    bonoUsado = Math.min(basePrice, window.zippyCurrentBono);
   }
 
   const distText = document.getElementById('routeDistance').textContent + ' km';
@@ -146,24 +192,24 @@ export async function acceptRide(state, map) {
     }
 
     if (error) throw error;
-    
+
     if (bonoUsado > 0) {
-        // Actualizar UI local
-        window.zippyCurrentBono -= bonoUsado;
-        let bonoEl = document.getElementById('displayClientBono');
-        let bonoTextEl = document.getElementById('availableBonoText');
-        if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
-        if (bonoTextEl) bonoTextEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
-        let bonoContainer = document.getElementById('bonoContainer');
-        if (window.zippyCurrentBono <= 0 && bonoContainer) {
-            bonoContainer.style.display = 'none';
-        }
-        
-        // Descontar en backend
-        const passengerId = localStorage.getItem('calmovil_cliente_id');
-        if (passengerId) {
-            supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
-        }
+      // Actualizar UI local
+      window.zippyCurrentBono -= bonoUsado;
+      let bonoEl = document.getElementById('displayClientBono');
+      let bonoTextEl = document.getElementById('availableBonoText');
+      if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+      if (bonoTextEl) bonoTextEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+      let bonoContainer = document.getElementById('bonoContainer');
+      if (window.zippyCurrentBono <= 0 && bonoContainer) {
+        bonoContainer.style.display = 'none';
+      }
+
+      // Descontar en backend
+      const passengerId = localStorage.getItem('calmovil_cliente_id');
+      if (passengerId) {
+        supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
+      }
     }
 
     state.currentRideId = data[0].id;
@@ -263,6 +309,11 @@ function updateETA(lat, lng, state) {
 export function listenForDriver(rideId, state, map) {
   console.log('📡 Iniciando radar para viaje:', rideId);
 
+  // Resetear estado del mapa al iniciar nuevo viaje
+  driverMapFocused = false;
+  lastRouteFetch = 0;
+  if (driverRouteLayer && map) { map.removeLayer(driverRouteLayer); driverRouteLayer = null; }
+
   // Strategy 1: Real-time WebSocket
   rideChannel = supabase.channel('ride-watch-' + rideId);
 
@@ -322,12 +373,7 @@ export function listenForDriver(rideId, state, map) {
             animateMarker(driverMarker, [lat, lng], 2000);
           }
 
-          // Zoom Inteligente: Ajustar mapa para ver ambos puntos (Pasajero y Moto)
-          if (state.startLatLng) {
-            const bounds = L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.4);
-            map.fitBounds(bounds, { animate: true });
-          }
-
+          updateDriverMap(lat, lng, state, map);
           updateETA(lat, lng, state);
         }
       }
@@ -373,12 +419,7 @@ export function listenForDriver(rideId, state, map) {
           animateMarker(driverMarker, [lat, lng], 2000);
         }
 
-        // Zoom Inteligente (Respaldo Polling)
-        if (state.startLatLng) {
-          const bounds = L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.4);
-          map.fitBounds(bounds, { animate: true });
-        }
-
+        updateDriverMap(lat, lng, state, map);
         updateETA(lat, lng, state);
       }
     }
@@ -845,7 +886,7 @@ function showRatingScreen(state) {
       <button id="skipRatingUserBtn" class="btn" style="display:block; width:100%; margin-top:12px; background:none; border:none; color:rgba(255,255,255,.4); font-size:13px; padding:8px;">Omitir</button>
     </div>
   `;
-  
+
   document.body.appendChild(overlay);
 
   let selectedRating = 0;
