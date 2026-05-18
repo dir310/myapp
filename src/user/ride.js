@@ -988,13 +988,16 @@ export async function cancelRide(state, map) {
 
   stopListening(state, map);
   if (state.currentRideId) {
+    let viaje = null;
     // ── Devolver bono si el viaje tenía uno aplicado ──
     try {
-      const { data: viaje } = await supabase
+      const { data } = await supabase
         .from('viajes')
         .select('bono_usado, pasajero_id, pago_wompi')
         .eq('id', state.currentRideId)
         .single();
+      
+      viaje = data;
 
       if (viaje?.bono_usado > 0 && viaje?.pasajero_id) {
         const { data: cliente } = await supabase
@@ -1015,7 +1018,7 @@ export async function cancelRide(state, map) {
         console.log(`[ZIPPY] Bono devuelto: $${viaje.bono_usado.toLocaleString('es-CO')}`);
       }
     } catch (e) {
-      console.warn('[ZIPPY] No se pudo devolver el bono al cancelar:', e);
+      console.warn('[ZIPPY] No se pudo procesar la info extra al cancelar:', e);
     }
 
     localStorage.removeItem(STORAGE_KEY);
