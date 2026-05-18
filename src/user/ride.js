@@ -169,7 +169,8 @@ export async function acceptRide(state, map) {
       cliente_cedula: cCedula,
       cliente_telefono: cTelefono,
       pasajero_id: localStorage.getItem('calmovil_cliente_id') || null,
-      pago_efectivo_confirmado: state.selectedPaymentMethod === 'efectivo'
+      pago_efectivo_confirmado: state.selectedPaymentMethod === 'efectivo',
+      multa_cobrada: window.zippyCurrentMulta || 0
     };
 
     let data, error;
