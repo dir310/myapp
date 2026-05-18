@@ -992,7 +992,7 @@ export async function cancelRide(state, map) {
     try {
       const { data: viaje } = await supabase
         .from('viajes')
-        .select('bono_usado, pasajero_id')
+        .select('bono_usado, pasajero_id, pago_wompi')
         .eq('id', state.currentRideId)
         .single();
 
@@ -1020,6 +1020,15 @@ export async function cancelRide(state, map) {
 
     localStorage.removeItem(STORAGE_KEY);
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
+
+    // ── Si pagó por Wompi, avisar sobre devoluciones antes de recargar ──
+    if (viaje?.pago_wompi === true) {
+      await zippyAlert(
+        '⚠️ Tu pago por Wompi fue registrado. Para solicitar una devolución por esta cancelación, comunícate con Soporte ZIPPY por WhatsApp.',
+        '💳',
+        'Devolución por Cancelación'
+      );
+    }
   }
   location.reload();
 }
