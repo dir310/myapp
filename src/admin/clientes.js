@@ -176,10 +176,57 @@ async function loadClientes() {
         }
     };
 
-    bonoContainer.appendChild(labelSpan);
-    bonoContainer.appendChild(saldoSpan);
-    bonoContainer.appendChild(giftBtn);
-    tdBilletera.appendChild(bonoContainer);
+    // Multa (Deuda)
+    let multa = c.multa_pendiente || 0;
+    
+    const multaContainer = document.createElement('div');
+    multaContainer.style.cssText = 'background:rgba(255,69,58,0.08); border:1px solid rgba(255,69,58,0.2); border-radius:10px; padding:8px 12px; width: 100px;';
+    
+    const multaSpan = document.createElement('span');
+    multaSpan.style.cssText = 'color:#FF453A; font-weight:900; font-size:16px; display:block;';
+    multaSpan.textContent = `$${multa.toLocaleString('es-CO')}`;
+
+    const labelMultaSpan = document.createElement('span');
+    labelMultaSpan.style.cssText = 'color:rgba(255,255,255,0.4); font-size:10px; text-transform:uppercase; display:block; margin-bottom:2px;';
+    labelMultaSpan.textContent = 'Multa PEND.';
+
+    const editMultaBtn = document.createElement('button');
+    editMultaBtn.textContent = '✏️ Editar';
+    editMultaBtn.style.cssText = 'margin-top:8px; background:rgba(255,69,58,0.2); color:#FF453A; border:1px solid rgba(255,69,58,0.4); padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; width:100%;';
+    
+    editMultaBtn.onclick = async () => {
+        const val = await zippyPrompt(`¿Ajustar multa de ${c.nombre}? (Pon 0 para perdonar)`, 'Ej: 0', '⚠️', 'Editar Multa', 'number');
+        if (val !== null && val !== '') {
+            const nuevaMulta = parseInt(val, 10);
+            if (isNaN(nuevaMulta)) return;
+
+            editMultaBtn.textContent = '...';
+            editMultaBtn.disabled = true;
+
+            const { error: mErr } = await supabase.from('clientes').update({ multa_pendiente: nuevaMulta }).eq('id', c.id);
+            if (!mErr) {
+                multa = nuevaMulta;
+                multaSpan.textContent = `$${multa.toLocaleString('es-CO')}`;
+                zippyToast(`¡Multa de ${c.nombre} actualizada!`);
+            } else {
+                zippyAlert('Error al actualizar: ' + mErr.message, '❌');
+            }
+            editMultaBtn.textContent = '✏️ Editar';
+            editMultaBtn.disabled = false;
+        }
+    };
+
+    multaContainer.appendChild(labelMultaSpan);
+    multaContainer.appendChild(multaSpan);
+    multaContainer.appendChild(editMultaBtn);
+
+    const walletWrapper = document.createElement('div');
+    walletWrapper.style.display = 'flex';
+    walletWrapper.style.gap = '10px';
+    walletWrapper.appendChild(bonoContainer);
+    walletWrapper.appendChild(multaContainer);
+
+    tdBilletera.appendChild(walletWrapper);
     tr.appendChild(tdBilletera);
 
     // 5. Documentos (Fotos)
