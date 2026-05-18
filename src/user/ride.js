@@ -340,6 +340,10 @@ export function listenForDriver(rideId, state, map) {
             if (topSearch) topSearch.style.display = 'none';
             showDriverAssigned(payload.new.conductor_id, state);
           } else if (payload.new.estado === 'finalizado') {
+            if (window.zippyCurrentMulta > 0) {
+              supabase.from('clientes').update({ multa_pendiente: 0 }).eq('id', localStorage.getItem('calmovil_cliente_id')).then();
+              window.zippyCurrentMulta = 0;
+            }
             showRatingScreen(state);
             if (driverMarker && map) {
               map.removeLayer(driverMarker);
@@ -401,6 +405,10 @@ export function listenForDriver(rideId, state, map) {
           if (data.estado === 'aceptado') playNotificationSound();
           showDriverAssigned(data.conductor_id, state);
         } else if (data.estado === 'finalizado') {
+          if (window.zippyCurrentMulta > 0) {
+            supabase.from('clientes').update({ multa_pendiente: 0 }).eq('id', localStorage.getItem('calmovil_cliente_id')).then();
+            window.zippyCurrentMulta = 0;
+          }
           showRatingScreen(state);
         } else if (data.estado === 'cancelado') {
           playNotificationSound();
@@ -993,7 +1001,7 @@ export async function cancelRide(state, map) {
     try {
       const { data } = await supabase
         .from('viajes')
-        .select('bono_usado, pasajero_id, pago_wompi')
+        .select('bono_usado, pasajero_id, pago_wompi, estado')
         .eq('id', state.currentRideId)
         .single();
       
@@ -1023,6 +1031,34 @@ export async function cancelRide(state, map) {
 
     localStorage.removeItem(STORAGE_KEY);
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
+
+    // ── MULTA POR CANCELACIÓN TARDÍA (1.500 COP para Zippy) ──
+    if (viaje?.pasajero_id && (viaje.estado === 'aceptado' || viaje.estado === 'en_progreso')) {
+      try {
+        const { data: clienteData } = await supabase
+          .from('clientes')
+          .select('multa_pendiente')
+          .eq('id', viaje.pasajero_id)
+          .single();
+        
+        const nuevaMulta = (clienteData?.multa_pendiente || 0) + 1500;
+        
+        await supabase
+          .from('clientes')
+          .update({ multa_pendiente: nuevaMulta })
+          .eq('id', viaje.pasajero_id);
+          
+        window.zippyCurrentMulta = nuevaMulta; // Cache local
+        
+        await zippyAlert(
+          'Cancelaste el viaje cuando el conductor ya estaba asignado. Se aplicará un recargo de $1.500 en tu próximo viaje por políticas de Zippy.',
+          '⚠️',
+          'Aviso de Cancelación'
+        );
+      } catch (err) {
+        console.error('[ZIPPY] Error aplicando multa de cancelación:', err);
+      }
+    }
 
     // ── Si pagó por Wompi, avisar sobre devoluciones antes de recargar ──
     if (viaje?.pago_wompi === true) {

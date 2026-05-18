@@ -30,10 +30,17 @@ function showPrice(distKm, mins) {
   price = Math.round((price * 1.03) + 500);
   price = price - 600; // Reducción total de $600 pesos en la tarifa
   price = Math.max(4000, price); // Garantizar que la tarifa mínima NUNCA baje de 4000
+  
+  // Agregar multa pendiente si existe
+  const multa = window.zippyCurrentMulta || 0;
+  price += multa;
+
   window.zippyCurrentBasePrice = price;
 
   const bonoCb = document.getElementById('useBonoCheckbox');
   const bonoContainer = document.getElementById('bonoContainer');
+  const multaContainer = document.getElementById('multaContainer');
+
   if (bonoCb) bonoCb.checked = false; // Resetear al calcular nueva ruta
 
   if (bonoContainer) {
@@ -42,6 +49,10 @@ function showPrice(distKm, mins) {
     } else {
       bonoContainer.style.display = 'none';
     }
+  }
+
+  if (multaContainer) {
+    multaContainer.style.display = (multa > 0) ? 'block' : 'none';
   }
 
   const el = document.getElementById('priceValue');
