@@ -932,3 +932,14 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
+
+/* --- ANIMACION RUTA PRINCIPAL (NARANJA) --- */
+.animated-main-route {
+  stroke-dasharray: 15 15 !important;
+  animation: mainRouteFlow 1.5s linear infinite;
+}
+@keyframes mainRouteFlow {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}
+
