@@ -46,44 +46,77 @@ export function createMap(elementId, center = LA_CALERA, zoom = 13) {
 }
 
 /**
- * Creates a Didi-style pin icon.
+ * Creates premium A/B map markers.
  * @param {string} color - Background color (hex).
- * @param {string} label - Single character label.
+ * @param {string} label - 'A' or 'B'.
  * @returns {L.DivIcon}
  */
 export function pinIcon(color, label) {
-  return L.divIcon({
-    className: '',
-    html: `<div style="width:34px;height:34px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
-      <span style="transform:rotate(45deg);font-size:13px;font-weight:800;color:#fff;">${label}</span></div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-  });
+  if (label === 'A') {
+    // Uber-style Start: Pulsing Green Dot
+    return L.divIcon({
+      className: 'premium-start-pin',
+      html: `<div style="position:relative; width:24px; height:24px;">
+               <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#30D158; border-radius:50%; animation: zippy-pulse 2s infinite;"></div>
+               <div style="position:absolute; top:6px; left:6px; width:12px; height:12px; background:#1A1A1E; border:2px solid #30D158; border-radius:50%; z-index:2; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"></div>
+             </div>
+             <style>@keyframes zippy-pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }</style>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+  } else {
+    // Uber-style End: Sleek Black Square with colored center
+    return L.divIcon({
+      className: 'premium-end-pin',
+      html: `<div style="width:18px; height:18px; background:#111; border:2px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.6);">
+               <div style="width:6px; height:6px; background:${color};"></div>
+             </div>`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+  }
 }
 
 /**
- * Creates a professional motorcycle map icon.
+ * Creates a highly realistic top-down motorcycle map icon.
  * @returns {L.DivIcon}
  */
 export function motoIcon() {
   return L.divIcon({
-    className: 'moto-icon-wrapper',
-    html: `<div style="width:40px; height:40px; background:#fff; border-radius:50%; border:3px solid #FF6B00; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FF6B00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;">
-                <circle cx="5" cy="18" r="3"></circle>
-                <circle cx="19" cy="18" r="3"></circle>
-                <path d="M5 15h14"></path>
-                <path d="M12 15V8L8 8V15"></path>
-                <path d="M15 15v-4l4-2"></path>
+    className: 'real-moto-wrapper',
+    html: `<div class="moto-rotate" style="width:30px; height:60px; transform: rotate(0deg); filter: drop-shadow(0px 8px 10px rgba(0,0,0,0.5));">
+            <svg viewBox="0 0 100 200" width="100%" height="100%">
+              <!-- Llanta trasera -->
+              <rect x="42" y="130" width="16" height="45" rx="5" fill="#1a1a1a"/>
+              <!-- Guardabarros trasero -->
+              <path d="M40 120 Q50 110 60 120 L58 150 Q50 155 42 150 Z" fill="#2c2c2c"/>
+              <!-- Llanta delantera -->
+              <rect x="44" y="15" width="12" height="40" rx="5" fill="#1a1a1a"/>
+              <!-- Horquilla delantera -->
+              <rect x="40" y="35" width="20" height="10" fill="#444"/>
+              <!-- Manubrio -->
+              <rect x="15" y="50" width="70" height="6" rx="3" fill="#333"/>
+              <!-- Puños -->
+              <rect x="10" y="48" width="10" height="10" rx="2" fill="#111"/>
+              <rect x="80" y="48" width="10" height="10" rx="2" fill="#111"/>
+              <!-- Tanque de gasolina (Naranja Zippy) -->
+              <path d="M40 60 C25 65 25 105 40 115 L60 115 C75 105 75 65 60 60 Z" fill="#FF6B00"/>
+              <!-- Luces / Tablero -->
+              <circle cx="50" cy="40" r="6" fill="#ddd"/>
+              <circle cx="50" cy="40" r="3" fill="#fff"/>
+              <!-- Asiento -->
+              <path d="M42 110 C35 115 38 145 42 150 L58 150 C62 145 65 115 58 110 Z" fill="#111"/>
+              <!-- Motor/Laterales -->
+              <rect x="35" y="85" width="30" height="20" rx="5" fill="#444"/>
             </svg>
            </div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    iconSize: [30, 60],
+    iconAnchor: [15, 30]
   });
 }
 
 /**
- * Animates a Leaflet marker smoothly from its current position to a new LatLng.
+ * Animates a Leaflet marker smoothly and rotates it towards travel direction.
  * @param {L.Marker} marker 
  * @param {[number, number]} newLatLng 
  * @param {number} durationMs 
@@ -92,9 +125,26 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
   const startLatLng = marker.getLatLng();
   const endLatLng = L.latLng(newLatLng);
   
-  if (!startLatLng) {
+  if (!startLatLng || (startLatLng.lat === endLatLng.lat && startLatLng.lng === endLatLng.lng)) {
     marker.setLatLng(endLatLng);
     return;
+  }
+
+  // Calcular el ángulo (Bearing) para rotar la moto
+  const dLng = (endLatLng.lng - startLatLng.lng) * Math.PI / 180;
+  const lat1 = startLatLng.lat * Math.PI / 180;
+  const lat2 = endLatLng.lat * Math.PI / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const brng = Math.atan2(y, x) * 180 / Math.PI;
+
+  const el = marker.getElement();
+  if (el) {
+    const inner = el.querySelector('.moto-rotate');
+    if (inner) {
+      inner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      inner.style.transform = \`rotate(\${brng}deg)\`;
+    }
   }
 
   const startTime = performance.now();
@@ -103,7 +153,7 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
     const elapsed = currentTime - startTime;
     let progress = elapsed / durationMs;
     
-    // Ease-out cubic calculation for smooth slide
+    // Ease-out cubic
     progress = 1 - Math.pow(1 - progress, 3);
     
     if (progress > 1) progress = 1;
