@@ -330,3 +330,64 @@ export function zippyPrompt(message, placeholder = '', icon = '⌨️', title = 
     };
   });
 }
+
+/**
+ * Global Network Status Monitor
+ * Muestra un banner rojo si se pierde el internet y verde cuando regresa.
+ */
+(function initNetworkMonitor() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const banner = document.createElement('div');
+  banner.id = 'zippy-network-banner';
+  banner.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #FF3B30;
+    color: white;
+    text-align: center;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 12px;
+    z-index: 99999999;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease, background 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    font-family: 'Inter', sans-serif;
+  `;
+  banner.innerHTML = '⚠️ Sin conexión a internet. Revisa tu red.';
+  
+  function appendBanner() {
+    if (!document.getElementById('zippy-network-banner')) {
+      document.body.appendChild(banner);
+    }
+  }
+
+  if (document.body) {
+    appendBanner();
+  } else {
+    window.addEventListener('DOMContentLoaded', appendBanner);
+  }
+
+  function updateOnlineStatus() {
+    if (navigator.onLine) {
+      banner.style.background = '#30D158';
+      banner.innerHTML = '✅ Conexión restaurada';
+      setTimeout(() => {
+        banner.style.transform = 'translateY(-100%)';
+      }, 2500);
+    } else {
+      banner.style.background = '#FF3B30';
+      banner.innerHTML = '⚠️ Sin conexión a internet. Revisa tu red.';
+      banner.style.transform = 'translateY(0)';
+    }
+  }
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+
+  // Initial check (in case they load from cache while offline)
+  if (!navigator.onLine) {
+    setTimeout(updateOnlineStatus, 500);
+  }
+})();
