@@ -335,11 +335,21 @@ export function listenForDriver(rideId, state, map) {
           console.log('⚡ Cambio detectado por Websocket:', payload.new.estado);
           state.lastKnownEstado = payload.new.estado;
 
-          if (payload.new.estado === 'aceptado' || payload.new.estado === 'en_progreso') {
+          if (payload.new.estado === 'aceptado' || payload.new.estado === 'en_progreso' || payload.new.estado === 'esperando_pasajero') {
             if (payload.new.estado === 'aceptado') playNotificationSound();
+            if (payload.new.estado === 'esperando_pasajero' && state.lastKnownEstado !== 'esperando_pasajero') playNotificationSound();
+            
             const topSearch = document.getElementById('topSearchArea');
             if (topSearch) topSearch.style.display = 'none';
-            showDriverAssigned(payload.new.conductor_id, state);
+            
+            // Reconstruir UI si no estaba ya (ej. al recargar la página en medio del viaje)
+            if (!document.getElementById('shareRideBtn')) {
+              showDriverAssigned(payload.new.conductor_id, state);
+            }
+            
+            if (payload.new.estado === 'esperando_pasajero') {
+              setTimeout(() => showDriverWaiting(state), 300);
+            }
           } else if (payload.new.estado === 'finalizado') {
             if (window.zippyCurrentMulta > 0) {
               supabase.from('clientes').update({ multa_pendiente: 0 }).eq('id', localStorage.getItem('calmovil_cliente_id')).then();
@@ -402,9 +412,17 @@ export function listenForDriver(rideId, state, map) {
       // 1. Actualizar Estado si cambió
       if (data.estado !== state.lastKnownEstado) {
         state.lastKnownEstado = data.estado;
-        if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
+        if (data.estado === 'aceptado' || data.estado === 'en_progreso' || data.estado === 'esperando_pasajero') {
           if (data.estado === 'aceptado') playNotificationSound();
-          showDriverAssigned(data.conductor_id, state);
+          if (data.estado === 'esperando_pasajero' && state.lastKnownEstado !== 'esperando_pasajero') playNotificationSound();
+          
+          if (!document.getElementById('shareRideBtn')) {
+            showDriverAssigned(data.conductor_id, state);
+          }
+          
+          if (data.estado === 'esperando_pasajero') {
+            setTimeout(() => showDriverWaiting(state), 300);
+          }
         } else if (data.estado === 'finalizado') {
           if (window.zippyCurrentMulta > 0) {
             supabase.from('clientes').update({ multa_pendiente: 0 }).eq('id', localStorage.getItem('calmovil_cliente_id')).then();
@@ -714,6 +732,23 @@ async function showDriverAssigned(driverId, state) {
   document.getElementById('cancelRideBtnAction').addEventListener('click', () => {
     cancelRide(state, null);
   });
+}
+
+/**
+ * Modifies the driver assigned UI to show the urgent waiting warning.
+ * @param {object} state - Shared app state.
+ */
+function showDriverWaiting(state) {
+  const etaText = document.getElementById('etaText');
+  if (etaText) {
+    etaText.innerHTML = `🚨 ¡TU CONDUCTOR HA LLEGADO!<br><span style="font-size:12px; font-weight:normal; display:block; margin-top:5px; color:#fff;">Tienes 5 minutos para salir o el viaje se cancelará con multa.</span>`;
+    etaText.style.background = 'rgba(255,59,48,0.15)';
+    etaText.style.color = '#FF3B30';
+    etaText.style.border = '1.5px solid rgba(255,59,48,0.5)';
+    etaText.style.animation = 'cancelServicePulse 2s ease-in-out infinite';
+    etaText.style.padding = '15px';
+    etaText.style.lineHeight = '1.4';
+  }
 }
 
 /**

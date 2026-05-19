@@ -9,6 +9,7 @@ import { zippyToast } from '../utils/ui-global.js';
 
 let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
+let activeTimers = {}; // Store countdown intervals to prevent flickering
 
 // ── Inyectar animaciones de badge de pago (una sola vez) ──
 (function injectPaymentAnimations() {
@@ -179,9 +180,9 @@ export function renderViajes(viajes, handlers) {
     return v.conductor_id === currentConductor;
   });
 
-  // Verificar si el conductor ya tiene un viaje activo (aceptado o en_progreso)
+  // Verificar si el conductor ya tiene un viaje activo
   const hasActiveTrip = filteredViajes.some(
-    (v) => v.conductor_id === currentConductor && (v.estado === 'aceptado' || v.estado === 'en_progreso')
+    (v) => v.conductor_id === currentConductor && (v.estado === 'aceptado' || v.estado === 'esperando_pasajero' || v.estado === 'en_progreso')
   );
 
   if (filteredViajes.length === 0) {
@@ -225,8 +226,16 @@ export function renderViajes(viajes, handlers) {
             <p style="font-size: 11px; margin-bottom: 8px; color: #30D158; font-weight: 800; text-transform: uppercase;">¡Pasajero encontrado!</p>
             <div id="mini-map-${v.id}" class="mini-map-container" data-lat-s="${v.origen_lat}" data-lng-s="${v.origen_lng}" data-lat-e="${v.destino_lat}" data-lng-e="${v.destino_lng}"></div>
             <button class="btn" style="width:100%; margin-bottom:10px; background:rgba(255,255,255,.1); font-size:12px; color:#30D158; border:1px solid #30D158;" data-action="navigate" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">🧭 Navegar a Recoger (Punto A)</button>
-            <button class="btn btn-accept" style="width:100%; background: #007AFF; box-shadow: 0 4px 15px rgba(0,122,255,.3);" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🚖 PASAJERO RECOGIDO — IR AL DESTINO</button>
+            <button class="btn btn-accept" style="width:100%; background: #FF9500; box-shadow: 0 4px 15px rgba(255,149,0,.3);" data-action="arrive" data-id="${v.id}" data-lat="${v.origen_lat}" data-lng="${v.origen_lng}">📍 HE LLEGADO</button>
             <button class="btn btn-reject" style="width:100%; margin-top:10px; opacity:0.6;" data-action="cancel_active" data-id="${v.id}">Cancelar Servicio</button>
+          </div>`;
+      } else if (v.estado === 'esperando_pasajero') {
+        actions = `
+          <div style="background: rgba(255,149,0,.1); border: 1.5px dashed #FF9500; padding: 15px; border-radius: 12px; margin-top: 10px; text-align: center;">
+            <p style="font-size: 11px; margin-bottom: 8px; color: #FF9500; font-weight: 800; text-transform: uppercase;">¡Has llegado! Esperando pasajero...</p>
+            <div id="timer-${v.id}" style="font-size: 36px; font-weight: 900; color: #FF9500; margin-bottom: 10px; font-family: monospace; letter-spacing: 2px;">05:00</div>
+            <button class="btn btn-accept" style="width:100%; margin-bottom:10px; background: #007AFF; box-shadow: 0 4px 15px rgba(0,122,255,.3);" data-action="verify" data-id="${v.id}" data-lat="${v.destino_lat}" data-lng="${v.destino_lng}">🚖 PASAJERO RECOGIDO — IR AL DESTINO</button>
+            <button id="btn-no-show-${v.id}" class="btn btn-reject" style="width:100%; background: #FF3B30; box-shadow: 0 4px 15px rgba(255,59,48,.3); display:none;" data-action="no_show" data-id="${v.id}">Pasajero no salió (Cobrar Multa)</button>
           </div>`;
       } else if (v.estado === 'en_progreso') {
         actions = `
@@ -284,6 +293,39 @@ export function renderViajes(viajes, handlers) {
   container.innerHTML = newHTML;
   lastRenderedHTML = newHTML;
 
+  // Manejar temporizadores de espera
+  Object.values(activeTimers).forEach(clearInterval);
+  activeTimers = {};
+
+  filteredViajes.forEach(v => {
+    if (v.estado === 'esperando_pasajero') {
+      let startTime = parseInt(localStorage.getItem(`espera_inicio_${v.id}`));
+      if (!startTime) {
+        startTime = Date.now();
+        localStorage.setItem(`espera_inicio_${v.id}`, startTime);
+      }
+      
+      const timerEl = document.getElementById(`timer-${v.id}`);
+      const btnNoShow = document.getElementById(`btn-no-show-${v.id}`);
+
+      activeTimers[v.id] = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, 300 - elapsed);
+        
+        if (timerEl) {
+          const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+          const s = (remaining % 60).toString().padStart(2, '0');
+          timerEl.textContent = `${m}:${s}`;
+        }
+
+        if (remaining === 0) {
+           if (btnNoShow) btnNoShow.style.display = 'block';
+           clearInterval(activeTimers[v.id]);
+        }
+      }, 1000);
+    }
+  });
+
   // ── Fetch and display passenger trip counts ──
   filteredViajes.forEach(v => {
     if (v.cliente_telefono && (v.estado === 'buscando' || v.estado === 'aceptado')) {
@@ -317,6 +359,18 @@ export function renderViajes(viajes, handlers) {
   container.querySelectorAll('[data-action="accept"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       handlers.onAccept(btn.dataset.id, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng));
+    });
+  });
+
+  container.querySelectorAll('[data-action="arrive"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      handlers.onArrive(btn.dataset.id, parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng));
+    });
+  });
+
+  container.querySelectorAll('[data-action="no_show"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      handlers.onNoShow(btn.dataset.id);
     });
   });
 

@@ -91,6 +91,8 @@ function getHandlers() {
     onVerify: startViaje,
     onFinish: finishViaje,
     onCancelActive: cancelActiveViaje,
+    onArrive: arriveAtPickup,
+    onNoShow: cancelForNoShow,
   };
 }
 
@@ -129,7 +131,7 @@ export async function loadViajes() {
   const { data, error } = await supabase
     .from('viajes')
     .select('*')
-    .or('estado.eq.buscando,estado.eq.aceptado,estado.eq.en_progreso')
+    .or('estado.eq.buscando,estado.eq.aceptado,estado.eq.esperando_pasajero,estado.eq.en_progreso')
     .order('created_at', { ascending: false });
 
   if (!error && data) {
@@ -204,7 +206,7 @@ function setupRealtimeWithReconnect() {
         { event: 'UPDATE', schema: 'public', table: 'viajes' },
         (payload) => {
           const index = activeViajes.findIndex((v) => v.id === payload.new.id);
-          const validStates = ['buscando', 'aceptado', 'en_progreso'];
+          const validStates = ['buscando', 'aceptado', 'esperando_pasajero', 'en_progreso'];
           if (payload.new.estado === 'cancelado' && index !== -1) {
             showNotification('¡El cliente canceló el servicio!', 'error');
           }
@@ -329,12 +331,95 @@ async function acceptViaje(id, lat, lng) {
 }
 
 /**
+ * Driver marks arrival at the pickup point.
+ */
+async function arriveAtPickup(id, originLat, originLng) {
+  // Validate distance (150 meters)
+  let distance = 0;
+  try {
+    if (navigator.geolocation) {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+      });
+      const { latitude, longitude } = pos.coords;
+      
+      const R = 6371e3; // metres
+      const lat1 = latitude * Math.PI/180;
+      const lat2 = originLat * Math.PI/180;
+      const dLat = (originLat-latitude) * Math.PI/180;
+      const dLng = (originLng-longitude) * Math.PI/180;
+
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLng/2) * Math.sin(dLng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      distance = R * c;
+    }
+  } catch(e) {
+    console.warn('No se pudo validar la distancia GPS', e);
+  }
+
+  if (distance > 150) {
+    zippyAlert(`Estás a ${Math.round(distance)} metros del punto de recogida. Acércate a menos de 150m para marcar tu llegada.`, '⚠️');
+    return;
+  }
+
+  const { error } = await supabase.from('viajes').update({ estado: 'esperando_pasajero' }).eq('id', id);
+  if (!error) {
+    localStorage.setItem(`espera_inicio_${id}`, Date.now().toString());
+    loadViajes();
+  } else {
+    zippyAlert('Error al avisar llegada: ' + error.message, '❌');
+  }
+}
+
+/**
+ * Driver cancels due to passenger no-show after 5 minutes.
+ */
+async function cancelForNoShow(id) {
+  if (await zippyConfirm(
+    '¿El pasajero no salió? Se cancelará el viaje y se le aplicará una multa de $1,500 COP.',
+    '🕒',
+    'Cancelar por Inasistencia',
+    { label: 'Sí, cobrar multa', emoji: '💸' },
+    { label: 'Esperar más', emoji: '↩️' }
+  )) {
+    const viaje = activeViajes.find(v => v.id === id);
+    if (!viaje) return;
+
+    // Apply penalty to passenger
+    if (viaje.pasajero_id) {
+      const { data: clienteData } = await supabase
+        .from('clientes')
+        .select('multa_pendiente')
+        .eq('id', viaje.pasajero_id)
+        .single();
+      
+      const nuevaMulta = (clienteData?.multa_pendiente || 0) + 1500;
+      await supabase.from('clientes').update({ multa_pendiente: nuevaMulta }).eq('id', viaje.pasajero_id);
+    }
+
+    const { error } = await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', id);
+    if (!error) {
+      activeViajes = activeViajes.filter((v) => v.id !== id);
+      localStorage.removeItem(`espera_inicio_${id}`);
+      stopGPS();
+      renderViajes(activeViajes, getHandlers());
+      showNotification('Viaje cancelado por inasistencia. Multa aplicada al pasajero.', 'success');
+    } else {
+      zippyAlert('Error al cancelar: ' + error.message, '❌');
+    }
+  }
+}
+
+/**
  * Start a trip directly (skipping OTP) and open Waze to destination manually later.
  * @param {string} id - Ride UUID.
  */
 async function startViaje(id) {
   const { error } = await supabase.from('viajes').update({ estado: 'en_progreso' }).eq('id', id);
   if (!error) {
+    localStorage.removeItem(`espera_inicio_${id}`); // Clean up timer
     // Asegurar que el GPS siga activo
     startGPS(id);
     loadViajes();
