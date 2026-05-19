@@ -378,8 +378,8 @@ export function listenForDriver(rideId, state, map) {
               zIndexOffset: 1000 // Siempre arriba
             }).addTo(map);
           } else {
-            // Animar el movimiento suavemente (2 segundos de duración)
-            animateMarker(driverMarker, [lat, lng], 2000);
+            // Animar el movimiento suavemente (1 segundo de duración)
+            animateMarker(driverMarker, [lat, lng], 1000);
           }
 
           updateDriverMap(lat, lng, state, map);
@@ -429,14 +429,14 @@ export function listenForDriver(rideId, state, map) {
             zIndexOffset: 1000
           }).addTo(map);
         } else {
-          animateMarker(driverMarker, [lat, lng], 2000);
+          animateMarker(driverMarker, [lat, lng], 1000);
         }
 
         updateDriverMap(lat, lng, state, map);
         updateETA(lat, lng, state);
       }
     }
-  }, 2000);
+  }, 1000);
 }
 
 /**
