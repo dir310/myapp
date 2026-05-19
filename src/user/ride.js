@@ -378,7 +378,8 @@ export function listenForDriver(rideId, state, map) {
         }
 
         // Live Tracking de la Moto (GPS Update)
-        if (payload.new.conductor_lat && payload.new.conductor_lng && map) {
+        const activeTripStates = ['aceptado', 'esperando_pasajero', 'en_progreso'];
+        if (activeTripStates.includes(payload.new.estado) && payload.new.conductor_lat && payload.new.conductor_lng && map) {
           const lat = payload.new.conductor_lat;
           const lng = payload.new.conductor_lng;
 
@@ -437,7 +438,8 @@ export function listenForDriver(rideId, state, map) {
       }
 
       // 2. Actualización de GPS (Respaldo si falla el Websocket)
-      if (data.conductor_lat && data.conductor_lng && map) {
+      const activeTripStates = ['aceptado', 'esperando_pasajero', 'en_progreso'];
+      if (activeTripStates.includes(data.estado) && data.conductor_lat && data.conductor_lng && map) {
         const lat = data.conductor_lat;
         const lng = data.conductor_lng;
 
