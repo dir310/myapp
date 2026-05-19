@@ -156,20 +156,26 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
     return;
   }
 
-  // Calcular el ángulo (Bearing) para rotar la moto
-  const dLng = (endLatLng.lng - startLatLng.lng) * Math.PI / 180;
-  const lat1 = startLatLng.lat * Math.PI / 180;
-  const lat2 = endLatLng.lat * Math.PI / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  const brng = Math.atan2(y, x) * 180 / Math.PI;
+  // Filtrar el "ruido" del GPS: si se mueve menos de 3 metros, probablemente es un brinco estático, no girar.
+  const distance = startLatLng.distanceTo(endLatLng);
+  
+  if (distance > 3) {
+    const dLng = (endLatLng.lng - startLatLng.lng) * Math.PI / 180;
+    const lat1 = startLatLng.lat * Math.PI / 180;
+    const lat2 = endLatLng.lat * Math.PI / 180;
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    marker._lastBrng = Math.atan2(y, x) * 180 / Math.PI;
+  }
+
+  const finalBrng = marker._lastBrng || 0;
 
   const el = marker.getElement();
   if (el) {
     const inner = el.querySelector('.moto-rotate');
     if (inner) {
-      inner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-      inner.style.transform = `rotate(${brng}deg)`;
+      inner.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Suavizado premium
+      inner.style.transform = `rotate(${finalBrng}deg)`;
     }
   }
 
