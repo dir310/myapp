@@ -143,6 +143,11 @@ export function motoIcon() {
  * @param {number} durationMs 
  */
 export function animateMarker(marker, newLatLng, durationMs = 2000) {
+  if (marker._animId) {
+    cancelAnimationFrame(marker._animId);
+    marker._animId = null;
+  }
+
   const startLatLng = marker.getLatLng();
   const endLatLng = L.latLng(newLatLng);
   
@@ -177,19 +182,21 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
     // Ease-out cubic
     progress = 1 - Math.pow(1 - progress, 3);
     
-    if (progress > 1) progress = 1;
+    if (progress >= 1) {
+      marker.setLatLng([endLatLng.lat, endLatLng.lng]);
+      marker._animId = null;
+      return;
+    }
 
     const currentLat = startLatLng.lat + (endLatLng.lat - startLatLng.lat) * progress;
     const currentLng = startLatLng.lng + (endLatLng.lng - startLatLng.lng) * progress;
 
     marker.setLatLng([currentLat, currentLng]);
 
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    }
+    marker._animId = requestAnimationFrame(animate);
   }
 
-  requestAnimationFrame(animate);
+  marker._animId = requestAnimationFrame(animate);
 }
 
 /**

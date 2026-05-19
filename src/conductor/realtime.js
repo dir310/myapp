@@ -12,6 +12,25 @@ let misViajesFinalizados = []; // Track trips finished by this driver to ensure 
 // Tracker GPS
 let isTrackingGPS = false;
 let currentTrackingTripId = null;
+let gpsWatchId = null;
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock activado: pantalla se mantendrá encendida');
+    }
+  } catch (err) {
+    console.error('Error con Wake Lock:', err.name, err.message);
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock.release().then(() => { wakeLock = null; });
+  }
+}
 
 async function startGPS(tripId) {
   if (isTrackingGPS) return; // Ya estamos trackeando
@@ -19,36 +38,46 @@ async function startGPS(tripId) {
 
   isTrackingGPS = true;
   currentTrackingTripId = tripId;
-  console.log('Iniciando rastreo GPS intensivo cada 2s para el viaje:', tripId);
+  console.log('Iniciando rastreo GPS continuo para el viaje:', tripId);
+  
+  await requestWakeLock();
 
-  const getPos = () => new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
-  });
+  let lastUpdate = 0;
 
-  while (isTrackingGPS && currentTrackingTripId === tripId) {
-    try {
-      const pos = await getPos();
+  gpsWatchId = navigator.geolocation.watchPosition(
+    async (pos) => {
+      if (!isTrackingGPS || currentTrackingTripId !== tripId) return;
+      
+      const now = Date.now();
+      if (now - lastUpdate < 1000) return; // Limitar a máximo 1 actualización cada 1s
+      lastUpdate = now;
+
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      // Update DB silently
-      await supabase
-        .from('viajes')
-        .update({ conductor_lat: lat, conductor_lng: lng })
-        .eq('id', tripId)
-        .in('estado', ['aceptado', 'en_progreso']);
-    } catch (err) {
-      console.error('GPS Error:', err.message);
-    }
-    
-    // Esperar exactamente 2 segundos antes del siguiente pulso
-    await new Promise(r => setTimeout(r, 2000));
-  }
+      try {
+        await supabase
+          .from('viajes')
+          .update({ conductor_lat: lat, conductor_lng: lng })
+          .eq('id', tripId)
+          .in('estado', ['aceptado', 'en_progreso']);
+      } catch (err) {
+        console.error('GPS Update Error:', err.message);
+      }
+    },
+    (err) => console.warn('GPS Watch Error:', err.message),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+  );
 }
 
 function stopGPS() {
   isTrackingGPS = false;
   currentTrackingTripId = null;
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  releaseWakeLock();
   console.log('Rastreo GPS detenido.');
 }
 
