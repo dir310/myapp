@@ -72,15 +72,19 @@ export function placeMarker(type, lat, lng, name, state, map) {
   // Validación de Cobertura
   if (!isPointInPolygon({ lat, lng }, COVERAGE_POLYGON)) {
     showCoverageModal();
-    // Borrar el punto anterior si existía para evitar confusión
+    // Borrar el punto y limpiar el input para que no quede nada
     if (type === 'start') {
       if (state.startMarker) map.removeLayer(state.startMarker);
       state.startLatLng = null;
       state.startMarker = null;
+      const input = document.getElementById('startInput');
+      if (input) input.value = '';
     } else {
       if (state.endMarker) map.removeLayer(state.endMarker);
       state.endLatLng = null;
       state.endMarker = null;
+      const input = document.getElementById('endInput');
+      if (input) input.value = '';
     }
     return;
   }
