@@ -48,6 +48,7 @@ let driverRouteLayer = null;   // Polyline de ruta conductor → Punto A
 let driverMapFocused = false;  // Bandera: primer foco ya hecho
 let lastRouteFetch = 0;        // Throttle peticiones OSRM
 let rideChannel = null;        // Referencia al canal de Supabase
+let gpsPollerInterval = null;  // Polling GPS dedicado (independiente del WebSocket)
 
 /**
  * Centra el mapa en el conductor y dibuja la ruta hacia el Punto A.
@@ -400,17 +401,16 @@ export function listenForDriver(rideId, state, map) {
     )
     .subscribe();
 
-  // Strategy 2: Backup polling every 5 seconds
+  // Strategy 2: Backup polling for STATE changes every 4 seconds
   if (state.pollerInterval) clearInterval(state.pollerInterval);
   state.pollerInterval = setInterval(async () => {
     const { data, error } = await supabase
       .from('viajes')
-      .select('estado, conductor_id, conductor_lat, conductor_lng')
+      .select('estado, conductor_id')
       .eq('id', rideId)
       .single();
 
     if (!error && data) {
-      // 1. Actualizar Estado si cambió
       if (data.estado !== state.lastKnownEstado) {
         state.lastKnownEstado = data.estado;
         if (data.estado === 'aceptado' || data.estado === 'en_progreso' || data.estado === 'esperando_pasajero') {
@@ -436,10 +436,39 @@ export function listenForDriver(rideId, state, map) {
           cancelRide(state, map);
         }
       }
+    }
+  }, 4000);
 
-      // 2. Actualización de GPS (Respaldo si falla el Websocket)
+  // Strategy 3: GPS-dedicated polling every 2 seconds (NEVER killed by UI transitions)
+  startGPSPoller(rideId, state, map);
+}
+
+/**
+ * Dedicated GPS poller that runs independently of state polling.
+ * This ensures the moto marker always updates even if WebSocket misses GPS-only changes.
+ */
+function startGPSPoller(rideId, state, map) {
+  if (gpsPollerInterval) clearInterval(gpsPollerInterval);
+
+  gpsPollerInterval = setInterval(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('viajes')
+        .select('estado, conductor_lat, conductor_lng')
+        .eq('id', rideId)
+        .single();
+
+      if (error || !data) return;
+
       const activeTripStates = ['aceptado', 'esperando_pasajero', 'en_progreso'];
-      if (activeTripStates.includes(data.estado) && data.conductor_lat && data.conductor_lng && map) {
+      if (!activeTripStates.includes(data.estado)) {
+        // Viaje ya no está activo, detener GPS poller
+        clearInterval(gpsPollerInterval);
+        gpsPollerInterval = null;
+        return;
+      }
+
+      if (data.conductor_lat && data.conductor_lng && map) {
         const lat = data.conductor_lat;
         const lng = data.conductor_lng;
 
@@ -449,14 +478,16 @@ export function listenForDriver(rideId, state, map) {
             zIndexOffset: 1000
           }).addTo(map);
         } else {
-          animateMarker(driverMarker, [lat, lng], 1000);
+          animateMarker(driverMarker, [lat, lng], 1800);
         }
 
         updateDriverMap(lat, lng, state, map);
         updateETA(lat, lng, state);
       }
+    } catch (e) {
+      console.warn('[ZIPPY GPS Poller] Error:', e);
     }
-  }, 1000);
+  }, 2000);
 }
 
 /**
@@ -465,6 +496,7 @@ export function listenForDriver(rideId, state, map) {
  * @param {object} state - Shared app state.
  */
 async function showDriverAssigned(driverId, state) {
+  // Solo limpiar el polling de ESTADO, NO el GPS poller
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
@@ -1003,6 +1035,12 @@ export function stopListening(state, map) {
   if (state.pollerInterval) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
+  }
+
+  // Detener GPS poller dedicado
+  if (gpsPollerInterval) {
+    clearInterval(gpsPollerInterval);
+    gpsPollerInterval = null;
   }
 
   if (rideChannel) {

@@ -60,7 +60,7 @@ async function startGPS(tripId) {
           .from('viajes')
           .update({ conductor_lat: lat, conductor_lng: lng })
           .eq('id', tripId)
-          .in('estado', ['aceptado', 'en_progreso']);
+          .in('estado', ['aceptado', 'esperando_pasajero', 'en_progreso']);
       } catch (err) {
         console.error('GPS Update Error:', err.message);
       }
