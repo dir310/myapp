@@ -54,7 +54,8 @@ async function startGPS(tripId) {
 
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-
+      window.lastConductorLatLng = { lat, lng }; // Guardar última posición para validación instantánea
+      
       try {
         await supabase
           .from('viajes')
@@ -334,15 +335,31 @@ async function acceptViaje(id, lat, lng) {
  * Driver marks arrival at the pickup point.
  */
 async function arriveAtPickup(id, originLat, originLng) {
+  const btn = document.querySelector(`[data-action="arrive"][data-id="${id}"]`);
+  let originalHTML = '';
+  if (btn) {
+    originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⌛ Verificando GPS...';
+  }
+
   // Validate distance (150 meters)
   let distance = 0;
   try {
-    if (navigator.geolocation) {
+    let latitude, longitude;
+    // Si tenemos la última posición guardada por watchPosition, usarla directamente
+    if (window.lastConductorLatLng) {
+      latitude = window.lastConductorLatLng.lat;
+      longitude = window.lastConductorLatLng.lng;
+    } else if (navigator.geolocation) {
       const pos = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
       });
-      const { latitude, longitude } = pos.coords;
-      
+      latitude = pos.coords.latitude;
+      longitude = pos.coords.longitude;
+    }
+
+    if (latitude !== undefined && longitude !== undefined) {
       const R = 6371e3; // metres
       const lat1 = latitude * Math.PI/180;
       const lat2 = originLat * Math.PI/180;
@@ -361,6 +378,10 @@ async function arriveAtPickup(id, originLat, originLng) {
 
   if (distance > 150) {
     zippyAlert(`Estás a ${Math.round(distance)} metros del punto de recogida. Acércate a menos de 150m para marcar tu llegada.`, '⚠️');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
     return;
   }
 
@@ -370,6 +391,10 @@ async function arriveAtPickup(id, originLat, originLng) {
     loadViajes();
   } else {
     zippyAlert('Error al avisar llegada: ' + error.message, '❌');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
   }
 }
 

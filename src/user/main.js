@@ -894,9 +894,12 @@ map.on('click', (e) => {
   if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
   const { lat, lng } = e.latlng;
-  showStatus('📍 Obteniendo dirección...', true);
+  showStatus('📍 Cargando dirección...', true);
 
-  // Intentamos convertir las coordenadas a dirección real con Nominatim
+  // Colocar marcador instantáneo de cargando para cero latencia visual
+  boundPlaceMarker(target, lat, lng, '📍 Cargando dirección...');
+
+  // Intentamos convertir las coordenadas a dirección real con Nominatim en segundo plano
   fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
     .then(res => res.json())
     .then(data => {
@@ -917,12 +920,22 @@ map.on('click', (e) => {
             name = data.display_name.split(',').slice(0,2).join(',').trim();
         }
       }
-      boundPlaceMarker(target, lat, lng, name);
+      // Volver a llamar para actualizar el nombre real (solo si el punto sigue activo)
+      if (target === 'start' && state.startLatLng) {
+        boundPlaceMarker(target, lat, lng, name);
+      } else if (target === 'end' && state.endLatLng) {
+        boundPlaceMarker(target, lat, lng, name);
+      }
     })
     .catch(err => {
       console.error('[ZIPPY] Error en Reverse Geocoding:', err);
-      // Fallback a coordenadas si falla la red
-      boundPlaceMarker(target, lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      // Fallback a coordenadas si falla la red (solo si el punto sigue activo)
+      const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      if (target === 'start' && state.startLatLng) {
+        boundPlaceMarker(target, lat, lng, name);
+      } else if (target === 'end' && state.endLatLng) {
+        boundPlaceMarker(target, lat, lng, name);
+      }
     })
     .finally(() => {
       showStatus('', false);
