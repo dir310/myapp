@@ -50,6 +50,8 @@ let lastRouteFetch = 0;        // Throttle peticiones OSRM
 let rideChannel = null;        // Referencia al canal de Supabase
 let gpsPollerInterval = null;  // Polling GPS dedicado (independiente del WebSocket)
 let driverAssignedAt = 0;      // Timestamp de cuando se asignó el conductor (para gracia de 1 min)
+let userInteractedAt = 0;      // Timestamp de última interacción del usuario con el mapa
+let mapDragBound = false;      // Bandera: ya se registró el listener de drag
 
 /**
  * Centra el mapa en el conductor y dibuja la ruta hacia el Punto A.
@@ -58,11 +60,21 @@ let driverAssignedAt = 0;      // Timestamp de cuando se asignó el conductor (p
 function updateDriverMap(lat, lng, state, map) {
   if (!map) return;
 
+  // ── Registrar listener de interacción del usuario (una sola vez) ──
+  if (!mapDragBound) {
+    map.on('dragstart', () => { userInteractedAt = Date.now(); });
+    map.on('zoomstart', () => { userInteractedAt = Date.now(); });
+    mapDragBound = true;
+  }
+
   // ── Foco del mapa ──
+  // Si el usuario tocó/arrastró el mapa hace menos de 20s, no mover la cámara
+  const userExploring = (Date.now() - userInteractedAt) < 20000;
+
   if (!driverMapFocused && state.startLatLng) {
     map.fitBounds(L.latLngBounds([state.startLatLng, [lat, lng]]).pad(0.5), { animate: true });
     driverMapFocused = true;
-  } else {
+  } else if (!userExploring) {
     map.panTo([lat, lng], { animate: true, duration: 1.2 });
   }
 
