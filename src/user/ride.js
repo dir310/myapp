@@ -49,6 +49,7 @@ let driverMapFocused = false;  // Bandera: primer foco ya hecho
 let lastRouteFetch = 0;        // Throttle peticiones OSRM
 let rideChannel = null;        // Referencia al canal de Supabase
 let gpsPollerInterval = null;  // Polling GPS dedicado (independiente del WebSocket)
+let driverAssignedAt = 0;      // Timestamp de cuando se asignó el conductor (para gracia de 1 min)
 
 /**
  * Centra el mapa en el conductor y dibuja la ruta hacia el Punto A.
@@ -501,6 +502,9 @@ async function showDriverAssigned(driverId, state) {
     clearInterval(state.pollerInterval);
     state.pollerInterval = null;
   }
+
+  // Registrar el momento de asignación del conductor (para gracia de 1 minuto)
+  if (!driverAssignedAt) driverAssignedAt = Date.now();
 
   // Limpiar carrusel previo si existe
   if (state.carouselInterval) {
@@ -1109,7 +1113,11 @@ export async function cancelRide(state, map) {
     await supabase.from('viajes').update({ estado: 'cancelado' }).eq('id', state.currentRideId);
 
     // ── MULTA POR CANCELACIÓN TARDÍA (1.500 COP para Zippy) ──
-    if (viaje?.pasajero_id && (viaje.estado === 'aceptado' || viaje.estado === 'en_progreso')) {
+    // Solo aplicar multa si han pasado más de 60 segundos desde la asignación del conductor
+    const secondsSinceAssigned = driverAssignedAt ? (Date.now() - driverAssignedAt) / 1000 : 999;
+    const withinGracePeriod = secondsSinceAssigned < 60;
+
+    if (viaje?.pasajero_id && (viaje.estado === 'aceptado' || viaje.estado === 'en_progreso') && !withinGracePeriod) {
       try {
         const { data: clienteData } = await supabase
           .from('clientes')
@@ -1134,7 +1142,17 @@ export async function cancelRide(state, map) {
       } catch (err) {
         console.error('[ZIPPY] Error aplicando multa de cancelación:', err);
       }
+    } else if (viaje?.pasajero_id && (viaje.estado === 'aceptado' || viaje.estado === 'en_progreso') && withinGracePeriod) {
+      // Cancelación dentro del minuto de gracia — sin multa
+      await zippyAlert(
+        'Tu viaje ha sido cancelado sin recargo porque lo hiciste dentro del primer minuto.',
+        '✅',
+        'Cancelación sin Multa'
+      );
     }
+
+    // Resetear timestamp de asignación
+    driverAssignedAt = 0;
 
     // ── Si pagó por Wompi, avisar sobre devoluciones antes de recargar ──
     if (viaje?.pago_wompi === true) {
