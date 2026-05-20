@@ -1083,6 +1083,14 @@ export function stopListening(state, map) {
  * @param {L.Map} map - Leaflet map instance.
  */
 export async function cancelRide(state, map) {
+  // Cambiar visualmente los botones de cancelar a "Cancelando..." de inmediato
+  const cancelBtn1 = document.getElementById('cancelRideBtn');
+  const cancelBtn2 = document.getElementById('cancelRideBtnAction');
+  const cancelBtn3 = document.getElementById('cancelSearchBtn');
+  if (cancelBtn1) { cancelBtn1.disabled = true; cancelBtn1.innerHTML = '⏳ Cancelando...'; }
+  if (cancelBtn2) { cancelBtn2.disabled = true; cancelBtn2.innerHTML = '⏳ Cancelando...'; }
+  if (cancelBtn3) { cancelBtn3.disabled = true; cancelBtn3.innerHTML = '⏳ Cancelando...'; }
+
   // Solo pedir confirmación si realmente se está cancelando activamente
   // (Si viene de un alert de "conductor canceló", ya se llamó stopListening)
 
