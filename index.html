@@ -703,5 +703,145 @@
             </div>
         </div>
     </div>
+    <!-- ── Modal: Cuenta Regresiva Prueba ── -->
+    <div id="trialCountdownModal"
+         style="display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.82); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); align-items:center; justify-content:center; padding:24px;">
+        <div style="background:linear-gradient(160deg,#1c1c1e,#201208); border:1px solid rgba(255,107,0,0.45); border-radius:28px; padding:32px 24px 26px; max-width:330px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.85), 0 0 60px rgba(255,107,0,0.1); position:relative; overflow:hidden; animation:trialModalPop 0.5s cubic-bezier(.17,.67,.35,1.3) both;">
+
+            <!-- Glow decorativo superior -->
+            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:180px;height:90px;background:rgba(255,107,0,0.2);border-radius:50%;filter:blur(35px);pointer-events:none;"></div>
+
+            <!-- Ícono -->
+            <div style="font-size:52px; margin-bottom:12px; filter:drop-shadow(0 4px 15px rgba(255,107,0,0.4)); position:relative; z-index:1;">🧪</div>
+
+            <!-- Título -->
+            <h2 style="color:#FF6B00; margin:0 0 6px 0; font-size:20px; font-weight:900; letter-spacing:0.5px; position:relative; z-index:1;">PERÍODO DE PRUEBA</h2>
+            <p style="color:rgba(255,255,255,0.55); font-size:12px; margin:0 0 20px 0; line-height:1.4; position:relative; z-index:1;">
+                Evaluación activa para verificadores.<br>Tiempo restante para finalizar la prueba:
+            </p>
+
+            <!-- Countdown boxes -->
+            <div id="trialCountdownDisplay" style="display:flex; gap:8px; justify-content:center; margin-bottom:22px; position:relative; z-index:1;">
+                <div style="flex:1; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.3); border-radius:16px; padding:12px 4px;">
+                    <div id="countdownDays" style="color:#FF6B00; font-weight:900; font-size:28px; line-height:1;">0</div>
+                    <div style="color:rgba(255,255,255,0.4); font-size:9px; text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; font-weight:700;">Días</div>
+                </div>
+                <div style="flex:1; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.3); border-radius:16px; padding:12px 4px;">
+                    <div id="countdownHours" style="color:#FF6B00; font-weight:900; font-size:28px; line-height:1;">0</div>
+                    <div style="color:rgba(255,255,255,0.4); font-size:9px; text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; font-weight:700;">Horas</div>
+                </div>
+                <div style="flex:1; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.3); border-radius:16px; padding:12px 4px;">
+                    <div id="countdownMinutes" style="color:#FF6B00; font-weight:900; font-size:28px; line-height:1;">0</div>
+                    <div style="color:rgba(255,255,255,0.4); font-size:9px; text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; font-weight:700;">Min</div>
+                </div>
+                <div style="flex:1; background:rgba(255,107,0,0.1); border:1px solid rgba(255,107,0,0.3); border-radius:16px; padding:12px 4px;">
+                    <div id="countdownSeconds" style="color:#FF6B00; font-weight:900; font-size:28px; line-height:1;">0</div>
+                    <div style="color:rgba(255,255,255,0.4); font-size:9px; text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; font-weight:700;">Seg</div>
+                </div>
+            </div>
+
+            <!-- Mensaje cuando la prueba termine -->
+            <div id="trialExpiredMsg" style="display:none; color:#30D158; font-size:14px; font-weight:800; margin-bottom:18px; position:relative; z-index:1;">
+                ✅ ¡El período de prueba ha finalizado!
+            </div>
+
+            <!-- Barra de progreso -->
+            <div style="background:rgba(255,255,255,0.06); border-radius:8px; height:6px; margin-bottom:20px; overflow:hidden; position:relative; z-index:1;">
+                <div id="trialProgressBar" style="height:100%; background:linear-gradient(90deg,#FF6B00,#FF9500); border-radius:8px; transition:width 1s ease; width:100%;"></div>
+            </div>
+
+            <!-- Botón OK -->
+            <button id="closeTrialCountdownBtn"
+                    style="width:100%; background:linear-gradient(135deg,#FF6B00,#FF9500); color:#fff; border:none; border-radius:14px; padding:14px; font-family:'Inter',sans-serif; font-size:15px; font-weight:900; cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,107,0,0.4); transition:transform 0.2s, box-shadow 0.2s; position:relative; z-index:1;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 10px 30px rgba(255,107,0,0.5)';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 25px rgba(255,107,0,0.4)';">
+                👍 OK, Entendido
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes trialModalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+    </style>
+
+    <script>
+    (function() {
+        // Fecha límite: 23 de mayo 2026 a las 22:00 (hora Colombia, UTC-5)
+        const TRIAL_END = new Date('2026-05-23T22:00:00-05:00').getTime();
+        const TRIAL_START = new Date('2026-05-20T22:00:00-05:00').getTime();
+        const TRIAL_TOTAL = TRIAL_END - TRIAL_START;
+        let countdownInterval = null;
+
+        function updateCountdown() {
+            const now = Date.now();
+            const remaining = TRIAL_END - now;
+
+            const daysEl = document.getElementById('countdownDays');
+            const hoursEl = document.getElementById('countdownHours');
+            const minutesEl = document.getElementById('countdownMinutes');
+            const secondsEl = document.getElementById('countdownSeconds');
+            const display = document.getElementById('trialCountdownDisplay');
+            const expiredMsg = document.getElementById('trialExpiredMsg');
+            const progressBar = document.getElementById('trialProgressBar');
+
+            if (remaining <= 0) {
+                // Prueba finalizada
+                if (display) display.style.display = 'none';
+                if (expiredMsg) expiredMsg.style.display = 'block';
+                if (progressBar) progressBar.style.width = '0%';
+                if (countdownInterval) clearInterval(countdownInterval);
+                return;
+            }
+
+            const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+            if (daysEl) daysEl.textContent = days;
+            if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
+
+            // Barra de progreso
+            if (progressBar) {
+                const pct = Math.max(0, (remaining / TRIAL_TOTAL) * 100);
+                progressBar.style.width = pct + '%';
+            }
+        }
+
+        function showTrialModal() {
+            const modal = document.getElementById('trialCountdownModal');
+            if (!modal) return;
+
+            // Solo mostrar si el usuario está logueado (en el mapa, no en login)
+            const email = localStorage.getItem('calmovil_cliente_email');
+            if (!email) return;
+
+            modal.style.display = 'flex';
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // Cerrar modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.getElementById('closeTrialCountdownBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    var modal = document.getElementById('trialCountdownModal');
+                    if (modal) modal.style.display = 'none';
+                    if (countdownInterval) clearInterval(countdownInterval);
+                });
+            }
+
+            // Mostrar el modal después del splash (3.5s para dar tiempo al splash de 2.2s + login check)
+            setTimeout(showTrialModal, 3500);
+        });
+    })();
+    </script>
+
 </body>
 </html>
