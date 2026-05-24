@@ -1,6 +1,6 @@
 {
   "name": "ZIPPY Conductor",
-  "short_name": "Conductor",
+  "short_name": "ZIPPY Conductor",
   "description": "Panel exclusivo para conductores de ZIPPY.",
   "id": "com.zippy.driver",
   "start_url": "/conductor/",
