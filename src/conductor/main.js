@@ -73,47 +73,4 @@ if (closeDriverAboutBtn) {
   }, { passive: true });
 })();
 
-// ── Botón "Atrás" del teléfono — Confirmación de salida ──
-(function initBackButtonGuard() {
-  let isGuarding = false;
-  let isExiting  = false;
 
-  // Inicializar en 'load' para que auth y otros módulos
-  // terminen de inicializarse antes de empujar el estado de guarda.
-  window.addEventListener('load', function () {
-    history.pushState({ zippyGuard: true }, '');
-
-    window.addEventListener('popstate', async function () {
-      // Si estamos en proceso de salida, no interceptar
-      if (isExiting) return;
-
-      // Si ya hay un diálogo abierto, re-empujar y esperar
-      if (isGuarding) {
-        history.pushState({ zippyGuard: true }, '');
-        return;
-      }
-
-      isGuarding = true;
-      // Re-empujar ANTES del diálogo (async) para mantener el control
-      history.pushState({ zippyGuard: true }, '');
-
-      const salir = await zippyDanger(
-        '¿Deseas salir de ZIPPY? El radar se apagará.',
-        '🚪',
-        'Salir de la App',
-        { label: 'Sí, salir', emoji: '🚪' },
-        { label: 'No, quedarme', emoji: '↩️' }
-      );
-
-      isGuarding = false;
-
-      if (salir) {
-        isExiting = true;
-        // Intento 1: cerrar ventana (funciona en TWA / Chrome Desktop)
-        try { window.close(); } catch (_) {}
-        // Intento 2: vaciar historial → Android cierra la PWA
-        setTimeout(() => history.go(-history.length), 300);
-      }
-    });
-  });
-})();
