@@ -94,15 +94,4 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') requestWakeLock();
 });
 
-// ── Hack Audio Silencioso para Background GPS ──
-// Reproduce un audio en blanco en bucle continuo para engañar al sistema operativo
-// y forzar a que el navegador no pause la PWA al abrir Waze.
-const silentBgAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
-silentBgAudio.loop = true;
 
-// El audio necesita una interacción del usuario para arrancar
-function startSilentAudio() {
-    silentBgAudio.play().catch(e => console.log('Silent audio bloqueado (necesita interacción previa)', e));
-}
-document.body.addEventListener('touchstart', startSilentAudio, { once: true });
-document.body.addEventListener('click', startSilentAudio, { once: true });
