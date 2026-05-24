@@ -644,36 +644,125 @@
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script type="module" src="src/user/main.js?v=3"></script>
 
+    <!-- ── Modal PWA Install Autoprompt ── -->
+    <div id="pwaInstallModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:24px;">
+        <div style="background:linear-gradient(160deg,#1c1c1e,#22150c); border:1px solid rgba(255,107,0,0.45); border-radius:28px; padding:32px 24px 26px; max-width:320px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.85), 0 0 50px rgba(255,107,0,0.08); position:relative; overflow:hidden; animation:pwaPop 0.4s cubic-bezier(.17,.67,.35,1.15) both;">
+            <!-- Glow decorativo superior -->
+            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:180px;height:90px;background:rgba(255,107,0,0.2);border-radius:50%;filter:blur(35px);pointer-events:none;"></div>
+            
+            <!-- Icono PWA -->
+            <img src="https://i.imgur.com/UexR6kn.jpeg" alt="ZIPPY" style="width:78px; height:78px; border-radius:20px; box-shadow:0 8px 25px rgba(255,107,0,0.4); margin-bottom:18px; border:2px solid rgba(255,255,255,0.1); position:relative; z-index:1;">
+            
+            <!-- Titulo -->
+            <h2 style="color:#FF6B00; margin:0 0 8px 0; font-size:20px; font-weight:900; letter-spacing:0.5px; position:relative; z-index:1;">¡Instala la App de ZIPPY!</h2>
+            <p style="color:rgba(255,255,255,0.75); font-size:12.5px; margin:0 0 24px 0; line-height:1.5; position:relative; z-index:1;">
+                Accede mucho más rápido a tus viajes, sin abrir el navegador y de forma 100% segura en tu celular.
+            </p>
+            
+            <!-- Botones de accion -->
+            <div style="display:flex; flex-direction:column; gap:10px; position:relative; z-index:1;">
+                <button id="pwaModalInstallBtn" style="width:100%; background:linear-gradient(135deg,#FF6B00,#FF9500); color:#fff; border:none; border-radius:14px; padding:14px; font-family:'Inter',sans-serif; font-size:15px; font-weight:900; cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(255,107,0,0.4); transition:transform 0.2s;">
+                    📲 Instalar Aplicación
+                </button>
+                <button id="pwaModalDeclineBtn" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:12.5px; font-weight:700; cursor:pointer; padding:6px 0; text-decoration:underline; text-underline-offset:3px;">
+                    Quizás más tarde
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes pwaPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+    </style>
+
     <!-- PWA Install Prompt -->
     <script>
-        var _pwaPrompt = null;
-        var _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        (function() {
+            var _pwaPrompt = null;
+            var _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        window.addEventListener('beforeinstallprompt', function(e) {
-            e.preventDefault();
-            _pwaPrompt = e;
-        });
+            // Escuchar el evento de instalación de Android
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                _pwaPrompt = e;
+                
+                // Mostrar el modal si no ha sido rechazado recientemente
+                showInstallModalDelayed();
+            });
 
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.id === 'pwaInstallBtn') {
-                if (_pwaPrompt) {
-                    // Android: instalacion directa
-                    _pwaPrompt.prompt();
-                    _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
-                } else if (_isIOS) {
-                    // iOS: banner con instrucciones
-                    document.getElementById('iosBanner').style.display = 'block';
-                } else {
-                    // Ya instalada
-                    alert('✅ ZIPPY ya está instalada en tu dispositivo.');
-                }
+            // Si es iOS y no está instalado, también mostrar modal con retraso
+            if (_isIOS && !_isStandalone) {
+                showInstallModalDelayed();
             }
-        });
 
-        window.addEventListener('appinstalled', function() {
-            var btn = document.getElementById('pwaInstallBtn');
-            if (btn) btn.textContent = '✅ App Instalada';
-        });
+            function showInstallModalDelayed() {
+                var lastDeclined = localStorage.getItem('pwa_prompt_declined');
+                var oneDay = 24 * 60 * 60 * 1000;
+                if (lastDeclined && (Date.now() - lastDeclined < oneDay)) {
+                    return;
+                }
+
+                // Mostrar el modal a los 5 segundos de carga
+                setTimeout(function() {
+                    var modal = document.getElementById('pwaInstallModal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+                    }
+                }, 5000);
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var installBtn = document.getElementById('pwaModalInstallBtn');
+                var declineBtn = document.getElementById('pwaModalDeclineBtn');
+                var modal = document.getElementById('pwaInstallModal');
+
+                if (installBtn) {
+                    installBtn.addEventListener('click', function() {
+                        if (modal) modal.style.display = 'none';
+                        if (_pwaPrompt) {
+                            _pwaPrompt.prompt();
+                            _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+                        } else if (_isIOS) {
+                            var iosBanner = document.getElementById('iosBanner');
+                            if (iosBanner) iosBanner.style.display = 'block';
+                        }
+                    });
+                }
+
+                if (declineBtn) {
+                    declineBtn.addEventListener('click', function() {
+                        if (modal) modal.style.display = 'none';
+                        localStorage.setItem('pwa_prompt_declined', Date.now());
+                    });
+                }
+
+                // Mantener soporte para botón manual si existe
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.id === 'pwaInstallBtn') {
+                        if (_pwaPrompt) {
+                            _pwaPrompt.prompt();
+                            _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+                        } else if (_isIOS) {
+                            var iosBanner = document.getElementById('iosBanner');
+                            if (iosBanner) iosBanner.style.display = 'block';
+                        } else {
+                            alert('✅ ZIPPY ya está instalada en tu dispositivo.');
+                        }
+                    }
+                });
+            });
+
+            window.addEventListener('appinstalled', function() {
+                var modal = document.getElementById('pwaInstallModal');
+                if (modal) modal.style.display = 'none';
+                var btn = document.getElementById('pwaInstallBtn');
+                if (btn) btn.textContent = '✅ App Instalada';
+            });
+        })();
     </script>
     <!-- Sonido de notificación -->
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
