@@ -576,36 +576,109 @@
       };
     </script>
 
+    <!-- ── Modal PWA Install Autoprompt (Conductor) ── -->
+    <div id="pwaInstallModalDriver" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:24px;">
+        <div style="background:linear-gradient(160deg,#1c1c1e,#0c2212); border:1px solid rgba(56,142,60,0.5); border-radius:28px; padding:32px 24px 26px; max-width:320px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.85), 0 0 50px rgba(56,142,60,0.08); position:relative; overflow:hidden; animation:pwaPop 0.4s cubic-bezier(.17,.67,.35,1.15) both;">
+            <!-- Glow decorativo superior -->
+            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:180px;height:90px;background:rgba(56,142,60,0.2);border-radius:50%;filter:blur(35px);pointer-events:none;"></div>
+
+            <!-- Icono PWA -->
+            <img src="https://i.imgur.com/UexR6kn.jpeg" alt="ZIPPY" style="width:78px; height:78px; border-radius:20px; box-shadow:0 8px 25px rgba(56,142,60,0.4); margin-bottom:18px; border:2px solid rgba(255,255,255,0.1); position:relative; z-index:1;">
+
+            <!-- Titulo -->
+            <h2 style="color:#4CAF50; margin:0 0 8px 0; font-size:20px; font-weight:900; letter-spacing:0.5px; position:relative; z-index:1;">¡Instala tu Panel de Conductor!</h2>
+            <p style="color:rgba(255,255,255,0.75); font-size:12.5px; margin:0 0 24px 0; line-height:1.5; position:relative; z-index:1;">
+                Recibe tus viajes más rápido instalando la app en tu celular. Sin navegador, siempre a mano.
+            </p>
+
+            <!-- Botones de accion -->
+            <div style="display:flex; flex-direction:column; gap:10px; position:relative; z-index:1;">
+                <button id="pwaModalInstallBtnDriver" style="width:100%; background:linear-gradient(135deg,#388E3C,#4CAF50); color:#fff; border:none; border-radius:14px; padding:14px; font-family:'Inter',sans-serif; font-size:15px; font-weight:900; cursor:pointer; letter-spacing:0.5px; box-shadow:0 8px 25px rgba(56,142,60,0.4); transition:transform 0.2s;">
+                    📲 Instalar App de Conductor
+                </button>
+                <button id="pwaModalDeclineBtnDriver" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:12.5px; font-weight:700; cursor:pointer; padding:6px 0; text-decoration:underline; text-underline-offset:3px;">
+                    Quizás más tarde
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA Install Prompt -->
     <script>
-        var _pwaPromptDriver = null;
-        var _isIOSDriver = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        (function() {
+            var _pwaPromptDriver = null;
+            var _isIOSDriver = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            var _isStandaloneDriver = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        window.addEventListener('beforeinstallprompt', function (e) {
-            e.preventDefault();
-            _pwaPromptDriver = e;
-        });
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                _pwaPromptDriver = e;
+                showDriverInstallModal();
+            });
 
-        document.addEventListener('click', function (e) {
-            if (e.target && e.target.id === 'pwaInstallBtnDriver') {
-                if (_pwaPromptDriver) {
-                    // Android: instalacion directa
-                    _pwaPromptDriver.prompt();
-                    _pwaPromptDriver.userChoice.then(function () { _pwaPromptDriver = null; });
-                } else if (_isIOSDriver) {
-                    // iOS: banner con instrucciones
-                    document.getElementById('iosBannerDriver').style.display = 'block';
-                } else {
-                    // Ya instalada
-                    alert('✅ ZIPPY ya está instalada en tu dispositivo.');
-                }
+            if (_isIOSDriver && !_isStandaloneDriver) {
+                showDriverInstallModal();
             }
-        });
 
-        window.addEventListener('appinstalled', function () {
-            var btn = document.getElementById('pwaInstallBtnDriver');
-            if (btn) btn.textContent = '✅ App Instalada';
-        });
+            function showDriverInstallModal() {
+                var lastDeclined = localStorage.getItem('pwa_driver_prompt_declined');
+                var oneDay = 24 * 60 * 60 * 1000;
+                if (lastDeclined && (Date.now() - lastDeclined < oneDay)) return;
+
+                setTimeout(function() {
+                    var modal = document.getElementById('pwaInstallModalDriver');
+                    if (modal) modal.style.display = 'flex';
+                }, 5000);
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var installBtn = document.getElementById('pwaModalInstallBtnDriver');
+                var declineBtn = document.getElementById('pwaModalDeclineBtnDriver');
+                var modal = document.getElementById('pwaInstallModalDriver');
+
+                if (installBtn) {
+                    installBtn.addEventListener('click', function() {
+                        if (modal) modal.style.display = 'none';
+                        if (_pwaPromptDriver) {
+                            _pwaPromptDriver.prompt();
+                            _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
+                        } else if (_isIOSDriver) {
+                            var iosBanner = document.getElementById('iosBannerDriver');
+                            if (iosBanner) iosBanner.style.display = 'block';
+                        }
+                    });
+                }
+
+                if (declineBtn) {
+                    declineBtn.addEventListener('click', function() {
+                        if (modal) modal.style.display = 'none';
+                        localStorage.setItem('pwa_driver_prompt_declined', Date.now());
+                    });
+                }
+
+                // Soporte para botón manual
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.id === 'pwaInstallBtnDriver') {
+                        if (_pwaPromptDriver) {
+                            _pwaPromptDriver.prompt();
+                            _pwaPromptDriver.userChoice.then(function() { _pwaPromptDriver = null; });
+                        } else if (_isIOSDriver) {
+                            var iosBanner = document.getElementById('iosBannerDriver');
+                            if (iosBanner) iosBanner.style.display = 'block';
+                        } else {
+                            alert('✅ ZIPPY Conductor ya está instalada en tu dispositivo.');
+                        }
+                    }
+                });
+            });
+
+            window.addEventListener('appinstalled', function() {
+                var modal = document.getElementById('pwaInstallModalDriver');
+                if (modal) modal.style.display = 'none';
+                var btn = document.getElementById('pwaInstallBtnDriver');
+                if (btn) btn.textContent = '✅ App Instalada';
+            });
+        })();
     </script>
 
 </body>
