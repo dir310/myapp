@@ -193,8 +193,74 @@ function checkPassengerAuth() {
         document.getElementById('displayClientName').textContent = sanitizeHTML(nombre, 50);
         document.getElementById('displayClientPhone').textContent = sanitizeHTML(telefono, 20);
 
-        // Avatar fijo (emoji de persona, sin inicial)
-        // El avatar muestra 👤 siempre — definido en el HTML
+        // --- Lógica de Foto de Perfil (Avatar) ---
+        const avatarImg = document.getElementById('profileAvatarImg');
+        const avatarEmoji = document.getElementById('profileAvatarEmoji');
+        const uploadBtn = document.getElementById('uploadAvatarBtn');
+        const fileInput = document.getElementById('avatarFileInput');
+
+        // Función para actualizar UI del avatar
+        const updateAvatarUI = (url) => {
+            if (url && url.trim() !== '') {
+                avatarImg.src = url;
+                avatarImg.style.display = 'block';
+                avatarEmoji.style.display = 'none';
+                localStorage.setItem('zippy_passenger_avatar', url);
+            } else {
+                avatarImg.style.display = 'none';
+                avatarEmoji.style.display = 'block';
+            }
+        };
+
+        // Cargar foto inicial desde local
+        updateAvatarUI(localStorage.getItem('zippy_passenger_avatar'));
+
+        // Configurar subida de foto
+        if (uploadBtn && fileInput && !fileInput.dataset.bound) {
+            fileInput.dataset.bound = 'true';
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const clienteId = localStorage.getItem('calmovil_cliente_id');
+                if (!clienteId) return zippyAlert('Inicia sesión de nuevo para cambiar tu foto.');
+
+                const originalHtml = uploadBtn.innerHTML;
+                uploadBtn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;border-top-color:#FF6B00;border-color:rgba(255,107,0,0.2);"></div>';
+                uploadBtn.style.pointerEvents = 'none';
+
+                try {
+                    // Comprimir
+                    const compressed = await compressImage(file, 400); // Max 400px de ancho/alto
+                    const fileName = `${clienteId}-${Date.now()}.jpg`;
+
+                    // Subir a Supabase
+                    const { error: uploadError } = await supabase.storage.from('avatars').upload(`passengers/${fileName}`, compressed, { upsert: true });
+                    if (uploadError) throw uploadError;
+
+                    // Obtener URL pública
+                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(`passengers/${fileName}`);
+
+                    // Guardar en base de datos
+                    const { error: dbError } = await supabase.from('clientes').update({ foto_url: publicUrl }).eq('id', clienteId);
+                    if (dbError) throw dbError;
+
+                    // Actualizar UI
+                    updateAvatarUI(publicUrl);
+                    zippyToast('📸 ¡Foto de perfil actualizada!');
+
+                } catch (err) {
+                    console.error('Error subiendo avatar:', err);
+                    zippyAlert('❌ Hubo un error al subir tu foto. Inténtalo de nuevo.');
+                } finally {
+                    uploadBtn.innerHTML = originalHtml;
+                    uploadBtn.style.pointerEvents = 'auto';
+                    fileInput.value = '';
+                }
+            });
+        }
 
         // --- Verificación de Aprobación Administrativa ---
         const emailStored = localStorage.getItem('calmovil_cliente_email');
@@ -223,13 +289,15 @@ function checkPassengerAuth() {
 
         supabase
           .from('clientes')
-          .select('estado_validacion, saldo_bono, multa_pendiente')
+          .select('estado_validacion, saldo_bono, multa_pendiente, foto_url')
           .eq('email', emailStored)
           .single()
           .then(({ data, error }) => {
             const banner = document.getElementById('passengerValidationBanner');
             const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
+              // Sincronizar foto de perfil si viene de la nube
+              if (data.foto_url) updateAvatarUI(data.foto_url);
               
               // Actualizar saldo bono y multa
               window.zippyCurrentBono = data.saldo_bono || 0;

@@ -271,10 +271,15 @@ export function renderViajes(viajes, handlers) {
         </div>
       </div>
       <div style="background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="font-size: 13px;">
-            <span style="display:block; font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase;">Pasajero</span>
-            <b>${cNombre}</b>
-            <div id="badge-trips-${v.id}" style="font-size:10px; color:rgba(255,255,255,.3); margin-top:2px; font-weight:bold;">Buscando Perfil...</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div id="passenger-avatar-${v.id}" style="width:40px; height:40px; border-radius:50%; background:#222; overflow:hidden; border:1px solid #FF6B00; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+                👤
+            </div>
+            <div style="font-size: 13px;">
+                <span style="display:block; font-size:10px; color:rgba(255,255,255,.4); text-transform:uppercase;">Pasajero</span>
+                <b>${cNombre}</b>
+                <div id="badge-trips-${v.id}" style="font-size:10px; color:rgba(255,255,255,.3); margin-top:2px; font-weight:bold;">Buscando Perfil...</div>
+            </div>
         </div>
         ${cTelefono ? `<a href="tel:${cTelefono}" class="btn" style="padding: 5px 12px; font-size: 11px; background:#30D158; text-decoration:none;">📞 Llamar</a>` : ''}
       </div>
@@ -326,10 +331,11 @@ export function renderViajes(viajes, handlers) {
     }
   });
 
-  // ── Fetch and display passenger trip counts ──
+  // ── Fetch and display passenger trip counts and avatar ──
   filteredViajes.forEach(v => {
-    if (v.cliente_telefono && (v.estado === 'buscando' || v.estado === 'aceptado')) {
+    if (v.cliente_telefono && (v.estado === 'buscando' || v.estado === 'aceptado' || v.estado === 'esperando_pasajero' || v.estado === 'en_progreso')) {
       import('../config/supabase.js').then(({ supabase }) => {
+        // Fetch Trip Count
         supabase.from('viajes').select('id', { count: 'exact', head: true })
           .eq('cliente_telefono', v.cliente_telefono)
           .eq('estado', 'finalizado')
@@ -347,6 +353,19 @@ export function renderViajes(viajes, handlers) {
               }
             }
           });
+        
+        // Fetch Avatar
+        if (v.pasajero_id) {
+          supabase.from('clientes').select('foto_url').eq('id', v.pasajero_id).single()
+            .then(({ data, error }) => {
+              if (!error && data && data.foto_url) {
+                const avatarEl = document.getElementById(`passenger-avatar-${v.id}`);
+                if (avatarEl) {
+                  avatarEl.innerHTML = `<img src="${data.foto_url}" style="width:100%; height:100%; object-fit:cover;">`;
+                }
+              }
+            });
+        }
       });
     }
   });
