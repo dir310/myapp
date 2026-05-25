@@ -8,7 +8,7 @@ import { motoIcon, animateMarker } from '../utils/map.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { initGame, stopGame } from './game.js';
 import { generateRideCode } from '../utils/id.js';
-import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
+import { zippyAlert, zippyConfirm, zippyToast } from '../utils/ui-global.js';
 
 const STORAGE_KEY = 'calmovil_current_ride_id';
 
@@ -52,6 +52,63 @@ let gpsPollerInterval = null;  // Polling GPS dedicado (independiente del WebSoc
 let driverAssignedAt = 0;      // Timestamp de cuando se asignó el conductor (para gracia de 1 min)
 let userInteractedAt = 0;      // Timestamp de última interacción del usuario con el mapa
 let mapDragBound = false;      // Bandera: ya se registró el listener de drag
+
+/**
+ * Shows a payment method selection overlay and returns the chosen method.
+ * @returns {Promise<string|null>} 'efectivo', 'wompi', or null if cancelled.
+ */
+async function showPaymentChangeOverlay() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.id = 'changePaymentOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
+    overlay.innerHTML = `
+      <div style="background:linear-gradient(160deg,#1c1c1e,#201208);border-radius:24px;padding:28px;max-width:320px;width:100%;text-align:center;border:1px solid rgba(255,107,0,.35);box-shadow:0 20px 60px rgba(0,0,0,0.7);position:relative;overflow:hidden;animation:pwaPop 0.3s ease both;">
+        <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:160px;height:80px;background:rgba(255,107,0,0.15);border-radius:50%;filter:blur(30px);pointer-events:none;"></div>
+        <div style="font-size:40px;margin-bottom:12px;position:relative;z-index:1;">🔄</div>
+        <h3 style="color:#FF6B00;margin:0 0 6px;font-weight:900;font-size:18px;position:relative;z-index:1;">Cambiar Método de Pago</h3>
+        <p style="color:rgba(255,255,255,.5);font-size:12px;margin-bottom:22px;line-height:1.4;position:relative;z-index:1;">Selecciona el nuevo método.<br>La búsqueda de conductor continuará.</p>
+        <div style="display:flex;gap:10px;flex-direction:column;position:relative;z-index:1;">
+          <button id="cpEfectivoBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Inter',sans-serif;transition:all .2s;">💵 Efectivo</button>
+          <button id="cpWompiBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Inter',sans-serif;transition:all .2s;">💳 Wompi</button>
+        </div>
+        <button id="cpCancelBtn" style="background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;margin-top:16px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:'Inter',sans-serif;">Volver a la búsqueda</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const cleanup = (method) => { overlay.remove(); resolve(method); };
+    document.getElementById('cpEfectivoBtn').addEventListener('click', () => cleanup('efectivo'));
+    document.getElementById('cpWompiBtn').addEventListener('click', () => cleanup('wompi'));
+    document.getElementById('cpCancelBtn').addEventListener('click', () => cleanup(null));
+  });
+}
+
+/**
+ * Wires the "Cambiar Pago" button in the searching UI.
+ */
+function wireChangePaymentBtn(state) {
+  const btn = document.getElementById('changePayBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const method = await showPaymentChangeOverlay();
+    if (!method) return;
+
+    state.selectedPaymentMethod = method;
+    const isEfectivo = method === 'efectivo';
+
+    // Update database in real-time (conductor sees change instantly)
+    if (state.currentRideId) {
+      await supabase.from('viajes').update({ pago_efectivo_confirmado: isEfectivo }).eq('id', state.currentRideId);
+    }
+
+    // Update the badge in the UI
+    const badge = document.getElementById('currentPayBadge');
+    if (badge) badge.innerHTML = isEfectivo ? '💵 Efectivo' : '💳 Wompi';
+
+    zippyToast(isEfectivo ? '💵 Método cambiado a Efectivo' : '💳 Método cambiado a Wompi');
+  });
+}
 
 /**
  * Centra el mapa en el conductor y dibuja la ruta hacia el Punto A.
@@ -246,6 +303,10 @@ export async function acceptRide(state, map) {
         <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
         <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${finalPriceToPay.toLocaleString('es-CO')}</div>
         ${bonoUsado > 0 ? `<div style="color:#3498DB; font-size:12px; font-weight:bold;">(Bono aplicado: -$${bonoUsado.toLocaleString('es-CO')})</div>` : ''}
+        <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span id="currentPayBadge" style="background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:5px 14px; color:rgba(255,255,255,.7); font-size:12px; font-weight:700;">${state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo'}</span>
+          <button id="changePayBtn" style="background:none; border:none; color:#FF9500; font-size:11px; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; font-family:'Inter',sans-serif;">🔄 Cambiar</button>
+        </div>
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
     `;
@@ -254,6 +315,7 @@ export async function acceptRide(state, map) {
     document.getElementById('cancelSearchBtn').addEventListener('click', () => {
       cancelRide(state, map);
     });
+    wireChangePaymentBtn(state);
 
     // Start listening for driver
     listenForDriver(state.currentRideId, state, map);
@@ -944,6 +1006,10 @@ function showSearchingRecovery(state) {
         </div>
         <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Re-buscando conductor...</h3>
         <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5; padding:0 20px;">Estamos avisando a los conductores cercanos nuevamente. No cierres esta ventana.</p>
+        <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span id="currentPayBadge" style="background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:5px 14px; color:rgba(255,255,255,.7); font-size:12px; font-weight:700;">${state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo'}</span>
+          <button id="changePayBtn" style="background:none; border:none; color:#FF9500; font-size:11px; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; font-family:'Inter',sans-serif;">🔄 Cambiar</button>
+        </div>
       </div>
       <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
   `;
@@ -951,6 +1017,7 @@ function showSearchingRecovery(state) {
   document.getElementById('cancelSearchBtn').addEventListener('click', () => {
     cancelRide(state, null);
   });
+  wireChangePaymentBtn(state);
 }
 
 /**
@@ -1228,16 +1295,23 @@ export async function restoreActiveRide(state, map) {
 
     // 3. Restaurar UI de Búsqueda / Conductor
     if (data.estado === 'buscando') {
+      state.selectedPaymentMethod = data.pago_efectivo_confirmado ? 'efectivo' : 'wompi';
+      const payLabel = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo';
       document.getElementById('priceSection').innerHTML = `
           <div id="searchingContainer" style="text-align:center; padding: 25px 0;">
             <div class="spinner" style="border-color: rgba(255,107,0,.2); border-top-color: #FF6B00; width: 45px; height: 45px; border-width: 5px; margin-bottom: 25px;"></div>
             <h3 style="color:#FF6B00; margin-bottom:12px; font-weight:800; font-size:20px;">Buscando conductor...</h3>
             <p style="color:rgba(255,255,255,.6); font-size:13px; line-height:1.5;">Estamos avisando a los conductores cercanos. No cierres esta ventana.</p>
             <div style="margin-top:20px; color:#30D158; font-weight:bold; font-size:24px;">$${data.tarifa.toLocaleString('es-CO')}</div>
+            <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+              <span id="currentPayBadge" style="background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:5px 14px; color:rgba(255,255,255,.7); font-size:12px; font-weight:700;">${payLabel}</span>
+              <button id="changePayBtn" style="background:none; border:none; color:#FF9500; font-size:11px; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; font-family:'Inter',sans-serif;">🔄 Cambiar</button>
+            </div>
           </div>
           <button class="btn" style="background:rgba(255,255,255,.08); color:rgba(255,255,255,.8); width:100%; margin-top:10px" id="cancelSearchBtn">Cancelar Solicitud</button>
         `;
       document.getElementById('cancelSearchBtn').addEventListener('click', () => cancelRide(state, map));
+      wireChangePaymentBtn(state);
       document.getElementById('priceSection').style.display = 'block';
     } else if (data.estado === 'aceptado' || data.estado === 'en_progreso') {
       // Alerta: showDriverAssigned es asíncrona pero la llamamos secuencialmente
