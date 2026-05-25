@@ -597,7 +597,7 @@ async function showDriverAssigned(driverId, state) {
   `;
 
   // Fetch datos reales a base de datos (incluyendo datos de pago)
-  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color').eq('id', driverId).single();
+  const { data: driver } = await supabase.from('conductores').select('nombre, placa, telefono, marca_cilindraje_color, foto_url').eq('id', driverId).single();
   const { data: viajeInfo } = await supabase.from('viajes').select('tarifa, pago_wompi, codigo_viaje, bono_usado').eq('id', state.currentRideId).single();
   const tarifa = viajeInfo?.tarifa || 0;
   const isPaid = viajeInfo?.pago_wompi === true;
@@ -701,10 +701,16 @@ async function showDriverAssigned(driverId, state) {
   const conductorWindowHTML = `
     <div class="zippy-window">
       <div style="background:rgba(255,255,255,.03); border:1px solid rgba(48,209,88,0.2); border-radius:16px; padding:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); height:auto; width:92%; margin:0 auto; box-sizing:border-box; position:relative;">
-        <div style="margin-bottom:12px;">
-          <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor Asignado</span>
-          <span style="color:#fff; font-size:20px; font-weight:800; display:block;">${driverName}</span>
-          <span style="color:#FFD700; font-size:12px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <!-- Foto del conductor -->
+          <div style="width:50px; height:50px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
+            ${driver?.foto_url ? `<img src="${driver.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px;">👷</div>`}
+          </div>
+          <div>
+            <span style="color:rgba(255,255,255,.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Tu Conductor Asignado</span>
+            <span style="color:#fff; font-size:18px; font-weight:800; display:block; line-height:1.1;">${driverName}</span>
+            <span style="color:#FFD700; font-size:12px; font-weight:700; display:block; margin-top:2px;">${driverRating}</span>
+          </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 70px; width: 100%;">
           <!-- Bloque Vehículo -->

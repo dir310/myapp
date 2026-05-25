@@ -105,7 +105,53 @@ function setupUIEvents() {
 
   // Edit Profile UI logic eliminada al no estar permitido
 
+  // ── Lógica de Foto de Perfil (Conductor) ──
+  const driverUploadBtn = document.getElementById('uploadDriverAvatarBtn');
+  const driverFileInput = document.getElementById('driverAvatarFileInput');
+  if (driverUploadBtn && driverFileInput) {
+    driverUploadBtn.onclick = () => driverFileInput.click();
+    driverFileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file || !currentProfile) return;
 
+      const originalHtml = driverUploadBtn.innerHTML;
+      driverUploadBtn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;border-top-color:#FF6B00;border-color:rgba(255,107,0,0.2);"></div>';
+      driverUploadBtn.style.pointerEvents = 'none';
+
+      try {
+        const compressed = await compressImage(file, 400);
+        const fileName = `${currentProfile.id}-${Date.now()}.jpg`;
+
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(`drivers/${fileName}`, compressed, { upsert: true });
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(`drivers/${fileName}`);
+
+        const { error: dbError } = await supabase.from('conductores').update({ foto_url: publicUrl }).eq('id', currentProfile.id);
+        if (dbError) throw dbError;
+
+        currentProfile.foto_url = publicUrl;
+        
+        // Update UI
+        const imgEl = document.getElementById('profilePic');
+        if (imgEl) {
+            imgEl.src = publicUrl;
+            imgEl.style.display = 'block';
+        }
+        const emojiEl = document.getElementById('profilePicAvatar');
+        if (emojiEl) emojiEl.style.display = 'none';
+
+        zippyAlert('📸 ¡Foto de perfil actualizada exitosamente!', '✅');
+      } catch (err) {
+        console.error('Error subiendo avatar:', err);
+        zippyAlert('❌ Hubo un error al subir tu foto. Inténtalo de nuevo.');
+      } finally {
+        driverUploadBtn.innerHTML = originalHtml;
+        driverUploadBtn.style.pointerEvents = 'auto';
+        driverFileInput.value = '';
+      }
+    };
+  }
   // Botón cerrar Protocolo de Seguridad
   const closeSafetyBtn = document.getElementById('closeSafetyBtn');
   if (closeSafetyBtn) {

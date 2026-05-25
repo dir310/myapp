@@ -205,10 +205,19 @@
                         </div>
                     </div>
 
-                    <!-- Avatar circular con inicial -->
-                    <div id="profileAvatar" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:42px;font-weight:900;color:#fff;box-shadow:0 8px 30px rgba(255,107,0,0.5);letter-spacing:0;flex-shrink:0;position:relative;">👤
+                    <!-- Avatar circular con inicial y selector de foto -->
+                    <div style="position:relative; width:72px; height:72px; margin:0 auto 14px;">
+                        <div id="profileAvatar" style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#fff;box-shadow:0 8px 30px rgba(255,107,0,0.5);position:relative;overflow:hidden;">
+                            <span id="profileAvatarEmoji">👤</span>
+                            <img id="profileAvatarImg" src="" style="display:none; width:100%; height:100%; object-fit:cover;" alt="Avatar">
+                        </div>
                         <!-- Anillo exterior -->
-                        <div style="position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(255,107,0,0.4);"></div>
+                        <div style="position:absolute;inset:-3px;border-radius:50%;border:2px solid rgba(255,107,0,0.4);pointer-events:none;"></div>
+                        <!-- Botón de cámara -->
+                        <div id="uploadAvatarBtn" style="position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); cursor:pointer; font-size:12px; z-index:2;">
+                            📷
+                        </div>
+                        <input type="file" id="avatarFileInput" accept="image/jpeg, image/png, image/webp" style="display:none;">
                     </div>
 
                     <!-- Nombre -->
