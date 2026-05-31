@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { zippyAlert, zippyDanger } from '../utils/ui-global.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
-import { initRadar } from './ui.js';
+import { initRadar, resetRenderCache } from './ui.js';
 import { compressImage } from '../utils/image.js';
 
 let currentUser = null;
@@ -263,6 +263,9 @@ function proceedToApp() {
     warning.style.color = '';
     warning.innerHTML = `<strong>⚠️ Cuenta en Validación</strong><br>Estamos revisando tus datos. Pronto activaremos tu cuenta para recibir viajes.`;
   }
+
+  // Al recuperar conexión, limpiamos el caché del render para que 'Buscando pasajeros' vuelva a dibujarse
+  resetRenderCache();
 
   if (esPendiente) {
     // Mostrar aviso de validación
