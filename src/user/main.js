@@ -489,10 +489,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (checkBlockState()) return;
       const authMode = btn.textContent === 'Guardar Cambios' ? 'edit' : (btn.textContent.includes('Registrar') ? 'register' : 'login');
 
-      // ── Modo Edición: solo actualiza nombre y teléfono ──
+      // ── Modo Edición: actualiza nombre, teléfono y foto ──
       if (authMode === 'edit') {
         const n = sanitizeHTML(document.getElementById('authNombre').value.trim(), 60);
         const t = sanitizeHTML(document.getElementById('authTelefono').value.trim(), 10);
+        const photoFile = document.getElementById('authFotoPerfil').files[0];
 
         if (!n || !t) return zippyAlert('Por favor llena nombre y teléfono.', '⚠️');
 
@@ -500,9 +501,22 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
 
         try {
+          let updateData = { nombre: n, telefono: t };
+
+          if (photoFile) {
+            btn.innerHTML = '<span class="spinner"></span> Subiendo foto...';
+            const compressed = await compressImage(photoFile);
+            const ref = `passengers/${localStorage.getItem('calmovil_cliente_id')}_${Date.now()}.jpg`;
+            await supabase.storage.from('avatars').upload(ref, compressed);
+            const { data: pData } = supabase.storage.from('avatars').getPublicUrl(ref);
+            updateData.foto_url = pData.publicUrl;
+            localStorage.setItem('zippy_passenger_avatar', pData.publicUrl);
+          }
+
+          btn.innerHTML = '<span class="spinner"></span> Guardando datos...';
           const { error: err } = await supabase
             .from('clientes')
-            .update({ nombre: n, telefono: t })
+            .update(updateData)
             .eq('id', localStorage.getItem('calmovil_cliente_id'));
 
           if (err) throw err;
@@ -696,8 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const backBtn = document.getElementById('authBackBtn');
           if (backBtn) backBtn.style.display = 'none';
 
-          // Mostrar solo nombre y teléfono
-          ['groupNombre', 'groupTelefono'].forEach(id => {
+          // Mostrar solo nombre y teléfono y foto perfil
+          ['groupNombre', 'groupTelefono', 'groupFotoPerfil'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'block';
           });
