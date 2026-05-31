@@ -11,6 +11,10 @@ let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
 let activeTimers = {}; // Store countdown intervals to prevent flickering
 
+export function resetRenderCache() {
+  lastRenderedHTML = '';
+}
+
 // ── Inyectar animaciones de badge de pago (una sola vez) ──
 (function injectPaymentAnimations() {
   if (document.getElementById('zippy-pay-anim')) return;
