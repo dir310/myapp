@@ -233,6 +233,37 @@ function proceedToApp() {
   const radarBtn = document.getElementById('radarBtn');
   const viajesList = document.getElementById('viajesList');
 
+  // --- Verificación de Internet ---
+  if (!navigator.onLine) {
+    if (warning) {
+      warning.style.display = 'block';
+      warning.style.backgroundColor = 'rgba(255, 59, 48, 0.1)';
+      warning.style.borderLeftColor = '#FF3B30';
+      warning.style.color = '#FF3B30';
+      warning.innerHTML = `<strong>⚠️ Sin Conexión a Internet</strong><br>Revisa tus datos móviles o Wi-Fi para conectarte con Zippy.`;
+    }
+    if (radarBtn) radarBtn.style.display = 'none';
+    if (viajesList) {
+      viajesList.innerHTML = `
+        <div style="text-align:center; padding:30px 20px; color:rgba(255,255,255,0.4);">
+          <div style="font-size:40px; margin-bottom:12px;">📡</div>
+          <p style="font-size:13px; line-height:1.6; margin:0;">
+            Estás desconectado.<br>
+            Asegúrate de tener internet para recibir viajes.
+          </p>
+        </div>`;
+    }
+    return;
+  }
+
+  // --- Restaurar Estilo del Warning ---
+  if (warning) {
+    warning.style.backgroundColor = '';
+    warning.style.borderLeftColor = '';
+    warning.style.color = '';
+    warning.innerHTML = `<strong>⚠️ Cuenta en Validación</strong><br>Estamos revisando tus datos. Pronto activaremos tu cuenta para recibir viajes.`;
+  }
+
   if (esPendiente) {
     // Mostrar aviso de validación
     if (warning) warning.style.display = 'block';
@@ -526,3 +557,12 @@ async function openProfile() {
     }
   }
 }
+
+
+window.addEventListener('online', () => {
+  if (currentProfile) proceedToApp();
+});
+window.addEventListener('offline', () => {
+  if (currentProfile) proceedToApp();
+});
+
