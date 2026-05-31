@@ -182,6 +182,12 @@ async function handleSession(session) {
       .eq('id', currentUser.id)
       .single();
 
+    if (profileError && profileError.code === 'PGRST116') {
+      console.warn('Perfil de conductor borrado en DB. Cerrando sesión.');
+      await supabase.auth.signOut();
+      return handleSession(null);
+    }
+
     if (profileError || !profile) {
       console.error('Error cargando perfil:', profileError);
       // Fallback: si tenemos ID de usuario pero falló la carga del registro completo, 
