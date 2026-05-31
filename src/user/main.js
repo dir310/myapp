@@ -293,6 +293,17 @@ function checkPassengerAuth() {
           .eq('email', emailStored)
           .single()
           .then(({ data, error }) => {
+            // Verificar si el perfil fue eliminado de Supabase (error PGRST116: no rows found)
+            if (error && error.code === 'PGRST116') {
+              console.warn('Perfil no encontrado en Supabase. Cerrando sesión local.');
+              localStorage.removeItem('calmovil_cliente_email');
+              localStorage.removeItem('calmovil_cliente_id');
+              localStorage.removeItem('calmovil_cliente_nombre');
+              localStorage.removeItem('calmovil_cliente_telefono');
+              window.location.reload();
+              return;
+            }
+
             const banner = document.getElementById('passengerValidationBanner');
             const topSearch = document.getElementById('topSearchArea');
             if (!error && data) {
