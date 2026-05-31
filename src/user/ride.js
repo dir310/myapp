@@ -187,6 +187,13 @@ export async function acceptRide(state, map) {
     return;
   }
 
+  // --- Bloqueo por Foto de Perfil ---
+  const avatar = localStorage.getItem('zippy_passenger_avatar');
+  if (!avatar || avatar.trim() === '') {
+    await zippyAlert('⚠️ Por seguridad de nuestra comunidad, debes subir una foto de tu rostro en tu perfil antes de poder solicitar un viaje. Ve al Menú -> Mi Perfil.', '📸');
+    return;
+  }
+
   state.driverArrived = false;
 
   // Limpiar UI de selección
