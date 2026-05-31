@@ -246,7 +246,7 @@
                     <div style="display:flex;gap:8px;margin-bottom:10px;">
                         <button id="editPassengerBtn"
                             style="flex:1;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.4);border-radius:14px;color:#FF6B00;font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
-                            ✏️ Editar
+                            ✏️ Editar Perfil
                         </button>
                         <button id="logoutPassengerBtn"
                             style="flex:1;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.4);border-radius:14px;color:#FF6B00;font-size:12px;font-weight:700;cursor:pointer;padding:11px 8px;font-family:'Inter',sans-serif;">
@@ -389,6 +389,14 @@
                             style="width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:white; border-radius: 8px;"
                             placeholder="Ej. 3110000000" maxlength="10" minlength="10" pattern="[0-9]{10}"
                             inputmode="numeric">
+                    </div>
+                </div>
+
+                <div id="groupFotoPerfil" style="display:none;">
+                    <label style="color: #fff; font-size: 13px; font-weight:bold; margin-bottom: 8px; display:block;">Foto de Perfil (Opcional)</label>
+                    <div style="margin-bottom: 15px; position:relative;">
+                        <input type="file" id="authFotoPerfil" accept="image/jpeg, image/png, image/webp" 
+                            style="width: 100%; box-sizing: border-box; padding: 10px; font-size: 12px; background: rgba(255,107,0,0.05); border: 1px dashed rgba(255,107,0,0.3); color:rgba(255,255,255,0.7); border-radius: 8px; cursor:pointer;">
                     </div>
                 </div>
 
