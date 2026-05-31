@@ -5,7 +5,7 @@
 import { getCurrentProfile, isDriverApproved } from './auth.js';
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
-import { zippyToast } from '../utils/ui-global.js';
+import { zippyToast, zippyAlert } from '../utils/ui-global.js';
 
 let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
@@ -86,6 +86,15 @@ export function toggleRadar(isAutoClick = false) {
   const isManual = isAutoClick instanceof Event || isAutoClick === undefined;
 
   if (isManual) {
+    // Verificación de foto de perfil obligatoria antes de encender
+    if (!radarEnabled) {
+      const profile = getCurrentProfile();
+      if (!profile || !profile.foto_url || profile.foto_url.trim() === '') {
+        zippyAlert('⚠️ Por tu seguridad y la de los pasajeros, debes subir una foto de tu rostro en tu perfil antes de poder encender el radar y recibir viajes.', '📸');
+        return; // Frena la activación
+      }
+    }
+
     if (radarEnabled) {
       sessionStorage.setItem('radar_manually_off', 'true');
     } else {
@@ -131,6 +140,15 @@ export function toggleRadar(isAutoClick = false) {
 
 export function initRadar() {
   const manuallyOff = sessionStorage.getItem('radar_manually_off') === 'true';
+  const profile = getCurrentProfile();
+  const hasPhoto = profile && profile.foto_url && profile.foto_url.trim() !== '';
+
+  // Si NO tiene foto, forzamos apagado e impedimos encender auto
+  if (!hasPhoto) {
+    if (radarEnabled) toggleRadar(false); // Falso indica evento interno (sin manual)
+    return;
+  }
+
   if (!manuallyOff && !radarEnabled) {
     toggleRadar(true);
   }
