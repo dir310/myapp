@@ -621,13 +621,13 @@ document.addEventListener('DOMContentLoaded', () => {
               nombre, email, password, telefono, cedula, edad,
               foto_frontal_url: frontRef, foto_trasera_url: backRef,
               estado_validacion: 'pendiente',
-              saldo_bono: 3000
+              saldo_bono: 0
             }]).select().single();
 
             if (err) throw err;
 
             // Auto-login: guardar datos en memoria local para no volver al formulario
-            window.zippyCurrentBono = 3000;
+            window.zippyCurrentBono = 0;
             localStorage.setItem('calmovil_cliente_id', newUser.id);
             localStorage.setItem('calmovil_cliente_nombre', newUser.nombre);
             localStorage.setItem('calmovil_cliente_email', newUser.email);
