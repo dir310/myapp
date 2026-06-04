@@ -358,7 +358,7 @@ async function handleLoginSubmit() {
 
 async function handleRegisterSubmit() {
   const btn = document.getElementById('registerSubmitBtn');
-  const telefono = document.getElementById('regTelefono').value.trim();
+  const telefono = document.getElementById('regTelefono').value.replace(/\D/g, ''); // Solo dígitos
   const termsElement = document.getElementById('regTerms');
   const terms = termsElement ? termsElement.checked : true;
 
