@@ -95,7 +95,31 @@
         });
     </script>
 
-    <div class="header" style="justify-content: space-between; gap: 8px;">
+    <!-- Botón flotante Registrarme como Conductor -->
+    <button id="switchToRegister" onclick="void(0)" style="
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 9999;
+        padding: 9px 14px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,107,0,0.18);
+        border: 1.5px solid rgba(255,107,0,0.5);
+        color: #FF9500;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(255,107,0,0.2);
+        transition: all .2s;
+    " onmouseover="this.style.background='rgba(255,107,0,0.3)'" onmouseout="this.style.background='rgba(255,107,0,0.18)'">
+        📝 Registrarme
+    </button>
+
         <div class="title">Panel Conductor</div>
         <div style="display:flex; gap:6px; align-items:center;">
             <button id="notifBtn" onclick="activarNotificaciones()"
@@ -212,17 +236,6 @@
 
                 <button id="loginSubmitBtn" class="btn btn-accept" style="width:100%; margin-top:15px;">Ingresar al Panel</button>
 
-                <!-- Separador -->
-                <div style="display:flex; align-items:center; gap:10px; margin:16px 0;">
-                    <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
-                    <span style="color:rgba(255,255,255,0.3); font-size:11px;">¿No tienes cuenta?</span>
-                    <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
-                </div>
-
-                <!-- Botón Registrarse dentro del formulario -->
-                <button id="switchToRegister" style="width:100%; padding:13px; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(255,107,0,0.12); border:1.5px solid rgba(255,107,0,0.4); color:#FF9500; transition:all .2s;">
-                    📝 Registrarme como Conductor
-                </button>
 
                 <!-- Política de Privacidad -->
                 <div style="text-align:center; margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.07);">

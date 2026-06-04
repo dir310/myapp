@@ -74,6 +74,7 @@ function setupUIEvents() {
           e.preventDefault();
           document.getElementById('registerView').style.display = 'none';
           document.getElementById('loginView').style.display = 'block';
+          if (switchToRegisterBtn) switchToRegisterBtn.style.display = 'flex';
       };
   }
 
@@ -82,6 +83,7 @@ function setupUIEvents() {
           e.preventDefault();
           document.getElementById('loginView').style.display = 'none';
           document.getElementById('registerView').style.display = 'block';
+          switchToRegisterBtn.style.display = 'none';
       };
   }
 
