@@ -86,6 +86,31 @@
         });
     </script>
 
+    <!-- Botón flotante Instalar App (Pasajero, lado derecho) -->
+    <button id="pwaInstallBtn" style="
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 999;
+        padding: 9px 14px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 12px;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,107,0,0.18);
+        border: 1.5px solid rgba(255,107,0,0.5);
+        color: #FF9500;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(255,107,0,0.2);
+        transition: all .2s;
+    " onmouseover="this.style.background='rgba(255,107,0,0.3)'" onmouseout="this.style.background='rgba(255,107,0,0.18)'">
+        📲 Instalar App
+    </button>
+
     <!-- ── Map ── -->
     <div id="map"></div>
 
@@ -702,34 +727,28 @@
             var _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             var _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
+            function showInstallButton() {
+                if (_isStandalone) return; // Si ya está instalada, no mostrar nada
+                
+                var btn = document.getElementById('pwaInstallBtn');
+                if (btn) btn.style.display = 'flex';
+            }
+
+            function hideInstallButton() {
+                var btn = document.getElementById('pwaInstallBtn');
+                if (btn) btn.style.display = 'none';
+            }
+
             // Escuchar el evento de instalación de Android
             window.addEventListener('beforeinstallprompt', function(e) {
                 e.preventDefault();
                 _pwaPrompt = e;
-                
-                // Mostrar el modal si no ha sido rechazado recientemente
-                showInstallModalDelayed();
+                showInstallButton();
             });
 
-            // Si es iOS y no está instalado, también mostrar modal con retraso
+            // Si es iOS y no está instalado, mostrar botón
             if (_isIOS && !_isStandalone) {
-                showInstallModalDelayed();
-            }
-
-            function showInstallModalDelayed() {
-                var lastDeclined = localStorage.getItem('pwa_prompt_declined');
-                var oneDay = 24 * 60 * 60 * 1000;
-                if (lastDeclined && (Date.now() - lastDeclined < oneDay)) {
-                    return;
-                }
-
-                // Mostrar el modal a los 2.5 segundos de carga
-                setTimeout(function() {
-                    var modal = document.getElementById('pwaInstallModal');
-                    if (modal) {
-                        modal.style.display = 'flex';
-                    }
-                }, 2500);
+                showInstallButton();
             }
 
             document.addEventListener('DOMContentLoaded', function() {
@@ -742,7 +761,10 @@
                         if (modal) modal.style.display = 'none';
                         if (_pwaPrompt) {
                             _pwaPrompt.prompt();
-                            _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+                            _pwaPrompt.userChoice.then(function() { 
+                                _pwaPrompt = null; 
+                                hideInstallButton();
+                            });
                         } else if (_isIOS) {
                             var iosBanner = document.getElementById('iosBanner');
                             if (iosBanner) iosBanner.style.display = 'block';
@@ -757,17 +779,22 @@
                     });
                 }
 
-                // Mantener soporte para botón manual si existe
+                // Soporte para botón manual
                 document.addEventListener('click', function(e) {
-                    if (e.target && e.target.id === 'pwaInstallBtn') {
+                    if (e.target && (e.target.id === 'pwaInstallBtn' || e.target.closest('#pwaInstallBtn'))) {
                         if (_pwaPrompt) {
                             _pwaPrompt.prompt();
-                            _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+                            _pwaPrompt.userChoice.then(function(choiceResult) { 
+                                if (choiceResult.outcome === 'accepted') {
+                                    _pwaPrompt = null; 
+                                    hideInstallButton();
+                                }
+                            });
                         } else if (_isIOS) {
                             var iosBanner = document.getElementById('iosBanner');
                             if (iosBanner) iosBanner.style.display = 'block';
                         } else {
-                            alert('✅ ZIPPY ya está instalada en tu dispositivo.');
+                            alert('✅ ZIPPY ya está instalada o no es compatible con instalación manual.');
                         }
                     }
                 });
@@ -776,8 +803,7 @@
             window.addEventListener('appinstalled', function() {
                 var modal = document.getElementById('pwaInstallModal');
                 if (modal) modal.style.display = 'none';
-                var btn = document.getElementById('pwaInstallBtn');
-                if (btn) btn.textContent = '✅ App Instalada';
+                hideInstallButton();
             });
         })();
     </script>
