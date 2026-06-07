@@ -730,8 +730,12 @@
             function showInstallButton() {
                 if (_isStandalone) return; // Si ya está instalada, no mostrar nada
                 
+                // Solo mostrar si está en el login
+                var authOverlay = document.getElementById('passengerAuthOverlay');
                 var btn = document.getElementById('pwaInstallBtn');
-                if (btn) btn.style.display = 'flex';
+                if (btn && authOverlay && authOverlay.style.display === 'flex') {
+                    btn.style.display = 'flex';
+                }
             }
 
             function hideInstallButton() {
@@ -739,16 +743,32 @@
                 if (btn) btn.style.display = 'none';
             }
 
+            // Función para controlar el botón PWA según el estado de login
+            function updatePwaButtonVisibility() {
+                var authOverlay = document.getElementById('passengerAuthOverlay');
+                var btn = document.getElementById('pwaInstallBtn');
+                if (!btn || !authOverlay) return;
+
+                if (authOverlay.style.display === 'flex' && !_isStandalone) {
+                    btn.style.display = 'flex';
+                } else {
+                    btn.style.display = 'none';
+                }
+            }
+
             // Escuchar el evento de instalación de Android
             window.addEventListener('beforeinstallprompt', function(e) {
                 e.preventDefault();
                 _pwaPrompt = e;
-                showInstallButton();
+                updatePwaButtonVisibility();
             });
 
-            // Si es iOS y no está instalado, mostrar botón
+            // Si es iOS y no está instalado, mostrar botón (solo en login)
             if (_isIOS && !_isStandalone) {
-                showInstallButton();
+                // Esperar a que el DOM esté listo para verificar si está en login
+                document.addEventListener('DOMContentLoaded', function() {
+                    updatePwaButtonVisibility();
+                });
             }
 
             document.addEventListener('DOMContentLoaded', function() {
