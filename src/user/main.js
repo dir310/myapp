@@ -182,8 +182,16 @@ function checkPassengerAuth() {
       setAuthMode('login');
     }
     if (profileWidget) profileWidget.style.display = 'none';
+    // Actualizar visibilidad del botón PWA (mostrar en login)
+    if (typeof updatePwaButtonVisibility === 'function') {
+      updatePwaButtonVisibility();
+    }
   } else {
     if (overlay) overlay.style.display = 'none';
+    // Ocultar botón PWA cuando se autentica
+    if (typeof updatePwaButtonVisibility === 'function') {
+      updatePwaButtonVisibility();
+    }
     if (profileWidget) {
         profileWidget.style.display = 'flex';
         iniciarRelojPerfil();
