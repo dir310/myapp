@@ -1,1 +1,1 @@
-[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.appzippy.twa","sha256_cert_fingerprints":["4A:4D:77:80:2D:8E:10:C4:E5:73:60:02:76:6D:C9:94:4C:25:C5:63:F7:05:68:2A:E4:D3:C7:70:61:0B:C0:A2"]}}]
+[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.appzippy.oficial","sha256_cert_fingerprints":["73:EC:51:AD:9D:21:E0:FF:A7:17:7B:15:4A:9D:DC:07:3A:BD:7A:D8:52:C8:2A:EC:3A:2C:D6:26:CA:09:30:00"]}}]
