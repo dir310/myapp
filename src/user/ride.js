@@ -952,7 +952,7 @@ async function initWompiCheckout(viajeId, tarifa, rideCode) {
   const currency = 'COP';
   const amountInCents = tarifa * 100; // Wompi expects cents
   const reference = `ZIPPY_${rideCode}_${Date.now()}`;
-  const secret = 'test_integrity_ESw0LTbced5TdxOxtkBlvPzfaDBFtX5T';
+  const secret = 'prod_integrity_lImL3CgFSTzGzBcs661J1WF9UFJdHuZC';
 
   // Generar firma de integridad requerida por Wompi
   const message = reference + amountInCents + currency + secret;
@@ -965,7 +965,7 @@ async function initWompiCheckout(viajeId, tarifa, rideCode) {
     currency: currency,
     amountInCents: amountInCents,
     reference: reference,
-    publicKey: 'pub_test_0uLX5b7sUNR0Dw4hrWEuK0e53RYZqPn4',
+    publicKey: 'pub_prod_SxZqnd7Fi3WqOdXDFGrDg0qNP0rMFtE4',
     signature: { integrity: hashHex }
   });
 
