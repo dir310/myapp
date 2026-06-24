@@ -13,7 +13,8 @@
     {
       "src": "https://i.imgur.com/1IoBmEy.jpeg",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
       "src": "https://i.imgur.com/1IoBmEy.jpeg",
