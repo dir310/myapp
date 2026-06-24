@@ -3,6 +3,8 @@
   "short_name": "ZIPPY Conductor",
   "description": "Panel exclusivo para conductores de ZIPPY.",
   "id": "com.zippy.driver",
+  "lang": "es",
+  "dir": "ltr",
   "start_url": "/conductor/",
   "scope": "/conductor/",
   "display": "standalone",
