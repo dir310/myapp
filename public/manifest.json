@@ -1,7 +1,7 @@
 {
   "name": "ZIPPY Pasajero",
   "short_name": "ZIPPY",
-  "description": "Pide tu viaje rápido y seguro con ZIPPY.",
+  "description": "Pide tu viaje rÃ¡pido y seguro con ZIPPY.",
   "id": "com.zippy.passenger",
   "start_url": "/",
   "scope": "/",
@@ -11,23 +11,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "icons/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
