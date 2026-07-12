@@ -4,7 +4,8 @@
     "namespace": "android_app",
     "package_name": "com.appzippy.oficial",
     "sha256_cert_fingerprints": [
-      "98:66:44:9F:A7:25:7E:2B:E7:70:B1:6D:C8:E7:30:E1:93:86:A4:73:AA:E6:ED:4E:4C:D5:0A:75:5E:F9:65:B8"
+      "98:66:44:9F:A7:25:7E:2B:E7:70:B1:6D:C8:E7:30:E1:93:86:A4:73:AA:E6:ED:4E:4C:D5:0A:75:5E:F9:65:B8",
+      "73:EC:51:AD:9D:21:E0:FF:A7:17:7B:15:4A:9D:DC:07:3A:BD:7A:D8:52:C8:2A:EC:3A:2C:D6:26:CA:09:30:00"
     ]
   }
 }]
