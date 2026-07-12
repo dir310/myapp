@@ -111,6 +111,21 @@
         📲 Instalar App
     </button>
 
+    <!-- ══ LETRERO DE BIENVENIDA ══ -->
+    <div id="welcomeBanner" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:99999; display:flex; align-items:center; justify-content:center; animation: fadeIn 0.5s;">
+        <div style="background:linear-gradient(135deg, #1c1c1e, #2c2c2e); padding:30px 20px; border-radius:20px; text-align:center; max-width:300px; border: 2px solid #FF6B00; box-shadow: 0 10px 30px rgba(255,107,0,0.3);">
+            <div style="font-size:40px; margin-bottom:10px;">👋</div>
+            <h2 style="color:#FF6B00; margin:0 0 10px 0; font-weight:900;">¡Bienvenido a ZIPPY!</h2>
+            <p style="color:rgba(255,255,255,0.8); font-size:14px; margin-bottom:20px; line-height:1.5;">
+                Estamos listos para llevarte a tu destino de forma rápida y segura. ¿A dónde vamos hoy?
+            </p>
+            <button onclick="document.getElementById('welcomeBanner').style.display='none'" 
+                    style="background:#FF6B00; color:white; border:none; padding:12px 20px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; width:100%; box-shadow: 0 4px 15px rgba(255,107,0,0.4);">
+                Pedir un viaje 🏍️
+            </button>
+        </div>
+    </div>
+
     <!-- ── Map ── -->
     <div id="map"></div>
 
