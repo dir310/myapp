@@ -6,6 +6,7 @@ import { getCurrentProfile, isDriverApproved } from './auth.js';
 import L from 'leaflet';
 import { pinIcon } from '../utils/map.js';
 import { zippyToast, zippyAlert } from '../utils/ui-global.js';
+import { supabase } from '../config/supabase.js';
 
 let cardMaps = new Map(); // Store mini-map instances by ride ID
 let lastRenderedHTML = '';
@@ -132,6 +133,11 @@ export function toggleRadar(isAutoClick = false) {
     // Sonido de encendido solo en interacción manual
     if (isManual) playToggleSound('on');
 
+    const profile = getCurrentProfile();
+    if (profile && profile.id) {
+      supabase.from('conductores').update({ is_online: true }).eq('id', profile.id).then();
+    }
+
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
@@ -139,8 +145,20 @@ export function toggleRadar(isAutoClick = false) {
 
     // Sonido de apagado solo en interacción manual
     if (isManual) playToggleSound('off');
+    
+    const profile = getCurrentProfile();
+    if (profile && profile.id) {
+      supabase.from('conductores').update({ is_online: false }).eq('id', profile.id).then();
+    }
   }
 }
+
+window.addEventListener('beforeunload', () => {
+  const profile = getCurrentProfile();
+  if (profile && profile.id) {
+    supabase.from('conductores').update({ is_online: false }).eq('id', profile.id).then();
+  }
+});
 
 export function initRadar() {
   const manuallyOff = sessionStorage.getItem('radar_manually_off') === 'true';

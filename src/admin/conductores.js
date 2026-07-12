@@ -30,13 +30,23 @@ async function loadConductores() {
   }
 
   if (!conductores || conductores.length === 0) {
-    listEl.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; opacity:0.5;">Aún no hay ningún conductor registrado en el sistema.</td></tr>`;
+    listEl.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; opacity:0.5;">Aún no hay ningún conductor registrado en el sistema.</td></tr>`;
     return;
   }
 
   listEl.innerHTML = '';
   conductores.forEach(c => {
     const tr = document.createElement('tr');
+
+    // 0. Estado En Vivo (Puntito)
+    const tdEnVivo = document.createElement('td');
+    tdEnVivo.style.textAlign = 'center';
+    if (c.is_online) {
+      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:#30D158; border-radius:50%; box-shadow: 0 0 8px rgba(48,209,88,0.6);" title="En Servicio"></span>`;
+    } else {
+      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:rgba(255,255,255,0.2); border-radius:50%;" title="Desconectado"></span>`;
+    }
+    tr.appendChild(tdEnVivo);
 
     // 1. Estado (Acceso) - Switch Toggle
     const tdEstado = document.createElement('td');
