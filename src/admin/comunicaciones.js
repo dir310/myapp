@@ -2,7 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { zippyAlert, zippyToast } from '../utils/ui-global.js';
 
 // OneSignal Config (Mismas que en user/ride.js)
-const OS_APP_ID = '07f66a98-8424-406f-b27b-edda32c256a4';
+const OS_APP_ID = 'd1912f76-c166-43c4-b85b-fc461630445d';
 const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmcelv7voadc7rzexsngbh3qb6fmhcvmghh7zrgiwoskzcr6ginu5zlzs5pj5vogpnizv6xdiuf2uhpx77y';
 
 document.addEventListener('DOMContentLoaded', async () => {
