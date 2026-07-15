@@ -12,6 +12,7 @@ export default defineConfig({
         viajes: resolve(__dirname, 'viajes.html'),
         admin_conductores: resolve(__dirname, 'admin-conductores.html'),
         admin_pagos: resolve(__dirname, 'admin-pagos.html'),
+        admin_comunicaciones: resolve(__dirname, 'admin-comunicaciones.html'),
         privacy: resolve(__dirname, 'privacy.html'),
         track: resolve(__dirname, 'track.html'),
         panel: resolve(__dirname, 'panel.html'),
