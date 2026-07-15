@@ -7,7 +7,35 @@ import '../styles/conductor.css';
 import { toggleRadar, playAlert } from './ui.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 import { zippyDanger } from '../utils/ui-global.js';
+import { supabase } from '../config/supabase.js';
 import './game.js';
+
+async function checkGlobalBanner() {
+  try {
+    const { data } = await supabase.from('mensajes_globales').select('*').eq('activo', true).limit(1).single();
+    if (data && data.titulo && data.mensaje) {
+      const banner = document.createElement('div');
+      banner.id = 'globalMessageBanner';
+      banner.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999999; display:flex; align-items:center; justify-content:center; animation: fadeIn 0.4s; padding:20px;';
+      banner.innerHTML = `
+        <div style="background:linear-gradient(135deg, #1c1c1e, #2c2c2e); padding:30px 20px; border-radius:20px; text-align:center; max-width:350px; border: 2px solid #3498DB; box-shadow: 0 10px 30px rgba(52,152,219,0.3); position:relative;">
+            <div style="font-size:40px; margin-bottom:10px;">📢</div>
+            <h2 style="color:#3498DB; margin:0 0 10px 0; font-weight:900;">${data.titulo}</h2>
+            <p style="color:rgba(255,255,255,0.9); font-size:15px; margin-bottom:20px; line-height:1.5;">${data.mensaje}</p>
+            <button onclick="document.getElementById('globalMessageBanner').remove()" 
+                    style="background:#3498DB; color:white; border:none; padding:12px 20px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; width:100%; box-shadow: 0 4px 15px rgba(52,152,219,0.4);">
+                ¡Entendido! 👍
+            </button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+document.addEventListener('DOMContentLoaded', checkGlobalBanner);
 
 
 // ── Event Listeners ──
