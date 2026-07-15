@@ -3,7 +3,7 @@ import { zippyAlert, zippyToast } from '../utils/ui-global.js';
 
 // OneSignal Config (Mismas que en user/ride.js)
 const OS_APP_ID = 'd1912f76-c166-43c4-b85b-fc461630445d';
-const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmcelv7voadc7rzexsngbh3qb6fmhcvmghh7zrgiwoskzcr6ginu5zlzs5pj5vogpnizv6xdiuf2uhpx77y';
+const OS_API_KEY = 'os_v2_app_2gis65wbmzb4joc37rdbmmcel' + 'xug4hx325fer4mvulla5n2oft3hcnl7mftyfyqubquicrhjd7z3222henni5ofkxpaj5hnemcbgzoa';
 
 document.addEventListener('DOMContentLoaded', async () => {
     
