@@ -489,9 +489,34 @@ async function checkGlobalBanner() {
   }
 }
 
+function initWelcomeBanner() {
+  const banner = document.getElementById('welcomeBanner');
+  if (!banner) return;
+
+  const today = new Date().toDateString();
+  const lastSeen = localStorage.getItem('zippy_welcome_banner_last_seen');
+
+  if (lastSeen === today) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  localStorage.setItem('zippy_welcome_banner_last_seen', today);
+  banner.style.display = 'flex';
+
+  setTimeout(() => {
+    banner.style.transition = 'opacity 0.5s ease';
+    banner.style.opacity = '0';
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 500);
+  }, 3000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Check for global announcements
   checkGlobalBanner();
+  initWelcomeBanner();
   
   // Verificar auth una vez que el DOM esté listo
   checkPassengerAuth();
