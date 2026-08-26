@@ -151,14 +151,17 @@ async function loadAgendados() {
     const isEnCurso = v.estado === 'en_curso';
     const isMine = v.conductor_id === profile?.id;
     const badgeColor = isEnCurso ? '#30D158' : (isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00');
-    const badgeText = isEnCurso ? '🚕 En Recogida / En Curso' : (isAccepted ? (isMine ? '✅ Aceptado (Tú)' : '🔒 Tomado') : '⏳ Disponible');
+    const pagoBadge = v.pagado
+      ? '<span style="font-size:11px;font-weight:800;color:#30D158;background:rgba(48,209,88,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(48,209,88,0.3);">💳 Pagado por Wompi</span>'
+      : '<span style="font-size:11px;font-weight:800;color:#FF9500;background:rgba(255,149,0,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(255,149,0,0.3);">⏳ Pendiente de Pago (Efectivo)</span>';
 
     return `
     <div style="background:rgba(255,255,255,.04);border:1px solid ${isEnCurso ? 'rgba(48,209,88,0.4)' : 'rgba(255,255,255,.08)'};border-radius:16px;padding:16px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-size:11px;font-weight:700;color:${badgeColor};background:rgba(255,255,255,.05);padding:4px 10px;border-radius:20px;border:1px solid ${badgeColor}40;">${badgeText}</span>
         <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
       </div>
+      <div style="margin-bottom:10px;">${pagoBadge}</div>
       <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:4px;">📅 ${fechaStr}</div>
       <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:3px;">📍 <strong>Recogida:</strong> ${v.origen}</div>
       <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;">🏁 <strong>Destino:</strong> ${v.destino}</div>
