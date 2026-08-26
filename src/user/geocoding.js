@@ -71,12 +71,23 @@ export function showLocationSugg(type, placeMarkerFn, state) {
       state.nextClick = type;
       state.mapClickTarget = type; // Habilita exactamente UN toque en el mapa para este punto
       sugg.style.display = 'none';
+      
       const hint = document.getElementById('clickHint');
       if (hint) {
         hint.style.display = 'block';
         hint.textContent = type === 'start'
           ? '🟢 Toca el inicio en el mapa'
           : '🟠 Toca el destino en el mapa';
+      }
+
+      // Mostrar flecha animada superior
+      const arrow = document.getElementById('mapSelectionArrow');
+      const arrowText = document.getElementById('mapSelectionArrowText');
+      if (arrow && arrowText) {
+        arrowText.innerHTML = type === 'start'
+          ? '🟢 Toca en el mapa tu punto de <strong style="color:#30D158;">RECOGIDA</strong>'
+          : '🟠 Toca en el mapa tu punto de <strong style="color:#FF9500;">DESTINO</strong>';
+        arrow.style.display = 'inline-flex';
       }
     });
   }
