@@ -175,13 +175,13 @@ export function checkRoute(state, map) {
   if (mainActions) mainActions.style.display = 'none';
   document.getElementById('priceSection').style.display = 'block';
 
-  // Configurar visibilidad del botón Pedir Viaje (Solo para tiempo real, Ocultar en agendado)
+  // Configurar texto y visibilidad del botón principal (Pedir Viaje / Agendar Viaje)
   const pedirBtn = document.getElementById('pedirViajeBtn');
   if (pedirBtn) {
+    pedirBtn.style.display = 'block';
     if (state.isScheduling) {
-      pedirBtn.style.display = 'none';
+      pedirBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Agendar y Pagar' : '📅 Agendar Viaje';
     } else {
-      pedirBtn.style.display = 'block';
       pedirBtn.innerHTML = '🏍️ Pedir Viaje';
     }
   }
