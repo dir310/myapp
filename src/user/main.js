@@ -1022,9 +1022,9 @@ map.on('click', (e) => {
   const hint = document.getElementById('clickHint');
   if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
-  // Ocultar flecha animada superior
-  const arrow = document.getElementById('mapSelectionArrow');
-  if (arrow) arrow.style.display = 'none';
+  // Ocultar cuadro emergente flotante
+  const popup = document.getElementById('mapSelectionPopup');
+  if (popup) popup.style.display = 'none';
 
   const { lat, lng } = e.latlng;
   showStatus('📍 Cargando dirección...', true);
@@ -1216,12 +1216,12 @@ document.addEventListener('DOMContentLoaded', () => {
         indicator.style.display = 'block';
       }
 
-      // Mostrar flecha animada superior de inmediato para punto A
-      const arrow = document.getElementById('mapSelectionArrow');
-      const arrowText = document.getElementById('mapSelectionArrowText');
-      if (arrow && arrowText) {
-        arrowText.innerHTML = '🟢 Toca en el mapa tu punto de <strong style="color:#30D158;">RECOGIDA</strong>';
-        arrow.style.display = 'inline-flex';
+      // Mostrar cuadro emergente flotante con Instrucción 1 (Recogida)
+      const popup = document.getElementById('mapSelectionPopup');
+      const stepText = document.getElementById('mapSelectionPopupStepText');
+      if (popup && stepText) {
+        stepText.innerHTML = '1. Toca en el mapa tu punto de <strong style="color:#30D158;">Recogida (Origen)</strong>';
+        popup.style.display = 'block';
       }
 
       // Cambiar texto del botón de pedir viaje

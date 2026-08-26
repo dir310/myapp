@@ -80,14 +80,14 @@ export function showLocationSugg(type, placeMarkerFn, state) {
           : '🟠 Toca el destino en el mapa';
       }
 
-      // Mostrar flecha animada superior
-      const arrow = document.getElementById('mapSelectionArrow');
-      const arrowText = document.getElementById('mapSelectionArrowText');
-      if (arrow && arrowText) {
-        arrowText.innerHTML = type === 'start'
-          ? '🟢 Toca en el mapa tu punto de <strong style="color:#30D158;">RECOGIDA</strong>'
-          : '🟠 Toca en el mapa tu punto de <strong style="color:#FF9500;">DESTINO</strong>';
-        arrow.style.display = 'inline-flex';
+      // Mostrar cuadro emergente flotante
+      const popup = document.getElementById('mapSelectionPopup');
+      const stepText = document.getElementById('mapSelectionPopupStepText');
+      if (popup && stepText) {
+        stepText.innerHTML = type === 'start'
+          ? '1. Toca en el mapa tu punto de <strong style="color:#30D158;">Recogida (Origen)</strong>'
+          : '2. Toca en el mapa tu punto de <strong style="color:#FF9500;">Destino</strong>';
+        popup.style.display = 'block';
       }
     });
   }

@@ -166,7 +166,8 @@ async function loadAgendados() {
       ${!isAccepted ? `
         <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
       ` : isMine ? `
-        <button onclick="cancelarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Cancelar Viaje</button>
+        <button onclick="iniciarViajeAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;box-shadow:0 4px 15px rgba(48,209,88,0.4);">🚕 Ir a Recoger (Iniciar Navegación)</button>
+        <button onclick="cancelarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar Viaje</button>
       ` : ''}
     </div>`;
   }).join('');
@@ -177,11 +178,62 @@ window.loadAgendados = loadAgendados;
 window.aceptarAgendado = async function(id) {
   const profile = await getCurrentProfile();
   if (!profile) { zippyAlert('Debes iniciar sesión.', '⚠️'); return; }
+
+  // Límite de 1 viaje agendado activo por conductor
+  const { data: existing } = await supabase
+    .from('viajes_agendados')
+    .select('id')
+    .eq('conductor_id', profile.id)
+    .eq('estado', 'aceptado');
+
+  if (existing && existing.length > 0) {
+    zippyAlert('⚠️ Ya tienes 1 viaje agendado aceptado. Debes completarlo o liberarlo antes de tomar otro.', '✋');
+    return;
+  }
+
   const ok = await zippyConfirm('¿Confirmas que aceptas este viaje agendado?');
   if (!ok) return;
   const { error } = await supabase.from('viajes_agendados').update({ estado: 'aceptado', conductor_id: profile.id }).eq('id', id).eq('estado', 'pendiente');
   if (error) { zippyAlert('No se pudo aceptar. Quizás otro conductor lo tomó.', '❌'); }
   loadAgendados();
+};
+
+window.iniciarViajeAgendado = async function(id) {
+  const profile = await getCurrentProfile();
+  if (!profile) return;
+  const ok = await zippyConfirm('¿Deseas iniciar la navegación e ir a recoger al pasajero de este viaje agendado?');
+  if (!ok) return;
+
+  const { data: v, error } = await supabase.from('viajes_agendados').select('*').eq('id', id).single();
+  if (error || !v) { zippyAlert('Error al cargar datos del viaje.', '❌'); return; }
+
+  // Insertar en la tabla de viajes activos en tiempo real
+  const { error: insErr } = await supabase.from('viajes').insert([{
+    codigo_viaje: v.codigo_viaje,
+    origen_nombre: v.origen,
+    origen_lat: v.origen_lat,
+    origen_lng: v.origen_lng,
+    destino_nombre: v.destino,
+    destino_lat: v.destino_lat,
+    destino_lng: v.destino_lng,
+    tarifa: v.tarifa,
+    distancia_km: v.distancia_km,
+    estado: 'aceptado',
+    conductor_id: profile.id,
+    pasajero_id: v.pasajero_id,
+    pago_efectivo_confirmado: !v.pagado,
+    pago_wompi: v.pagado
+  }]);
+
+  if (insErr) { zippyAlert('Error al iniciar el viaje en vivo: ' + insErr.message, '❌'); return; }
+
+  // Actualizar estado en viajes_agendados
+  await supabase.from('viajes_agendados').update({ estado: 'en_curso' }).eq('id', id);
+
+  // Cambiar pestaña a viajes en curso y refrescar
+  if (window.switchTab) window.switchTab('enCurso');
+  if (window.loadViajes) window.loadViajes();
+  zippyAlert('¡Viaje iniciado! Navega hacia el origen para recoger al pasajero.', '🚕');
 };
 
 window.cancelarAgendado = async function(id) {
