@@ -16,7 +16,6 @@ export default defineConfig({
         privacy: resolve(__dirname, 'privacy.html'),
         track: resolve(__dirname, 'track.html'),
         panel: resolve(__dirname, 'panel.html'),
-        agendar: resolve(__dirname, 'agendar.html'),
       },
     },
   },
