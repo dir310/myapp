@@ -143,59 +143,78 @@ async function loadAgendados() {
   if (!el) return;
   el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:32px;opacity:.3;">⏳</div><p style="font-size:13px;color:rgba(255,255,255,.4);margin-top:8px;">Cargando...</p></div>`;
 
-  const profile = await getCurrentProfile();
-  const profileId = profile?.id || 'null';
+  try {
+    const profile = await getCurrentProfile();
+    const profileId = profile?.id || null;
 
-  const { data, error } = await supabase
-    .from('viajes_agendados')
-    .select('*')
-    .or(`estado.eq.pendiente,and(estado.in.(aceptado,en_curso),conductor_id.eq.${profileId})`)
-    .order('fecha_hora', { ascending: true });
+    const { data, error } = await supabase
+      .from('viajes_agendados')
+      .select('*')
+      .in('estado', ['pendiente', 'aceptado', 'en_curso'])
+      .order('fecha_hora', { ascending: true });
 
-  if (error || !data?.length) {
-    el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
-    return;
-  }
+    if (error || !data || data.length === 0) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
+      return;
+    }
 
-  el.innerHTML = data.map(v => {
-    const fechaStr = new Date(v.fecha_hora).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' });
-    const isAccepted = v.estado === 'aceptado' || v.estado === 'en_curso';
-    const isEnCurso = v.estado === 'en_curso';
-    const isMine = v.conductor_id === profile?.id;
-    const badgeColor = isEnCurso ? '#30D158' : (isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00');
-    const pagoBadge = v.pagado
-      ? '<span style="font-size:11px;font-weight:800;color:#30D158;background:rgba(48,209,88,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(48,209,88,0.3);">💳 Pagado por Wompi</span>'
-      : '<span style="font-size:11px;font-weight:800;color:#FF9500;background:rgba(255,149,0,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(255,149,0,0.3);">⏳ Pendiente de Pago (Efectivo)</span>';
+    // Filtrar viajes disponibles (pendiente) o asignados al conductor actual
+    const filtered = data.filter(v => {
+      if (v.estado === 'pendiente') return true;
+      if ((v.estado === 'aceptado' || v.estado === 'en_curso') && profileId && v.conductor_id === profileId) return true;
+      return false;
+    });
 
-    return `
-    <div style="background:rgba(255,255,255,.04);border:1px solid ${isEnCurso ? 'rgba(48,209,88,0.4)' : 'rgba(255,255,255,.08)'};border-radius:16px;padding:16px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:11px;font-weight:700;color:${badgeColor};background:rgba(255,255,255,.05);padding:4px 10px;border-radius:20px;border:1px solid ${badgeColor}40;">${badgeText}</span>
-        <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
-      </div>
-      <div style="margin-bottom:10px;">${pagoBadge}</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:4px;">📅 ${fechaStr}</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:3px;">📍 <strong>Recogida:</strong> ${v.origen}</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;">🏁 <strong>Destino:</strong> ${v.destino}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px;">Código: #${v.codigo_viaje} · ${v.distancia_km} km</div>
-      ${!isAccepted ? `
-        <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
-      ` : (isMine && isEnCurso) ? `
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
-          <button onclick="abrirWazeDestino(${v.destino_lat}, ${v.destino_lng})" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 15px rgba(51,204,255,0.3);">🏁 Ir a Destino (Waze)</button>
-          <div style="display:flex;gap:6px;">
-            <button onclick="abrirWazeAgendado(${v.origen_lat}, ${v.origen_lng})" style="flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:11.5px;cursor:pointer;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);">📍 Waze Origen</button>
-            <button onclick="finalizarAgendado('${v.id}')" style="flex:1.4;padding:10px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;">✅ Finalizar Viaje</button>
+    if (filtered.length === 0) {
+      el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = filtered.map(v => {
+      const fechaStr = new Date(v.fecha_hora).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' });
+      const isAccepted = v.estado === 'aceptado' || v.estado === 'en_curso';
+      const isEnCurso = v.estado === 'en_curso';
+      const isMine = profileId && v.conductor_id === profileId;
+      const badgeColor = isEnCurso ? '#30D158' : (isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00');
+      const badgeText = isEnCurso ? '🚕 En Recogida / En Curso' : (isAccepted ? (isMine ? '✅ Aceptado (Tú)' : '🔒 Tomado') : '⏳ Disponible');
+
+      const pagoBadge = v.pagado
+        ? '<span style="font-size:11px;font-weight:800;color:#30D158;background:rgba(48,209,88,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(48,209,88,0.3);">💳 Pagado por Wompi</span>'
+        : '<span style="font-size:11px;font-weight:800;color:#FF9500;background:rgba(255,149,0,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(255,149,0,0.3);">⏳ Pendiente de Pago (Efectivo)</span>';
+
+      return `
+      <div style="background:rgba(255,255,255,.04);border:1px solid ${isEnCurso ? 'rgba(48,209,88,0.4)' : 'rgba(255,255,255,.08)'};border-radius:16px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:700;color:${badgeColor};background:rgba(255,255,255,.05);padding:4px 10px;border-radius:20px;border:1px solid ${badgeColor}40;">${badgeText}</span>
+          <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
+        </div>
+        <div style="margin-bottom:10px;">${pagoBadge}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:4px;">📅 ${fechaStr}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:3px;">📍 <strong>Recogida:</strong> ${v.origen}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;">🏁 <strong>Destino:</strong> ${v.destino}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px;">Código: #${v.codigo_viaje} · ${v.distancia_km} km</div>
+        ${!isAccepted ? `
+          <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
+        ` : (isMine && isEnCurso) ? `
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+            <button onclick="abrirWazeDestino(${v.destino_lat}, ${v.destino_lng})" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 15px rgba(51,204,255,0.3);">🏁 Ir a Destino (Waze)</button>
+            <div style="display:flex;gap:6px;">
+              <button onclick="abrirWazeAgendado(${v.origen_lat}, ${v.origen_lng})" style="flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:11.5px;cursor:pointer;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);">📍 Waze Origen</button>
+              <button onclick="finalizarAgendado('${v.id}')" style="flex:1.4;padding:10px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;">✅ Finalizar Viaje</button>
+            </div>
           </div>
-        </div>
-      ` : (isMine && !isEnCurso) ? `
-        <div style="display:flex;gap:8px;margin-top:6px;">
-          <button onclick="iniciarViajeAgendado('${v.id}')" style="flex:1.3;padding:12px 6px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);display:flex;align-items:center;justify-content:center;gap:4px;">🚕 Recoger Ya</button>
-          <button onclick="cancelarAgendado('${v.id}')" style="flex:1;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar</button>
-        </div>
-      ` : ''}
-    </div>`;
-  }).join('');
+        ` : (isMine && !isEnCurso) ? `
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <button onclick="iniciarViajeAgendado('${v.id}')" style="flex:1.3;padding:12px 6px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);display:flex;align-items:center;justify-content:center;gap:4px;">🚕 Recoger Ya</button>
+            <button onclick="cancelarAgendado('${v.id}')" style="flex:1;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar</button>
+          </div>
+        ` : ''}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error('[ZIPPY] Error al cargar agendados conductor:', e);
+    el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
+  }
 }
 
 window.loadAgendados = loadAgendados;
