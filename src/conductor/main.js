@@ -131,10 +131,13 @@ async function loadAgendados() {
   if (!el) return;
   el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:32px;opacity:.3;">⏳</div><p style="font-size:13px;color:rgba(255,255,255,.4);margin-top:8px;">Cargando...</p></div>`;
 
+  const profile = await getCurrentProfile();
+  const profileId = profile?.id || 'null';
+
   const { data, error } = await supabase
     .from('viajes_agendados')
     .select('*')
-    .in('estado', ['pendiente', 'aceptado'])
+    .or(`estado.eq.pendiente,and(estado.eq.aceptado,conductor_id.eq.${profileId})`)
     .gte('fecha_hora', new Date().toISOString())
     .order('fecha_hora', { ascending: true });
 
@@ -142,8 +145,6 @@ async function loadAgendados() {
     el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
     return;
   }
-
-  const profile = await getCurrentProfile();
 
   el.innerHTML = data.map(v => {
     const fechaStr = new Date(v.fecha_hora).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' });
@@ -184,9 +185,9 @@ window.aceptarAgendado = async function(id) {
 };
 
 window.cancelarAgendado = async function(id) {
-  const ok = await zippyConfirm('¿Confirmas que cancelas este viaje agendado?');
+  const ok = await zippyConfirm('¿Confirmas que deseas liberar este viaje para que otro conductor pueda tomarlo?');
   if (!ok) return;
-  await supabase.from('viajes_agendados').update({ estado: 'cancelado', conductor_id: null }).eq('id', id);
+  await supabase.from('viajes_agendados').update({ estado: 'pendiente', conductor_id: null }).eq('id', id);
   loadAgendados();
 };
 

@@ -1022,6 +1022,10 @@ map.on('click', (e) => {
   const hint = document.getElementById('clickHint');
   if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
 
+  // Ocultar flecha animada superior
+  const arrow = document.getElementById('mapSelectionArrow');
+  if (arrow) arrow.style.display = 'none';
+
   const { lat, lng } = e.latlng;
   showStatus('📍 Cargando dirección...', true);
 
@@ -1242,7 +1246,6 @@ async function loadActiveScheduledRide() {
       .select('*')
       .eq('pasajero_id', clientId)
       .in('estado', ['pendiente', 'aceptado'])
-      .gte('fecha_hora', new Date().toISOString())
       .order('fecha_hora', { ascending: true })
       .limit(1);
 

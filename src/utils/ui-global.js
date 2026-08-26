@@ -248,7 +248,9 @@ export function zippyToast(message, type = 'success') {
     display: flex;
     align-items: center;
     gap: 10px;
-    white-space: nowrap;
+    max-width: 90%;
+    text-align: center;
+    justify-content: center;
   `;
 
   toast.innerHTML = `<span style="font-size: 18px;">${icon}</span> <span>${message}</span>`;
