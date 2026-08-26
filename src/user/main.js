@@ -1236,7 +1236,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Cambiar texto del botón de pedir viaje
       const pedirBtn = document.getElementById('pedirViajeBtn');
       if (pedirBtn) {
-        pedirBtn.innerHTML = '📅 Agendar Viaje';
+        pedirBtn.innerHTML = '💳 Agendar y Pagar';
       }
 
       zippyToast('📅 Modo Agendado activo. Toca el mapa para marcar tu inicio.');
