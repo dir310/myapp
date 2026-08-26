@@ -278,6 +278,16 @@ export async function acceptRide(state, map) {
               localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
               sendPushToDrivers(basePrice, distText);
               await zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
+              
+              // Limpieza y restauración impecable del UI
+              document.getElementById('priceSection').style.display = 'none';
+              const confirmBtn = document.getElementById('confirmRouteBtn');
+              if (confirmBtn) confirmBtn.style.display = 'none';
+              const pedirBtn = document.getElementById('pedirViajeBtn');
+              if (pedirBtn) { pedirBtn.style.display = 'block'; pedirBtn.innerHTML = '🏍️ Pedir Viaje'; pedirBtn.disabled = false; }
+              const cancelBtn = document.getElementById('cancelActiveSchedBtn');
+              if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = '✕ Cancelar Viaje'; }
+
               if (window.cancelSchedulingMode) window.cancelSchedulingMode();
               if (window.loadActiveScheduledRide) window.loadActiveScheduledRide();
               const sidebar = document.getElementById('sidebar');
@@ -313,6 +323,16 @@ export async function acceptRide(state, map) {
         localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
         sendPushToDrivers(basePrice, distText);
         await zippyAlert(`¡Tu viaje agendado ha sido registrado! Código: #${rideCode}. Pagarás en efectivo al conductor al finalizar el viaje.`, '✅');
+        
+        // Limpieza y restauración impecable del UI
+        document.getElementById('priceSection').style.display = 'none';
+        const confirmBtn = document.getElementById('confirmRouteBtn');
+        if (confirmBtn) confirmBtn.style.display = 'none';
+        const pedirBtn = document.getElementById('pedirViajeBtn');
+        if (pedirBtn) { pedirBtn.style.display = 'block'; pedirBtn.innerHTML = '🏍️ Pedir Viaje'; pedirBtn.disabled = false; }
+        const cancelBtn = document.getElementById('cancelActiveSchedBtn');
+        if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = '✕ Cancelar Viaje'; }
+
         if (window.cancelSchedulingMode) window.cancelSchedulingMode();
         if (window.loadActiveScheduledRide) window.loadActiveScheduledRide();
         const sidebar = document.getElementById('sidebar');
