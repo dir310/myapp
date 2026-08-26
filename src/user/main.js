@@ -1107,7 +1107,11 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
       pedirBtn.disabled = false;
       pedirBtn.style.opacity = '1';
       pedirBtn.style.cursor = 'pointer';
-      pedirBtn.innerHTML = `🏍️ Pedir Viaje &nbsp;·&nbsp; ${isWompi ? '💳 Wompi' : '💵 Efectivo'}`;
+      if (state.isScheduling) {
+        pedirBtn.innerHTML = isWompi ? '💳 Agendar y Pagar' : '📅 Confirmar Agendamiento';
+      } else {
+        pedirBtn.innerHTML = `🏍️ Pedir Viaje &nbsp;·&nbsp; ${isWompi ? '💳 Wompi' : '💵 Efectivo'}`;
+      }
     }
 
   // ── Cambiar método de pago ──
@@ -1127,7 +1131,7 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
       pedirBtn.disabled = true;
       pedirBtn.style.opacity = '0.35';
       pedirBtn.style.cursor = 'not-allowed';
-      pedirBtn.innerHTML = '🏍️ Pedir Viaje';
+      pedirBtn.innerHTML = state.isScheduling ? '📅 Agendar Viaje' : '🏍️ Pedir Viaje';
     }
 
   // ── PEDIR VIAJE (inicia la búsqueda) ──
@@ -1187,8 +1191,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const fechaHora = new Date(`${fecha}T${hora}`);
-      if (fechaHora <= new Date()) {
-        zippyAlert('La fecha y hora deben ser en el futuro.', '⏰');
+      const now = new Date();
+      if (fechaHora <= now) {
+        zippyAlert('La fecha y hora programada debe ser en el futuro (si es hoy, elige una hora posterior).', '⏰');
         return;
       }
 
@@ -1222,6 +1227,102 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelSchedulingMode();
   });
 });
+
+// ── Viajes Agendados Activos (Pasajero) ──
+async function loadActiveScheduledRide() {
+  const card = document.getElementById('activeScheduledRideCard');
+  const schedBtn = document.getElementById('scheduleTripSidebarBtn');
+  const clientId = localStorage.getItem('calmovil_cliente_id');
+  if (!card || !clientId) return;
+
+  try {
+    // Buscar viaje agendado activo
+    const { data, error } = await supabase
+      .from('viajes_agendados')
+      .select('*')
+      .eq('pasajero_id', clientId)
+      .in('estado', ['pendiente', 'aceptado'])
+      .gte('fecha_hora', new Date().toISOString())
+      .order('fecha_hora', { ascending: true })
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      card.style.display = 'none';
+      if (schedBtn) schedBtn.style.display = 'flex';
+      return;
+    }
+
+    const v = data[0];
+    const fechaHora = new Date(v.fecha_hora);
+    
+    // Rellenar datos
+    document.getElementById('activeSchedDateTime').textContent = fechaHora.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('activeSchedOrigen').textContent = v.origen.split(',').slice(0, 2).join(', ');
+    document.getElementById('activeSchedDestino').textContent = v.destino.split(',').slice(0, 2).join(', ');
+
+    const statusBadge = document.getElementById('activeSchedStatusBadge');
+    const driverInfo = document.getElementById('activeSchedDriverInfo');
+    const cancelBtn = document.getElementById('cancelActiveSchedBtn');
+
+    if (v.estado === 'pendiente') {
+      if (statusBadge) {
+        statusBadge.textContent = 'Buscando';
+        statusBadge.style.color = '#FF9500';
+        statusBadge.style.background = 'rgba(255,149,0,0.15)';
+      }
+      if (driverInfo) driverInfo.style.display = 'none';
+    } else if (v.estado === 'aceptado') {
+      if (statusBadge) {
+        statusBadge.textContent = 'Aceptado';
+        statusBadge.style.color = '#30D158';
+        statusBadge.style.background = 'rgba(48,209,88,0.15)';
+      }
+      
+      // Cargar info del conductor
+      if (v.conductor_id) {
+        const { data: cond } = await supabase.from('conductores').select('nombre, placa').eq('id', v.conductor_id).single();
+        if (cond) {
+          document.getElementById('activeSchedDriverName').textContent = cond.nombre;
+          document.getElementById('activeSchedDriverPlate').textContent = cond.placa;
+          if (driverInfo) driverInfo.style.display = 'block';
+        }
+      }
+    }
+
+    // Ocultar botón de crear nuevo viaje (solo 1 a la vez)
+    if (schedBtn) schedBtn.style.display = 'none';
+    card.style.display = 'block';
+
+    // Event listener para cancelar
+    if (cancelBtn) {
+      // Remover listener viejo clonando el botón
+      const newCancelBtn = cancelBtn.cloneNode(true);
+      cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+      newCancelBtn.addEventListener('click', async () => {
+        const ok = await zippyConfirm('¿Estás seguro de que deseas cancelar este viaje programado?');
+        if (!ok) return;
+
+        newCancelBtn.disabled = true;
+        newCancelBtn.textContent = 'Cancelando...';
+        
+        const { error: delErr } = await supabase.from('viajes_agendados').update({ estado: 'cancelado' }).eq('id', v.id);
+        if (!delErr) {
+          zippyToast('📅 Viaje programado cancelado.');
+          loadActiveScheduledRide();
+        } else {
+          zippyAlert('No se pudo cancelar el viaje agendado. Intenta de nuevo.', '❌');
+          newCancelBtn.disabled = false;
+          newCancelBtn.textContent = '✕ Cancelar Viaje';
+        }
+      });
+    }
+
+  } catch (e) {
+    console.error('[ZIPPY] Error al cargar viaje agendado:', e);
+  }
+}
+
+window.loadActiveScheduledRide = loadActiveScheduledRide;
 
 function cancelSchedulingMode() {
   state.isScheduling = false;

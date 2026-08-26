@@ -216,7 +216,9 @@ export async function acceptRide(state, map) {
   if (btnW) btnW.disabled = true;
   if (btnE) btnE.disabled = true;
   const activeBtn = state.selectedPaymentMethod === 'wompi' ? btnW : btnE;
-  if (activeBtn) activeBtn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo...';
+  if (activeBtn) {
+    activeBtn.innerHTML = `<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> ${state.isScheduling ? 'Agendando...' : 'Pidiendo...'}`;
+  }
 
   // ── Intercepción de Viaje Agendado ──
   if (state.isScheduling) {
