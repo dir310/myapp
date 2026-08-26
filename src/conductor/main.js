@@ -137,8 +137,7 @@ async function loadAgendados() {
   const { data, error } = await supabase
     .from('viajes_agendados')
     .select('*')
-    .or(`estado.eq.pendiente,and(estado.eq.aceptado,conductor_id.eq.${profileId})`)
-    .gte('fecha_hora', new Date().toISOString())
+    .or(`estado.eq.pendiente,and(estado.in.(aceptado,en_curso),conductor_id.eq.${profileId})`)
     .order('fecha_hora', { ascending: true });
 
   if (error || !data?.length) {
@@ -148,13 +147,14 @@ async function loadAgendados() {
 
   el.innerHTML = data.map(v => {
     const fechaStr = new Date(v.fecha_hora).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' });
-    const isAccepted = v.estado === 'aceptado';
+    const isAccepted = v.estado === 'aceptado' || v.estado === 'en_curso';
+    const isEnCurso = v.estado === 'en_curso';
     const isMine = v.conductor_id === profile?.id;
-    const badgeColor = isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00';
-    const badgeText = isAccepted ? (isMine ? '✅ Aceptado (Tú)' : '🔒 Tomado') : '⏳ Disponible';
+    const badgeColor = isEnCurso ? '#30D158' : (isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00');
+    const badgeText = isEnCurso ? '🚕 En Recogida / En Curso' : (isAccepted ? (isMine ? '✅ Aceptado (Tú)' : '🔒 Tomado') : '⏳ Disponible');
 
     return `
-    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;">
+    <div style="background:rgba(255,255,255,.04);border:1px solid ${isEnCurso ? 'rgba(48,209,88,0.4)' : 'rgba(255,255,255,.08)'};border-radius:16px;padding:16px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;font-weight:700;color:${badgeColor};background:rgba(255,255,255,.05);padding:4px 10px;border-radius:20px;border:1px solid ${badgeColor}40;">${badgeText}</span>
         <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
@@ -165,7 +165,12 @@ async function loadAgendados() {
       <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px;">Código: #${v.codigo_viaje} · ${v.distancia_km} km</div>
       ${!isAccepted ? `
         <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
-      ` : isMine ? `
+      ` : (isMine && isEnCurso) ? `
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
+          <button onclick="abrirWazeAgendado(${v.origen_lat}, ${v.origen_lng})" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">📍 Navegar en Waze</button>
+          <button onclick="finalizarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;">🏁 Finalizar Viaje Agendado</button>
+        </div>
+      ` : (isMine && !isEnCurso) ? `
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button onclick="iniciarViajeAgendado('${v.id}')" style="flex:1.3;padding:12px 6px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);display:flex;align-items:center;justify-content:center;gap:4px;">🚕 Recoger Ya</button>
           <button onclick="cancelarAgendado('${v.id}')" style="flex:1;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar</button>
@@ -186,10 +191,10 @@ window.aceptarAgendado = async function(id) {
     .from('viajes_agendados')
     .select('id')
     .eq('conductor_id', profile.id)
-    .eq('estado', 'aceptado');
+    .in('estado', ['aceptado', 'en_curso']);
 
   if (existing && existing.length > 0) {
-    zippyAlert('⚠️ Ya tienes 1 viaje agendado aceptado. Debes completarlo o liberarlo antes de tomar otro.', '✋');
+    zippyAlert('⚠️ Ya tienes 1 viaje agendado activo. Debes completarlo o liberarlo antes de tomar otro.', '✋');
     return;
   }
 
@@ -203,39 +208,38 @@ window.aceptarAgendado = async function(id) {
 window.iniciarViajeAgendado = async function(id) {
   const profile = await getCurrentProfile();
   if (!profile) return;
-  const ok = await zippyConfirm('¿Deseas iniciar la navegación e ir a recoger al pasajero de este viaje agendado?');
-  if (!ok) return;
 
   const { data: v, error } = await supabase.from('viajes_agendados').select('*').eq('id', id).single();
   if (error || !v) { zippyAlert('Error al cargar datos del viaje.', '❌'); return; }
 
-  // Insertar en la tabla de viajes activos en tiempo real
-  const { error: insErr } = await supabase.from('viajes').insert([{
-    codigo_viaje: v.codigo_viaje,
-    origen_nombre: v.origen,
-    origen_lat: v.origen_lat,
-    origen_lng: v.origen_lng,
-    destino_nombre: v.destino,
-    destino_lat: v.destino_lat,
-    destino_lng: v.destino_lng,
-    tarifa: v.tarifa,
-    distancia_km: v.distancia_km,
-    estado: 'aceptado',
-    conductor_id: profile.id,
-    pasajero_id: v.pasajero_id,
-    pago_efectivo_confirmado: !v.pagado,
-    pago_wompi: v.pagado
-  }]);
+  const ok = await zippyConfirm('¿Deseas iniciar la recogida e ir a por el pasajero?');
+  if (!ok) return;
 
-  if (insErr) { zippyAlert('Error al iniciar el viaje en vivo: ' + insErr.message, '❌'); return; }
-
-  // Actualizar estado en viajes_agendados
+  // Actualizar estado exclusivamente dentro de viajes_agendados
   await supabase.from('viajes_agendados').update({ estado: 'en_curso' }).eq('id', id);
 
-  // Cambiar pestaña a viajes en curso y refrescar
-  if (window.switchTab) window.switchTab('enCurso');
-  if (window.loadViajes) window.loadViajes();
-  zippyAlert('¡Viaje iniciado! Navega hacia el origen para recoger al pasajero.', '🚕');
+  // Abrir Waze de inmediato
+  if (v.origen_lat && v.origen_lng) {
+    window.open(`https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes`, '_blank');
+  }
+
+  loadAgendados();
+  zippyAlert('¡Viaje en curso! Navegando en Waze hacia el punto de recogida.', '🚕');
+};
+
+window.abrirWazeAgendado = function(lat, lng) {
+  if (lat && lng) {
+    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+  }
+};
+
+window.finalizarAgendado = async function(id) {
+  const ok = await zippyConfirm('¿Confirmas que has recogido al pasajero y completado el viaje agendado?');
+  if (!ok) return;
+
+  await supabase.from('viajes_agendados').update({ estado: 'completado' }).eq('id', id);
+  loadAgendados();
+  zippyAlert('🎉 ¡Viaje agendado completado con éxito!', '✅');
 };
 
 window.cancelarAgendado = async function(id) {
