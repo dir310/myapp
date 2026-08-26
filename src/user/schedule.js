@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Scheduled Ride flow — date/time, map selection, fare, Wompi payment.
  */
 import { supabase } from '../config/supabase.js';
@@ -24,22 +24,6 @@ function calcFare(distKm) {
   return Math.max(4000,p);
 }
 
-async function initWompiSchedule(agendadoId, tarifa, codigo) {
-  if (typeof WidgetCheckout !== 'function') { zippyAlert('El sistema de pagos no cargó. Intenta de nuevo.','⚠️'); return false; }
-  const currency='COP', cents=tarifa*100, reference=ZIPPY_SCHED__;
-  const secret='prod_integrity_lImL3CgFSTzGzBcs661J1WF9UFJdHuZC';
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(reference+cents+currency+secret));
-  const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  return new Promise(resolve=>{
-    const co = new WidgetCheckout({ currency, amountInCents:cents, reference, publicKey:'pub_prod_SxZqnd7Fi3WqOdXDFGrDg0qNP0rMFtE4', signature:{integrity:hex} });
-    co.open(async result=>{
-      if (result.transaction?.status==='APPROVED') {
-        await supabase.from('viajes_agendados').update({pagado:true}).eq('id',agendadoId);
-        resolve(true);
-      } else { zippyAlert('Pago no completado. Intenta de nuevo.','❌'); resolve(false); }
-    });
-  });
-}
 
 const VIEWBOX='-74.20,5.05,-73.75,4.55';
 let geocodeTimers={};
@@ -152,25 +136,19 @@ document.addEventListener('DOMContentLoaded', async()=>{
     if(!state.startLatLng){zippyAlert('Marca el punto de recogida.','📍');return;}
     if(!state.endLatLng){zippyAlert('Marca el punto de destino.','🏁');return;}
     if(state.fare<=0){zippyAlert('No se calculó la tarifa. Intenta de nuevo.','⚠️');return;}
-    const fechaHora=new Date(${fechaVal}T);
+    const fechaHora=new Date(`${fechaVal}T${horaVal}`);
     if(fechaHora<=new Date()){zippyAlert('La fecha y hora deben ser en el futuro.','⏰');return;}
     const btn=document.getElementById('confirmBtn');
     btn.disabled=true; btn.textContent='Guardando...';
     const codigo=generateRideCode(), pasajeroId=user?.id||'anonimo_'+Date.now();
     const {data,error}=await supabase.from('viajes_agendados').insert({pasajero_id:pasajeroId,origen:state.startName,destino:state.endName,origen_lat:state.startLatLng.lat,origen_lng:state.startLatLng.lng,destino_lat:state.endLatLng.lat,destino_lng:state.endLatLng.lng,tarifa:state.fare,fecha_hora:fechaHora.toISOString(),estado:'pendiente',pagado:false,codigo_viaje:codigo,distancia_km:(haversineKm(state.startLatLng,state.endLatLng)*1.3).toFixed(1)}).select().single();
-    if(error||!data){btn.disabled=false;btn.textContent='💳 Pagar y Agendar';zippyAlert('Error al guardar. Intenta de nuevo.','❌');return;}
-    btn.textContent='Abriendo pago...';
-    const paid=await initWompiSchedule(data.id,state.fare,codigo);
-    if(paid){
-      await notifyDrivers(state.fare,fechaHora.toISOString());
-      document.getElementById('scheduleSheet').style.display='none';
-      document.getElementById('successScreen').style.display='flex';
-      document.getElementById('successCode').textContent=codigo;
-      document.getElementById('successDate').textContent=fechaHora.toLocaleString('es-CO',{dateStyle:'full',timeStyle:'short'});
-    }else{
-      await supabase.from('viajes_agendados').delete().eq('id',data.id);
-      btn.disabled=false; btn.textContent='💳 Pagar y Agendar';
-    }
+    if(error||!data){btn.disabled=false;btn.textContent='📅 Confirmar Agendamiento';zippyAlert('Error al guardar. Intenta de nuevo.','❌');return;}
+    
+    await notifyDrivers(state.fare,fechaHora.toISOString());
+    document.getElementById('scheduleSheet').style.display='none';
+    document.getElementById('successScreen').style.display='flex';
+    document.getElementById('successCode').textContent=codigo;
+    document.getElementById('successDate').textContent=fechaHora.toLocaleString('es-CO',{dateStyle:'full',timeStyle:'short'});
   });
 
   document.getElementById('goHomeBtn')?.addEventListener('click',()=>{window.location.href='/';});
