@@ -1257,8 +1257,9 @@ async function loadActiveScheduledRide() {
   const clientId = localStorage.getItem('calmovil_cliente_id');
   const clientPhone = localStorage.getItem('calmovil_cliente_telefono');
   const lastCode = localStorage.getItem('calmovil_ultimo_agendado_codigo');
+  const lastId = localStorage.getItem('calmovil_ultimo_agendado_id');
 
-  if (!clientId && !clientPhone && !lastCode) {
+  if (!clientId && !clientPhone && !lastCode && !lastId) {
     if (sidebarCard) sidebarCard.style.display = 'none';
     return;
   }
@@ -1268,6 +1269,7 @@ async function loadActiveScheduledRide() {
     if (clientId) orConditions.push(`pasajero_id.eq.${clientId}`);
     if (clientPhone) orConditions.push(`pasajero_id.eq.${clientPhone}`);
     if (lastCode) orConditions.push(`codigo_viaje.eq.${lastCode}`);
+    if (lastId) orConditions.push(`id.eq.${lastId}`);
 
     let query = supabase.from('viajes_agendados').select('*');
     if (orConditions.length > 0) {
@@ -1275,8 +1277,8 @@ async function loadActiveScheduledRide() {
     }
 
     const { data, error } = await query
-      .in('estado', ['pendiente', 'aceptado'])
-      .order('fecha_hora', { ascending: true })
+      .in('estado', ['pendiente', 'aceptado', 'en_curso'])
+      .order('created_at', { ascending: false })
       .limit(1);
 
     if (error || !data || data.length === 0) {
@@ -1286,6 +1288,9 @@ async function loadActiveScheduledRide() {
     }
 
     const v = data[0];
+    localStorage.setItem('calmovil_ultimo_agendado_id', v.id);
+    if (v.codigo_viaje) localStorage.setItem('calmovil_ultimo_agendado_codigo', v.codigo_viaje);
+
     const fechaHora = new Date(v.fecha_hora);
     const fechaStr = fechaHora.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -1307,8 +1312,11 @@ async function loadActiveScheduledRide() {
       if (v.estado === 'pendiente') {
         if (badge) { badge.textContent = '⏳ Buscando Conductor'; badge.style.color = '#FF9500'; }
         if (driverInfo) driverInfo.style.display = 'none';
-      } else if (v.estado === 'aceptado') {
-        if (badge) { badge.textContent = '✅ Conductor Asignado'; badge.style.color = '#30D158'; }
+      } else if (v.estado === 'aceptado' || v.estado === 'en_curso') {
+        if (badge) {
+          badge.textContent = v.estado === 'en_curso' ? '🚕 Conductor en Camino por Ti' : '✅ Conductor Asignado';
+          badge.style.color = '#30D158';
+        }
         if (v.conductor_id) {
           supabase.from('conductores').select('nombre, placa').eq('id', v.conductor_id).single().then(({ data: cond }) => {
             if (cond) {
