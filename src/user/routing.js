@@ -175,10 +175,15 @@ export function checkRoute(state, map) {
   if (mainActions) mainActions.style.display = 'none';
   document.getElementById('priceSection').style.display = 'block';
 
-  // Configurar texto del botón según el modo (Agendar vs Normal)
+  // Configurar visibilidad del botón Pedir Viaje (Solo para tiempo real, Ocultar en agendado)
   const pedirBtn = document.getElementById('pedirViajeBtn');
   if (pedirBtn) {
-    pedirBtn.innerHTML = state.isScheduling ? '💳 Agendar y Pagar' : '🏍️ Pedir Viaje';
+    if (state.isScheduling) {
+      pedirBtn.style.display = 'none';
+    } else {
+      pedirBtn.style.display = 'block';
+      pedirBtn.innerHTML = '🏍️ Pedir Viaje';
+    }
   }
 
   // Desplegar automáticamente el panel inferior con precio y pago
