@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ZIPPY | Agendar Viaje</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/styles/common.css">
+  <link rel="stylesheet" href="src/styles/user.css">
+  <script type="text/javascript" src="https://checkout.wompi.co/widget.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FF6B00">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',sans-serif;background:#0d0d0f;color:#fff;overflow:hidden;}
+    #schedMap{position:fixed;inset:0;z-index:0;}
+    #mapHint{display:none;position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(255,107,0,0.92);color:#fff;padding:10px 20px;border-radius:30px;font-weight:700;font-size:13px;pointer-events:none;backdrop-filter:blur(8px);}
+    #scheduleSheet{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(18,18,22,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px 24px 0 0;padding:20px 16px calc(16px + env(safe-area-inset-bottom));max-height:75vh;overflow-y:auto;border-top:1px solid rgba(255,107,0,0.25);}
+    .sheet-handle{width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px;}
+    .sheet-title{font-size:18px;font-weight:800;color:#FF6B00;margin-bottom:16px;text-align:center;}
+    .sched-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+    .sched-input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;margin-bottom:4px;}
+    .sched-input:focus{border-color:rgba(255,107,0,.6);}
+    .sched-input::placeholder{color:rgba(255,255,255,.3);}
+    input[type="date"].sched-input,input[type="time"].sched-input{color-scheme:dark;}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .sched-sugg{position:absolute;z-index:500;background:#1c1c1e;border:1px solid rgba(255,255,255,.1);border-radius:12px;width:100%;max-height:180px;overflow-y:auto;display:none;margin-top:2px;}
+    .sched-sugg-item{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);}
+    .sched-sugg-item:hover{background:rgba(255,107,0,.1);}
+    .inp-wrap{position:relative;margin-bottom:12px;}
+    #fareSection{display:none;background:rgba(255,107,0,.08);border:1px solid rgba(255,107,0,.25);border-radius:16px;padding:14px;text-align:center;margin-bottom:14px;}
+    .fare-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;}
+    #fareValue{font-size:26px;font-weight:900;color:#FF6B00;display:block;margin-top:4px;}
+    #confirmBtn{width:100%;padding:16px;border-radius:16px;font-weight:900;font-size:16px;cursor:pointer;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;border:none;font-family:'Inter',sans-serif;letter-spacing:.3px;transition:all .2s;}
+    #confirmBtn:disabled{opacity:.5;cursor:not-allowed;}
+    .back-btn{position:fixed;top:calc(14px + env(safe-area-inset-top));left:14px;z-index:200;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;backdrop-filter:blur(10px);}
+    #successScreen{display:none;position:fixed;inset:0;z-index:999;background:rgba(13,13,15,.97);flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;}
+    .success-icon{font-size:64px;margin-bottom:20px;}
+    .success-title{font-size:24px;font-weight:900;color:#30D158;margin-bottom:8px;}
+    .success-sub{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px;line-height:1.5;}
+    .success-code{font-size:36px;font-weight:900;color:#FF6B00;background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.3);border-radius:16px;padding:16px 30px;margin-bottom:8px;letter-spacing:2px;}
+    .success-code-label{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:24px;text-transform:uppercase;letter-spacing:.8px;}
+    .success-date{color:#fff;font-size:15px;font-weight:600;margin-bottom:30px;}
+    #goHomeBtn{background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;border:none;padding:16px 40px;border-radius:16px;font-weight:800;font-size:15px;cursor:pointer;font-family:'Inter',sans-serif;}
+  </style>
+</head>
+<body>
+
+  <!-- Mapa -->
+  <div id="schedMap"></div>
+
+  <!-- Hint de toque en mapa -->
+  <div id="mapHint">📍 Toca el mapa para marcar el punto</div>
+
+  <!-- Botón volver -->
+  <div class="back-btn" onclick="history.back()">←</div>
+
+  <!-- Bottom Sheet principal -->
+  <div id="scheduleSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📅 Agendar Viaje</div>
+
+    <!-- Fecha y Hora -->
+    <div class="row2">
+      <div>
+        <div class="sched-label">Fecha</div>
+        <input type="date" id="schedDate" class="sched-input">
+      </div>
+      <div>
+        <div class="sched-label">Hora</div>
+        <input type="time" id="schedTime" class="sched-input" value="08:00">
+      </div>
+    </div>
+
+    <!-- Punto de Recogida -->
+    <div class="sched-label">📍 Punto de Recogida</div>
+    <div class="inp-wrap">
+      <input type="text" id="startInput" class="sched-input" placeholder="¿Dónde te recogemos?" autocomplete="off">
+      <div class="sched-sugg" id="startSugg"></div>
+    </div>
+
+    <!-- Destino -->
+    <div class="sched-label">🏁 Destino</div>
+    <div class="inp-wrap">
+      <input type="text" id="endInput" class="sched-input" placeholder="¿A dónde vas?" autocomplete="off">
+      <div class="sched-sugg" id="endSugg"></div>
+    </div>
+
+    <!-- Tarifa -->
+    <div id="fareSection">
+      <div class="fare-label">💰 Tarifa estimada</div>
+      <span id="fareValue">$0</span>
+    </div>
+
+    <!-- Botón Confirmar -->
+    <button id="confirmBtn">💳 Pagar y Agendar</button>
+  </div>
+
+  <!-- Pantalla de Éxito -->
+  <div id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">¡Viaje Agendado!</div>
+    <div class="success-sub">Tu viaje ha sido confirmado y pagado.<br>Los conductores recibirán la notificación.</div>
+    <div class="success-code" id="successCode">------</div>
+    <div class="success-code-label">Código del Viaje</div>
+    <div class="success-date" id="successDate"></div>
+    <button id="goHomeBtn">🏠 Volver al Inicio</button>
+  </div>
+
+  <script type="module" src="src/user/schedule.js"></script>
+</body>
+</html>
