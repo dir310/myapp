@@ -339,6 +339,26 @@
 
             <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
 
+            <!-- Card de Viaje Agendado Activo en Pantalla Principal -->
+            <div id="mainActiveScheduledRideCard" style="display:none; margin:10px 14px; background:rgba(20,20,24,0.95); border:1.5px solid #FF9500; border-radius:20px; padding:16px; backdrop-filter:blur(12px); box-shadow:0 8px 30px rgba(0,0,0,0.5); text-align:left;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:12px; font-weight:900; color:#FF9500; letter-spacing:0.5px;">📅 VIAJE AGENDADO</span>
+                    <span id="mainSchedStatusBadge" style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px; background:rgba(255,149,0,0.2); color:#FF9500;">Buscando</span>
+                </div>
+                <div id="mainSchedDateTimeText" style="font-size:15px; font-weight:900; color:#fff; margin-bottom:8px;">--/-- --:--</div>
+                <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:10px; line-height:1.5;">
+                    🟢 <b>Recogida:</b> <span id="mainSchedOrigenText">--</span><br>
+                    🟠 <b>Destino:</b> <span id="mainSchedDestinoText">--</span>
+                </div>
+                <div id="mainSchedDriverInfo" style="display:none; padding:10px 12px; background:rgba(48,209,88,0.12); border:1px solid rgba(48,209,88,0.3); border-radius:14px; margin-bottom:10px; font-size:13px; color:#30D158;">
+                    🏍️ <b>Conductor Aceptado:</b> <span id="mainSchedDriverName">--</span><br>
+                    Placa: <b id="mainSchedDriverPlate" style="text-transform:uppercase;">--</b>
+                </div>
+                <button id="mainCancelSchedBtn" style="width:100%; padding:11px; background:rgba(255,59,48,0.15); border:1px solid rgba(255,59,48,0.4); color:#FF3B30; font-weight:800; font-size:13px; border-radius:14px; cursor:pointer; font-family:'Inter',sans-serif;">
+                    ❌ Cancelar Este Viaje Agendado
+                </button>
+            </div>
+
             <!-- Indicador con Flecha Animada para marcar puntos -->
             <div id="mapSelectionArrow" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(20,20,22,0.92); border:1.5px solid #FF9500; color:#fff; padding:10px 20px; border-radius:30px; font-weight:800; font-size:12.5px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 8px 30px rgba(0,0,0,0.5); pointer-events:none; align-items:center; gap:8px;">
                 <span style="display:inline-block; animation: zippy-bounce 1s infinite ease-in-out;">👇</span>
