@@ -224,7 +224,11 @@ export async function acceptRide(state, map) {
   if (state.isScheduling) {
     try {
       const rideCode = generateRideCode();
-      const passengerId = localStorage.getItem('calmovil_cliente_id');
+      let passengerId = localStorage.getItem('calmovil_cliente_id');
+      if (!passengerId) {
+        passengerId = 'pasajero_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        localStorage.setItem('calmovil_cliente_id', passengerId);
+      }
       const cNombre = sanitizeHTML(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
       const cTelefono = sanitizeHTML(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
 
@@ -253,7 +257,7 @@ export async function acceptRide(state, map) {
           if (result.transaction?.status === 'APPROVED') {
             // Guardar en la base de datos
             const { error } = await supabase.from('viajes_agendados').insert({
-              pasajero_id: passengerId || 'anonimo_' + Date.now(),
+              pasajero_id: passengerId,
               origen: originName,
               destino: destName,
               origen_lat: state.startLatLng.lat,
@@ -271,11 +275,12 @@ export async function acceptRide(state, map) {
             if (error) {
               zippyAlert('Pago aprobado, pero hubo un error al registrar el viaje agendado. Por favor contáctanos.', '⚠️');
             } else {
-              // Notificar conductores
               sendPushToDrivers(basePrice, distText);
-              zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
+              await zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
               if (window.cancelSchedulingMode) window.cancelSchedulingMode();
-              location.reload();
+              if (window.loadActiveScheduledRide) window.loadActiveScheduledRide();
+              const sidebar = document.getElementById('sidebar');
+              if (sidebar) sidebar.classList.remove('minimized');
             }
           } else {
             zippyAlert('Pago no aprobado o cancelado. Intenta de nuevo.', '❌');
@@ -287,7 +292,7 @@ export async function acceptRide(state, map) {
       } else {
         // Pago en efectivo / presencial
         const { error } = await supabase.from('viajes_agendados').insert({
-          pasajero_id: passengerId || 'anonimo_' + Date.now(),
+          pasajero_id: passengerId,
           origen: originName,
           destino: destName,
           origen_lat: state.startLatLng.lat,
@@ -304,11 +309,12 @@ export async function acceptRide(state, map) {
 
         if (error) throw error;
 
-        // Notificar conductores
         sendPushToDrivers(basePrice, distText);
         await zippyAlert(`¡Tu viaje agendado ha sido registrado! Código: #${rideCode}. Pagarás en efectivo al conductor al finalizar el viaje.`, '✅');
         if (window.cancelSchedulingMode) window.cancelSchedulingMode();
-        location.reload();
+        if (window.loadActiveScheduledRide) window.loadActiveScheduledRide();
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('minimized');
       }
     } catch (err) {
       zippyAlert('Error al agendar el viaje: ' + err.message, '❌');
