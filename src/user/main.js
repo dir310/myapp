@@ -1216,12 +1216,21 @@ document.addEventListener('DOMContentLoaded', () => {
         indicator.style.display = 'block';
       }
 
-      // Mostrar cuadro emergente flotante con Instrucción 1 (Recogida)
+      // Minimizar sidebar si estaba abierto para despejar el mapa
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.add('minimized');
+
+      // Mostrar cuadro emergente flotante con auto-ocultado en 2.5s
       const popup = document.getElementById('mapSelectionPopup');
       const stepText = document.getElementById('mapSelectionPopupStepText');
       if (popup && stepText) {
         stepText.innerHTML = '1. Toca en el mapa tu punto de <strong style="color:#30D158;">Recogida (Origen)</strong>';
         popup.style.display = 'block';
+
+        clearTimeout(window.zippyPopupTimer);
+        window.zippyPopupTimer = setTimeout(() => {
+          popup.style.display = 'none';
+        }, 2500);
       }
 
       // Cambiar texto del botón de pedir viaje
@@ -1297,7 +1306,7 @@ async function loadActiveScheduledRide() {
       if (dest) dest.textContent = v.destino.split(',').slice(0, 2).join(', ');
 
       if (v.estado === 'pendiente') {
-        if (badge) { badge.textContent = '⏳ Buscando Conductor'; badge.style.color = '#FF9500'; badge.style.background = 'rgba(255,149,0,0.2)'; }
+        if (badge) { badge.textContent = '⏳ En espera de conductor'; badge.style.color = '#FF9500'; badge.style.background = 'rgba(255,149,0,0.2)'; }
         if (driverInfo) driverInfo.style.display = 'none';
       } else if (v.estado === 'aceptado') {
         if (badge) { badge.textContent = '✅ Conductor Asignado'; badge.style.color = '#30D158'; badge.style.background = 'rgba(48,209,88,0.2)'; }

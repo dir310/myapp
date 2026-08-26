@@ -80,7 +80,11 @@ export function showLocationSugg(type, placeMarkerFn, state) {
           : '🟠 Toca el destino en el mapa';
       }
 
-      // Mostrar cuadro emergente flotante
+      // Minimizar sidebar si estaba abierto
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.add('minimized');
+
+      // Mostrar cuadro emergente flotante con auto-ocultado en 2.5s
       const popup = document.getElementById('mapSelectionPopup');
       const stepText = document.getElementById('mapSelectionPopupStepText');
       if (popup && stepText) {
@@ -88,6 +92,11 @@ export function showLocationSugg(type, placeMarkerFn, state) {
           ? '1. Toca en el mapa tu punto de <strong style="color:#30D158;">Recogida (Origen)</strong>'
           : '2. Toca en el mapa tu punto de <strong style="color:#FF9500;">Destino</strong>';
         popup.style.display = 'block';
+        
+        clearTimeout(window.zippyPopupTimer);
+        window.zippyPopupTimer = setTimeout(() => {
+          popup.style.display = 'none';
+        }, 2500);
       }
     });
   }
