@@ -372,55 +372,20 @@
     <!-- Wrap the main app in a container that can be hidden initially -->
     <div id="mainAppContent" style="display:none;">
 
-        <!-- Tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:14px;">
-            <button id="tabEnCurso" onclick="switchTab('enCurso')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,107,0,.2);color:#FF6B00;border:1px solid rgba(255,107,0,.4);">📡 En Curso</button>
-            <button id="tabAgendados" onclick="switchTab('agendados')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);">📅 Agendados</button>
+        <div
+            style="font-size:14px; font-weight:bold; margin-bottom:12px; color:rgba(255,255,255,.8); display: flex; align-items:center; gap:8px;">
+            <span>📡</span> Viajes en curso
         </div>
-
-        <!-- Panel En Curso -->
-        <div id="panelEnCurso">
-            <div id="viajesList">
-                <div class="empty-state">
-                    <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
-                    <p style="margin-bottom: 20px;">Cargando radar...</p>
-                    <button onclick="openRunner()" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin:0 auto;">
-                        🏎️ Jugar Zippy Runner
-                    </button>
-                </div>
+        <div id="viajesList">
+            <div class="empty-state">
+                <div style="font-size: 45px; margin-bottom: 15px; opacity:.3;">📡</div>
+                <p style="margin-bottom: 20px;">Cargando radar...</p>
+                <button onclick="openRunner()" style="background:rgba(255,107,0,.15); color:#FF6B00; border:1px solid #FF6B00; padding:10px 20px; border-radius:30px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; margin:0 auto;">
+                    🏎️ Jugar Zippy Runner
+                </button>
             </div>
         </div>
-
-        <!-- Panel Agendados -->
-        <div id="panelAgendados" style="display:none;">
-            <div id="agendadosList">
-                <div class="empty-state" style="padding:30px 0;">
-                    <div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div>
-                    <p style="font-size:13px;color:rgba(255,255,255,.5);">Cargando viajes agendados...</p>
-                </div>
-            </div>
-        </div>
-
     </div> <!-- End mainAppContent -->
-
-    <script>
-    function switchTab(tab) {
-        const enCurso = document.getElementById('panelEnCurso');
-        const agendados = document.getElementById('panelAgendados');
-        const tabEC = document.getElementById('tabEnCurso');
-        const tabAG = document.getElementById('tabAgendados');
-        if (tab === 'enCurso') {
-            enCurso.style.display = 'block'; agendados.style.display = 'none';
-            tabEC.style.background = 'rgba(255,107,0,.2)'; tabEC.style.color = '#FF6B00'; tabEC.style.borderColor = 'rgba(255,107,0,.4)';
-            tabAG.style.background = 'rgba(255,255,255,.05)'; tabAG.style.color = 'rgba(255,255,255,.5)'; tabAG.style.borderColor = 'rgba(255,255,255,.1)';
-        } else {
-            enCurso.style.display = 'none'; agendados.style.display = 'block';
-            tabAG.style.background = 'rgba(255,107,0,.2)'; tabAG.style.color = '#FF6B00'; tabAG.style.borderColor = 'rgba(255,107,0,.4)';
-            tabEC.style.background = 'rgba(255,255,255,.05)'; tabEC.style.color = 'rgba(255,255,255,.5)'; tabEC.style.borderColor = 'rgba(255,255,255,.1)';
-            if (window.loadAgendados) window.loadAgendados();
-        }
-    }
-    </script>
 
     <!-- Emergency Floating Button -->
     <a href="tel:3223482399" class="fab-emergency" title="Emergencia">
