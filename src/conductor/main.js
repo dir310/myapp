@@ -122,4 +122,70 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') requestWakeLock();
 });
 
+// ── Viajes Agendados (Conductor) ──────────────────────────────────────────────
+import { getCurrentProfile } from './auth.js';
+import { zippyAlert, zippyConfirm } from '../utils/ui-global.js';
 
+async function loadAgendados() {
+  const el = document.getElementById('agendadosList');
+  if (!el) return;
+  el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:32px;opacity:.3;">⏳</div><p style="font-size:13px;color:rgba(255,255,255,.4);margin-top:8px;">Cargando...</p></div>`;
+
+  const { data, error } = await supabase
+    .from('viajes_agendados')
+    .select('*')
+    .in('estado', ['pendiente', 'aceptado'])
+    .gte('fecha_hora', new Date().toISOString())
+    .order('fecha_hora', { ascending: true });
+
+  if (error || !data?.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
+    return;
+  }
+
+  const profile = await getCurrentProfile();
+
+  el.innerHTML = data.map(v => {
+    const fechaStr = new Date(v.fecha_hora).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' });
+    const isAccepted = v.estado === 'aceptado';
+    const isMine = v.conductor_id === profile?.id;
+    const badgeColor = isAccepted ? (isMine ? '#30D158' : '#FF9500') : '#FF6B00';
+    const badgeText = isAccepted ? (isMine ? '✅ Aceptado (Tú)' : '🔒 Tomado') : '⏳ Disponible';
+
+    return `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:700;color:${badgeColor};background:rgba(255,255,255,.05);padding:4px 10px;border-radius:20px;border:1px solid ${badgeColor}40;">${badgeText}</span>
+        <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:4px;">📅 ${fechaStr}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:3px;">📍 <strong>Recogida:</strong> ${v.origen}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;">🏁 <strong>Destino:</strong> ${v.destino}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px;">Código: #${v.codigo_viaje} · ${v.distancia_km} km</div>
+      ${!isAccepted ? `
+        <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
+      ` : isMine ? `
+        <button onclick="cancelarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Cancelar Viaje</button>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+window.loadAgendados = loadAgendados;
+
+window.aceptarAgendado = async function(id) {
+  const profile = await getCurrentProfile();
+  if (!profile) { zippyAlert('Debes iniciar sesión.', '⚠️'); return; }
+  const ok = await zippyConfirm('¿Confirmas que aceptas este viaje agendado?');
+  if (!ok) return;
+  const { error } = await supabase.from('viajes_agendados').update({ estado: 'aceptado', conductor_id: profile.id }).eq('id', id).eq('estado', 'pendiente');
+  if (error) { zippyAlert('No se pudo aceptar. Quizás otro conductor lo tomó.', '❌'); }
+  loadAgendados();
+};
+
+window.cancelarAgendado = async function(id) {
+  const ok = await zippyConfirm('¿Confirmas que cancelas este viaje agendado?');
+  if (!ok) return;
+  await supabase.from('viajes_agendados').update({ estado: 'cancelado', conductor_id: null }).eq('id', id);
+  loadAgendados();
+};
