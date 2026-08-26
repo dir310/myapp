@@ -167,8 +167,11 @@ async function loadAgendados() {
         <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
       ` : (isMine && isEnCurso) ? `
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
-          <button onclick="abrirWazeAgendado(${v.origen_lat}, ${v.origen_lng})" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">📍 Navegar en Waze</button>
-          <button onclick="finalizarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;">🏁 Finalizar Viaje Agendado</button>
+          <button onclick="abrirWazeDestino(${v.destino_lat}, ${v.destino_lng})" style="width:100%;padding:12px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 15px rgba(51,204,255,0.3);">🏁 Ir a Destino (Waze)</button>
+          <div style="display:flex;gap:6px;">
+            <button onclick="abrirWazeAgendado(${v.origen_lat}, ${v.origen_lng})" style="flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:11.5px;cursor:pointer;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);">📍 Waze Origen</button>
+            <button onclick="finalizarAgendado('${v.id}')" style="flex:1.4;padding:10px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;">✅ Finalizar Viaje</button>
+          </div>
         </div>
       ` : (isMine && !isEnCurso) ? `
         <div style="display:flex;gap:8px;margin-top:6px;">
@@ -218,7 +221,7 @@ window.iniciarViajeAgendado = async function(id) {
   // Actualizar estado exclusivamente dentro de viajes_agendados
   await supabase.from('viajes_agendados').update({ estado: 'en_curso' }).eq('id', id);
 
-  // Abrir Waze de inmediato
+  // Abrir Waze para ir por el pasajero (Origen)
   if (v.origen_lat && v.origen_lng) {
     window.open(`https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes`, '_blank');
   }
@@ -230,6 +233,14 @@ window.iniciarViajeAgendado = async function(id) {
 window.abrirWazeAgendado = function(lat, lng) {
   if (lat && lng) {
     window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+  }
+};
+
+window.abrirWazeDestino = function(lat, lng) {
+  if (lat && lng) {
+    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+  } else {
+    zippyAlert('No se encontraron coordenadas exactas del destino.', '⚠️');
   }
 };
 
