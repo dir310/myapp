@@ -359,10 +359,14 @@
                 </button>
             </div>
 
-            <!-- Indicador con Flecha Animada para marcar puntos -->
-            <div id="mapSelectionArrow" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(20,20,22,0.92); border:1.5px solid #FF9500; color:#fff; padding:10px 20px; border-radius:30px; font-weight:800; font-size:12.5px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 8px 30px rgba(0,0,0,0.5); pointer-events:none; align-items:center; gap:8px;">
-                <span style="display:inline-block; animation: zippy-bounce 1s infinite ease-in-out;">👇</span>
-                <span id="mapSelectionArrowText">Selecciona el punto en el mapa</span>
+            <!-- Cuadro Emergente Flotante para Marcar Origen y Destino -->
+            <div id="mapSelectionPopup" style="display:none; position:fixed; top:85px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(20,20,25,0.96); border:1.5px solid #FF9500; border-radius:20px; padding:14px 20px; color:#fff; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); backdrop-filter:blur(12px); max-width:90%; width:320px; pointer-events:none;">
+                <div style="font-size:13px; font-weight:900; color:#FF9500; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <span>📍</span> Marca Origen y Destino
+                </div>
+                <div id="mapSelectionPopupStepText" style="font-size:12px; font-weight:700; color:#fff;">
+                    1. Toca en el mapa tu punto de <span style="color:#30D158;">Recogida (Origen)</span>
+                </div>
             </div>
 
             <!-- Indicador dinámico de Viaje Agendado -->
