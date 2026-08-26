@@ -1149,7 +1149,7 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
       pedirBtn.style.opacity = '1';
       pedirBtn.style.cursor = 'pointer';
       if (state.isScheduling) {
-        pedirBtn.innerHTML = isWompi ? '💳 Agendar y Pagar' : '📅 Confirmar Agendamiento';
+        pedirBtn.innerHTML = isWompi ? '💳 Agendar y Pagar' : '📅 Agendar Viaje';
       } else {
         pedirBtn.innerHTML = `🏍️ Pedir Viaje &nbsp;·&nbsp; ${isWompi ? '💳 Wompi' : '💵 Efectivo'}`;
       }
