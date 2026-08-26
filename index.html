@@ -303,6 +303,10 @@
                         <span style="color:rgba(255,255,255,0.45);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tarifa mínima</span>
                         <span style="color:#FF6B00;font-size:15px;font-weight:900;">$4.000</span>
                     </div>
+                    <button id="scheduleTripSidebarBtn"
+                        style="width:100%;background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.35);border-radius:14px;color:#FF9500;font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:all 0.2s;">
+                        📅 Agendar Viaje Próximo
+                    </button>
                     <button id="historyPassengerBtn"
                         style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;">
                         ⏱️ Mi Historial de Viajes
@@ -315,6 +319,13 @@
 
             <p class="click-hint" id="clickHint">Toca el mapa para colocar inicio y destino</p>
 
+            <!-- Indicador dinámico de Viaje Agendado -->
+            <div id="schedulingIndicator" style="display:none; text-align:center; margin:8px 0 4px;">
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:30px; background:rgba(255,107,0,0.18); border:1.5px solid #FF9500; color:#FF9500; font-weight:800; font-size:12.5px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 15px rgba(255,107,0,0.15);">
+                    <span>📅</span> Agendando para: <span id="schedulingDateTimeText" style="color:#fff; margin-left:4px;">--/--</span>
+                    <span id="cancelSchedulingBtn" style="margin-left:12px; cursor:pointer; font-weight:bold; color:rgba(255,255,255,0.6); background:rgba(255,255,255,0.1); border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:10px;">✕</span>
+                </div>
+            </div>
             <!-- #mainActions eliminado: no aporta info al usuario -->
 
             <!-- Price Section (hidden initially) -->
@@ -855,6 +866,30 @@
        <svg viewBox="0 0 32 32" width="26" height="26" fill="white" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));" xmlns="http://www.w3.org/2000/svg"><path d="M16 2.004c-7.732 0-14 6.268-14 14 0 2.45.632 4.75 1.745 6.75l-2.02 6.06c-.16.48.28.92.76.76l6.06-2.02c2 1.113 4.3 1.745 6.75 1.745 7.732 0 14-6.268 14-14s-6.268-14-14-14zm-1.8 22.8c-1.95 0-3.8-.52-5.4-1.47l-.37-.22-3.8 1.26 1.26-3.8-.22-.37c-.95-1.6-1.47-3.45-1.47-5.4 0-6.62 5.38-12 12-12s12 5.38 12 12-5.38 12-12 12zm7.16-8.5c-.38-.19-2.25-1.11-2.6-1.24-.35-.12-.6-.19-.85.19-.25.38-.98 1.24-1.2 1.5-.22.25-.45.28-.83.09-2.22-1.07-3.7-2.67-4.73-4.42-.19-.33.01-.52.2-.71.17-.17.38-.45.57-.68.19-.22.25-.38.38-.63.12-.25.06-.48-.03-.68-.09-.19-.85-2.06-1.17-2.82-.3-.73-.61-.63-.85-.64-.22 0-.48-.01-.73-.01-.25 0-.66.09-1 .48-.35.38-1.33 1.3-1.33 3.17s1.36 3.68 1.55 3.93c.19.25 2.68 4.09 6.49 5.64 2.2.92 3.01.98 4.08.83 1.23-.17 2.25-.92 2.56-1.8.31-.89.31-1.65.22-1.8-.1-.16-.35-.25-.73-.44z"/></svg>
        <span style="font-size: 8px; font-weight: 800; letter-spacing: 0.5px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">P.Q.R.S</span>
     </a>
+    <!-- Modal de Agendamiento (Fecha y Hora) -->
+    <div id="scheduledDatePickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:#1c1c1e;width:100%;max-width:360px;border-radius:24px;padding:24px;box-sizing:border-box;box-shadow:0 10px 40px rgba(0,0,0,0.5);border:1px solid rgba(255,107,0,0.25);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 style="color:#FF6B00;margin:0;font-weight:900;font-size:18px;">📅 Seleccionar Fecha y Hora</h2>
+                <button id="closeSchedPickerBtn" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;font-weight:bold;cursor:pointer;">✕</button>
+            </div>
+            
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Fecha del viaje</label>
+                <input type="date" id="schedPickerDate" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;color:#fff;font-size:14px;outline:none;color-scheme:dark;">
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Hora del viaje</label>
+                <input type="time" id="schedPickerTime" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;color:#fff;font-size:14px;outline:none;color-scheme:dark;" value="08:00">
+            </div>
+
+            <button id="acceptSchedPickerBtn" style="width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;border:none;font-family:'Inter',sans-serif;letter-spacing:.3px;">
+                📅 Agendar y Seleccionar Ruta
+            </button>
+        </div>
+    </div>
+
     <!-- Modal de Historial de Viajes (Pasajero) -->
     <div id="passengerHistoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:flex-end;">
         <div style="background:#1c1c1e;width:100%;height:85vh;border-radius:24px 24px 0 0;padding:20px;display:flex;flex-direction:column;box-sizing:border-box;box-shadow:0 -10px 40px rgba(0,0,0,0.5);border-top:1px solid rgba(255,255,255,0.1);animation:slideUp 0.3s cubic-bezier(0.18,0.89,0.32,1.28);">

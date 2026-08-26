@@ -218,6 +218,105 @@ export async function acceptRide(state, map) {
   const activeBtn = state.selectedPaymentMethod === 'wompi' ? btnW : btnE;
   if (activeBtn) activeBtn.innerHTML = '<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> Pidiendo...';
 
+  // ── Intercepción de Viaje Agendado ──
+  if (state.isScheduling) {
+    try {
+      const rideCode = generateRideCode();
+      const passengerId = localStorage.getItem('calmovil_cliente_id');
+      const cNombre = sanitizeHTML(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
+      const cTelefono = sanitizeHTML(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
+
+      // Si paga con Wompi
+      if (state.selectedPaymentMethod === 'wompi') {
+        if (typeof WidgetCheckout !== 'function') {
+          throw new Error('El sistema de pagos no ha cargado aún. Intenta de nuevo.');
+        }
+        
+        const cents = basePrice * 100;
+        const reference = `ZIPPY_SCHED_${rideCode}_${Date.now()}`;
+        const secret = 'prod_integrity_lImL3CgFSTzGzBcs661J1WF9UFJdHuZC';
+        const msg = reference + cents + 'COP' + secret;
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const checkout = new WidgetCheckout({
+          currency: 'COP',
+          amountInCents: cents,
+          reference: reference,
+          publicKey: 'pub_prod_SxZqnd7Fi3WqOdXDFGrDg0qNP0rMFtE4',
+          signature: { integrity: hex }
+        });
+
+        checkout.open(async (result) => {
+          if (result.transaction?.status === 'APPROVED') {
+            // Guardar en la base de datos
+            const { error } = await supabase.from('viajes_agendados').insert({
+              pasajero_id: passengerId || 'anonimo_' + Date.now(),
+              origen: originName,
+              destino: destName,
+              origen_lat: state.startLatLng.lat,
+              origen_lng: state.startLatLng.lng,
+              destino_lat: state.endLatLng.lat,
+              destino_lng: state.endLatLng.lng,
+              tarifa: basePrice,
+              fecha_hora: state.scheduledDateTime,
+              estado: 'pendiente',
+              pagado: true,
+              codigo_viaje: rideCode,
+              distancia_km: distText
+            });
+
+            if (error) {
+              zippyAlert('Pago aprobado, pero hubo un error al registrar el viaje agendado. Por favor contáctanos.', '⚠️');
+            } else {
+              // Notificar conductores
+              sendPushToDrivers(basePrice, distText);
+              zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
+              if (window.cancelSchedulingMode) window.cancelSchedulingMode();
+              location.reload();
+            }
+          } else {
+            zippyAlert('Pago no aprobado o cancelado. Intenta de nuevo.', '❌');
+            if (btnW) btnW.disabled = false;
+            if (btnE) btnE.disabled = false;
+            if (activeBtn) activeBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo';
+          }
+        });
+      } else {
+        // Pago en efectivo / presencial
+        const { error } = await supabase.from('viajes_agendados').insert({
+          pasajero_id: passengerId || 'anonimo_' + Date.now(),
+          origen: originName,
+          destino: destName,
+          origen_lat: state.startLatLng.lat,
+          origen_lng: state.startLatLng.lng,
+          destino_lat: state.endLatLng.lat,
+          destino_lng: state.endLatLng.lng,
+          tarifa: basePrice,
+          fecha_hora: state.scheduledDateTime,
+          estado: 'pendiente',
+          pagado: false,
+          codigo_viaje: rideCode,
+          distancia_km: distText
+        });
+
+        if (error) throw error;
+
+        // Notificar conductores
+        sendPushToDrivers(basePrice, distText);
+        await zippyAlert(`¡Tu viaje agendado ha sido registrado! Código: #${rideCode}. Pagarás en efectivo al conductor al finalizar el viaje.`, '✅');
+        if (window.cancelSchedulingMode) window.cancelSchedulingMode();
+        location.reload();
+      }
+    } catch (err) {
+      zippyAlert('Error al agendar el viaje: ' + err.message, '❌');
+      if (btnW) btnW.disabled = false;
+      if (btnE) btnE.disabled = false;
+      if (activeBtn) activeBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo';
+    }
+    return;
+  }
+
   try {
     // Sanitizar datos del cliente antes de enviar
     const cNombre = sanitizeHTML(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);

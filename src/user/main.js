@@ -1143,6 +1143,100 @@ document.getElementById('priceSection').addEventListener('click', (e) => {
 // Suggestion dismiss on outside click
 setupSuggestionDismiss();
 
+// Reactivar al volver a la app (cambio de pestaña o multitarea)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+
+// ── Agendar Viaje Modal Logic ──
+document.addEventListener('DOMContentLoaded', () => {
+  const schedBtn = document.getElementById('scheduleTripSidebarBtn');
+  const modal = document.getElementById('scheduledDatePickerModal');
+  const closeBtn = document.getElementById('closeSchedPickerBtn');
+  const acceptBtn = document.getElementById('acceptSchedPickerBtn');
+  const dateInput = document.getElementById('schedPickerDate');
+  const timeInput = document.getElementById('schedPickerTime');
+
+  if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+    dateInput.value = today;
+  }
+
+  if (schedBtn && modal) {
+    schedBtn.addEventListener('click', () => {
+      // Cerrar sidebar primero
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.add('minimized');
+      modal.style.display = 'flex';
+    });
+  }
+
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  if (acceptBtn && modal) {
+    acceptBtn.addEventListener('click', () => {
+      const fecha = dateInput?.value;
+      const hora = timeInput?.value;
+      if (!fecha || !hora) {
+        zippyAlert('Por favor selecciona fecha y hora.', '📅');
+        return;
+      }
+      const fechaHora = new Date(`${fecha}T${hora}`);
+      if (fechaHora <= new Date()) {
+        zippyAlert('La fecha y hora deben ser en el futuro.', '⏰');
+        return;
+      }
+
+      // Activar modo agendado en el estado compartido
+      state.isScheduling = true;
+      state.scheduledDateTime = fechaHora.toISOString();
+
+      // Cerrar modal
+      modal.style.display = 'none';
+
+      // Mostrar barra/indicador de agendamiento
+      const indicator = document.getElementById('schedulingIndicator');
+      const text = document.getElementById('schedulingDateTimeText');
+      if (indicator && text) {
+        text.textContent = fechaHora.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+        indicator.style.display = 'block';
+      }
+
+      // Cambiar texto del botón de pedir viaje
+      const pedirBtn = document.getElementById('pedirViajeBtn');
+      if (pedirBtn) {
+        pedirBtn.innerHTML = '📅 Agendar Viaje';
+      }
+
+      zippyToast('📅 Modo Agendado activo. Ahora selecciona tu inicio y destino en el mapa.');
+    });
+  }
+
+  // Cancelar modo agendamiento
+  document.getElementById('cancelSchedulingBtn')?.addEventListener('click', () => {
+    cancelSchedulingMode();
+  });
+});
+
+function cancelSchedulingMode() {
+  state.isScheduling = false;
+  state.scheduledDateTime = null;
+  const indicator = document.getElementById('schedulingIndicator');
+  if (indicator) indicator.style.display = 'none';
+  const pedirBtn = document.getElementById('pedirViajeBtn');
+  if (pedirBtn) {
+    pedirBtn.innerHTML = '🏍️ Pedir Viaje';
+  }
+  zippyToast('📅 Modo agendado cancelado.');
+}
+
+window.cancelSchedulingMode = cancelSchedulingMode;
+
 // ── Register Service Worker (PWA) ──
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(new URL('/sw.js', import.meta.url).href).catch(console.log);
