@@ -275,6 +275,7 @@ export async function acceptRide(state, map) {
             if (error) {
               zippyAlert('Pago aprobado, pero hubo un error al registrar el viaje agendado. Por favor contáctanos.', '⚠️');
             } else {
+              localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
               sendPushToDrivers(basePrice, distText);
               await zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
               if (window.cancelSchedulingMode) window.cancelSchedulingMode();
@@ -309,6 +310,7 @@ export async function acceptRide(state, map) {
 
         if (error) throw error;
 
+        localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
         sendPushToDrivers(basePrice, distText);
         await zippyAlert(`¡Tu viaje agendado ha sido registrado! Código: #${rideCode}. Pagarás en efectivo al conductor al finalizar el viaje.`, '✅');
         if (window.cancelSchedulingMode) window.cancelSchedulingMode();

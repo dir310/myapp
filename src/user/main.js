@@ -1256,20 +1256,22 @@ async function loadActiveScheduledRide() {
   
   const clientId = localStorage.getItem('calmovil_cliente_id');
   const clientPhone = localStorage.getItem('calmovil_cliente_telefono');
+  const lastCode = localStorage.getItem('calmovil_ultimo_agendado_codigo');
 
-  if (!clientId && !clientPhone) {
+  if (!clientId && !clientPhone && !lastCode) {
     if (sidebarCard) sidebarCard.style.display = 'none';
     return;
   }
 
   try {
+    let orConditions = [];
+    if (clientId) orConditions.push(`pasajero_id.eq.${clientId}`);
+    if (clientPhone) orConditions.push(`pasajero_id.eq.${clientPhone}`);
+    if (lastCode) orConditions.push(`codigo_viaje.eq.${lastCode}`);
+
     let query = supabase.from('viajes_agendados').select('*');
-    if (clientId && clientPhone) {
-      query = query.or(`pasajero_id.eq.${clientId},pasajero_id.eq.${clientPhone}`);
-    } else if (clientId) {
-      query = query.eq('pasajero_id', clientId);
-    } else {
-      query = query.eq('pasajero_id', clientPhone);
+    if (orConditions.length > 0) {
+      query = query.or(orConditions.join(','));
     }
 
     const { data, error } = await query
@@ -1303,10 +1305,10 @@ async function loadActiveScheduledRide() {
       if (dest) dest.textContent = v.destino.split(',').slice(0, 2).join(', ');
 
       if (v.estado === 'pendiente') {
-        if (badge) { badge.textContent = 'Buscando'; badge.style.color = '#FF9500'; }
+        if (badge) { badge.textContent = '⏳ Buscando Conductor'; badge.style.color = '#FF9500'; }
         if (driverInfo) driverInfo.style.display = 'none';
       } else if (v.estado === 'aceptado') {
-        if (badge) { badge.textContent = 'Aceptado'; badge.style.color = '#30D158'; }
+        if (badge) { badge.textContent = '✅ Conductor Asignado'; badge.style.color = '#30D158'; }
         if (v.conductor_id) {
           supabase.from('conductores').select('nombre, placa').eq('id', v.conductor_id).single().then(({ data: cond }) => {
             if (cond) {
@@ -1326,6 +1328,7 @@ async function loadActiveScheduledRide() {
           cancelBtn.textContent = 'Cancelando...';
           const { error: err } = await supabase.from('viajes_agendados').update({ estado: 'cancelado' }).eq('id', v.id);
           if (!err) {
+            localStorage.removeItem('calmovil_ultimo_agendado_codigo');
             zippyToast('📅 Viaje agendado cancelado.');
             loadActiveScheduledRide();
           } else {
@@ -1355,6 +1358,9 @@ try {
 } catch (_) {}
 
 window.loadActiveScheduledRide = loadActiveScheduledRide;
+
+// Carga inicial automática al arrancar la página
+loadActiveScheduledRide();
 
 function cancelSchedulingMode() {
   state.isScheduling = false;
