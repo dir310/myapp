@@ -175,6 +175,18 @@ export function checkRoute(state, map) {
   if (mainActions) mainActions.style.display = 'none';
   document.getElementById('priceSection').style.display = 'block';
 
+  // Configurar texto del botón según el modo (Agendar vs Normal)
+  const pedirBtn = document.getElementById('pedirViajeBtn');
+  if (pedirBtn) {
+    pedirBtn.innerHTML = state.isScheduling ? '💳 Agendar y Pagar' : '🏍️ Pedir Viaje';
+  }
+
+  // Desplegar automáticamente el panel inferior con precio y pago
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('minimized')) {
+    sidebar.classList.remove('minimized');
+  }
+
   map.fitBounds(L.latLngBounds([state.startLatLng, state.endLatLng]).pad(0.3));
 
   const confirmBtn = document.getElementById('confirmRouteBtn');
