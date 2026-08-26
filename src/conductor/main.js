@@ -12,6 +12,10 @@ import './game.js';
 
 async function checkGlobalBanner() {
   try {
+    const today = new Date().toDateString();
+    const lastSeen = localStorage.getItem('zippy_global_banner_last_seen');
+    if (lastSeen === today) return; // Ya se mostró hoy
+
     const { data } = await supabase.from('mensajes_globales').select('*').eq('activo', true).limit(1).single();
     if (data && data.titulo && data.mensaje) {
       const banner = document.createElement('div');
@@ -22,13 +26,21 @@ async function checkGlobalBanner() {
             <div style="font-size:40px; margin-bottom:10px;">📢</div>
             <h2 style="color:#3498DB; margin:0 0 10px 0; font-weight:900;">${data.titulo}</h2>
             <p style="color:rgba(255,255,255,0.9); font-size:15px; margin-bottom:20px; line-height:1.5;">${data.mensaje}</p>
-            <button onclick="document.getElementById('globalMessageBanner').remove()" 
+            <button id="dismissGlobalBannerDriverBtn" 
                     style="background:#3498DB; color:white; border:none; padding:12px 20px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; width:100%; box-shadow: 0 4px 15px rgba(52,152,219,0.4);">
                 ¡Entendido! 👍
             </button>
         </div>
       `;
       document.body.appendChild(banner);
+
+      const dismissBtn = banner.querySelector('#dismissGlobalBannerDriverBtn');
+      if (dismissBtn) {
+        dismissBtn.onclick = () => {
+          localStorage.setItem('zippy_global_banner_last_seen', today);
+          banner.remove();
+        };
+      }
     }
   } catch (e) {
     // ignore
