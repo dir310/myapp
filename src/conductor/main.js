@@ -357,7 +357,33 @@ window.finalizarAgendado = async function(id) {
   const ok = await zippyConfirm('¿Confirmas que has recogido al pasajero y completado el viaje agendado?');
   if (!ok) return;
 
+  // 1. Obtener información completa del viaje agendado
+  const { data: v } = await supabase.from('viajes_agendados').select('*').eq('id', id).single();
+
+  // 2. Marcar viajes_agendados como completado
   await supabase.from('viajes_agendados').update({ estado: 'completado' }).eq('id', id);
+
+  // 3. Sincronizar en la tabla principal `viajes` para que todo el sistema (ganancias, historial, contadores) se actualice al 100%
+  let syncedViajeId = null;
+  if (v) {
+    try {
+      const { data: inserted } = await supabase.from('viajes').insert({
+        codigo_viaje: v.codigo_viaje || ('AG-' + Math.floor(1000 + Math.random() * 9000)),
+        conductor_id: v.conductor_id,
+        pasajero_id: v.pasajero_id,
+        tarifa: v.tarifa || 0,
+        origen_nombre: v.origen || 'Origen agendado',
+        destino_nombre: v.destino || 'Destino agendado',
+        estado: 'finalizado',
+        pago_wompi: v.pagado === true,
+        pago_efectivo_confirmado: v.pagado !== true,
+        created_at: v.created_at || new Date().toISOString()
+      }).select('id').single();
+      if (inserted) syncedViajeId = inserted.id;
+    } catch (syncErr) {
+      console.error('[ZIPPY] Sync error to viajes table:', syncErr);
+    }
+  }
 
   // Detener GPS del viaje agendado
   if (window.agendadoGpsWatchId) {
@@ -402,6 +428,11 @@ window.finalizarAgendado = async function(id) {
       btn.textContent = 'Guardando...';
       try {
         await supabase.from('viajes_agendados').update({ calificacion_conductor: selectedDriverStar }).eq('id', id);
+        if (syncedViajeId) {
+          await supabase.from('viajes').update({ calificacion_cliente: selectedDriverStar }).eq('id', syncedViajeId);
+        } else if (v && v.codigo_viaje) {
+          await supabase.from('viajes').update({ calificacion_cliente: selectedDriverStar }).eq('codigo_viaje', v.codigo_viaje);
+        }
       } catch (_) {}
       overlay.remove();
       loadAgendados();
