@@ -233,9 +233,7 @@ async function loadAgendados() {
             <button onclick="iniciarViajeAgendado('${v.id}')" style="flex:1.3;padding:12px 6px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);display:flex;align-items:center;justify-content:center;gap:4px;">🚕 Recoger Ya</button>
             <button onclick="cancelarAgendado('${v.id}')" style="flex:1;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar</button>
           </div>
-        ` : ''}
       </div>`;
-    }).join('');
     }).join('');
   } catch (e) {
     console.error('[ZIPPY] Error al cargar agendados conductor:', e);
@@ -244,6 +242,14 @@ async function loadAgendados() {
 }
 
 window.loadAgendados = loadAgendados;
+
+// Suscripción Realtime para actualizar al instante cuando un pasajero agende, cancele o modifique su viaje
+try {
+  supabase.channel('conductor-viajes-agendados')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'viajes_agendados' }, () => {
+      loadAgendados();
+    }).subscribe();
+} catch (_) {}
 
 window.aceptarAgendado = async function(id) {
   const profile = await getCurrentProfile();
