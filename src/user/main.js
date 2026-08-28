@@ -1299,7 +1299,7 @@ function listenForScheduledDriver(v) {
   const updateDriverOnMap = (lat, lng) => {
     if (!lat || !lng || !map) return;
 
-    // 1. Moto Marker
+    // 1. Moto Marker — mismo ícono que viajes normales
     const icon = L.divIcon({
       className: 'custom-moto-pin',
       html: `<div style="font-size:34px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));transform:scale(1.15);">🏍️</div>`,
@@ -1313,21 +1313,17 @@ function listenForScheduledDriver(v) {
       scheduledDriverMarker.setLatLng([lat, lng]);
     }
 
-    // 2. Trazado de ruta en vivo
+    // 2. Línea de ruta en vivo hacia el punto de recogida
     if (v.origen_lat && v.origen_lng) {
-      const latlngs = [
-        [lat, lng],
-        [v.origen_lat, v.origen_lng]
-      ];
+      const latlngs = [[lat, lng], [v.origen_lat, v.origen_lng]];
       if (!scheduledRoutePolyline) {
-        scheduledRoutePolyline = L.polyline(latlngs, { color: '#FF6B00', weight: 6, opacity: 0.9 }).addTo(map);
+        scheduledRoutePolyline = L.polyline(latlngs, { color: '#FF6B00', weight: 6, opacity: 0.9, dashArray: '10,6' }).addTo(map);
       } else {
         scheduledRoutePolyline.setLatLngs(latlngs);
       }
+      map.fitBounds(L.latLngBounds([[lat, lng], [v.origen_lat, v.origen_lng]]).pad(0.35));
 
-      map.fitBounds(L.latLngBounds([ [lat, lng], [v.origen_lat, v.origen_lng] ]).pad(0.35));
-
-      // 3. ETA y cálculo de distancia
+      // 3. ETA en badge de estado
       const distMeters = map.distance([lat, lng], [v.origen_lat, v.origen_lng]);
       const etaBadge = document.getElementById('activeSchedStatusBadge');
       if (etaBadge) {
@@ -1343,28 +1339,30 @@ function listenForScheduledDriver(v) {
     }
   };
 
-  // Obtener posición inicial del conductor
-  if (v.conductor_id) {
-    supabase.from('conductores').select('lat, lng').eq('id', v.conductor_id).single().then(({ data: cond }) => {
-      if (cond && cond.lat && cond.lng) {
-        updateDriverOnMap(cond.lat, cond.lng);
-      }
-    });
-  }
+  // Leer posición inicial desde viajes_agendados
+  supabase.from('viajes_agendados').select('conductor_lat, conductor_lng').eq('id', v.id).single().then(({ data }) => {
+    if (data && data.conductor_lat && data.conductor_lng) {
+      updateDriverOnMap(data.conductor_lat, data.conductor_lng);
+    }
+  });
 
-  // Suscribirse a cambios en tiempo real del GPS del conductor
+  // Suscribirse exactamente igual que listenForDriver en ride.js
   if (scheduledRealtimeChannel) {
     try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
   }
 
-  if (v.conductor_id) {
-    scheduledRealtimeChannel = supabase.channel(`sched-driver-watch-${v.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conductores', filter: `id=eq.${v.conductor_id}` }, (payload) => {
-        if (payload.new && payload.new.lat && payload.new.lng) {
-          updateDriverOnMap(payload.new.lat, payload.new.lng);
-        }
-      }).subscribe();
-  }
+  scheduledRealtimeChannel = supabase.channel('sched-ride-watch-' + v.id)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'viajes_agendados',
+      filter: `id=eq.${v.id}`
+    }, (payload) => {
+      // Mover moto si hay nueva posición GPS
+      if (payload.new.conductor_lat && payload.new.conductor_lng) {
+        updateDriverOnMap(payload.new.conductor_lat, payload.new.conductor_lng);
+      }
+    }).subscribe();
 }
 
 // ── Viajes Agendados Activos (Pasajero) ──
@@ -1561,10 +1559,68 @@ async function loadActiveScheduledRide() {
   }
 }
 
-// Suscripción Realtime para refrescar cuando el conductor acepte
+// Suscripción Realtime para refrescar cuando el conductor acepte, mueva o finalice el viaje agendado
 try {
   supabase.channel('pasajero-viajes-agendados')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'viajes_agendados' }, () => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'viajes_agendados' }, (payload) => {
+      // Interceptar completado directamente del payload antes de que el query lo filtre
+      if (payload.new && payload.new.estado === 'completado') {
+        // Disparar modal de calificación con los datos del payload
+        const v = payload.new;
+        const ratedKey = `zippy_sched_rated_${v.id}`;
+        if (!localStorage.getItem(ratedKey)) {
+          localStorage.setItem(ratedKey, '1');
+          localStorage.removeItem('calmovil_ultimo_agendado_id');
+          localStorage.removeItem('calmovil_ultimo_agendado_codigo');
+
+          // Limpiar marcadores del mapa
+          if (scheduledDriverMarker && window.mainMap) { try { window.mainMap.removeLayer(scheduledDriverMarker); } catch(_){} scheduledDriverMarker = null; }
+          if (scheduledRoutePolyline && window.mainMap) { try { window.mainMap.removeLayer(scheduledRoutePolyline); } catch(_){} scheduledRoutePolyline = null; }
+          if (scheduledRealtimeChannel) { try { supabase.removeChannel(scheduledRealtimeChannel); } catch(_){} scheduledRealtimeChannel = null; }
+
+          const yaPageo = v.pagado === true;
+          const tarifa = v.tarifa || 0;
+          const tarifaStr = `$${tarifa.toLocaleString('es-CO')}`;
+
+          const payNoticeHTML = yaPageo
+            ? `<div style="background:rgba(48,209,88,0.15);border:2px solid #30D158;border-radius:16px;padding:14px;margin-bottom:18px;"><div style="font-size:28px;margin-bottom:4px;">✅</div><div style="color:#30D158;font-weight:900;font-size:16px;">¡Viaje ya pagado por Wompi!</div><div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px;">Total: ${tarifaStr}</div></div>`
+            : `<div style="background:rgba(255,107,0,0.18);border:2px solid #FF6B00;border-radius:16px;padding:14px;margin-bottom:18px;animation:pulsePay 1.4s ease-in-out infinite;"><style>@keyframes pulsePay{0%,100%{box-shadow:0 0 0 0 rgba(255,107,0,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,0,0)}}</style><div style="font-size:28px;margin-bottom:4px;">💵</div><div style="color:#FF6B00;font-weight:900;font-size:16px;">Recuerda pagar al conductor</div><div style="color:#fff;font-weight:900;font-size:26px;margin-top:6px;">${tarifaStr}</div><div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;">Pago en efectivo</div></div>`;
+
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+          overlay.innerHTML = `
+            <div style="background:#1c1c1e;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.9);">
+              <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+              <h3 style="color:#fff;margin-bottom:4px;font-weight:900;font-size:18px;">¡Viaje Agendado Completado!</h3>
+              <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:18px;">Gracias por viajar con ZIPPY</p>
+              ${payNoticeHTML}
+              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:12px;font-weight:700;">¿Cómo calificas a tu conductor?</p>
+              <div id="passengerSchedStars" style="font-size:38px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:10px;">
+                <span onclick="window.setSchedStar(1)" style="transition:transform 0.15s;">⭐</span>
+                <span onclick="window.setSchedStar(2)" style="transition:transform 0.15s;">⭐</span>
+                <span onclick="window.setSchedStar(3)" style="transition:transform 0.15s;">⭐</span>
+                <span onclick="window.setSchedStar(4)" style="transition:transform 0.15s;">⭐</span>
+                <span onclick="window.setSchedStar(5)" style="transition:transform 0.15s;">⭐</span>
+              </div>
+              <button onclick="this.closest('div').parentElement.remove(); zippyToast('¡Gracias por tu calificación! ❤️');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Enviar Calificación</button>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+
+          window.setSchedStar = (n) => {
+            document.querySelectorAll('#passengerSchedStars span').forEach((s, i) => {
+              s.style.transform = i < n ? 'scale(1.25)' : 'scale(1)';
+              s.style.filter = i < n ? 'none' : 'grayscale(0.6)';
+            });
+          };
+
+          const sidebarCard = document.getElementById('activeScheduledRideCard');
+          const schedBtn = document.getElementById('scheduleTripSidebarBtn');
+          if (sidebarCard) sidebarCard.style.display = 'none';
+          if (schedBtn) schedBtn.style.display = 'flex';
+        }
+        return;
+      }
       loadActiveScheduledRide();
     }).subscribe();
 } catch (_) {}
