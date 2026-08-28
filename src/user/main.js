@@ -1440,12 +1440,49 @@ async function loadActiveScheduledRide() {
           badge.textContent = v.estado === 'en_curso' ? '🚕 Conductor en Camino por Ti' : '✅ Conductor Asignado';
           badge.style.color = '#30D158';
         }
-        if (v.conductor_id) {
-          supabase.from('conductores').select('nombre, placa, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: cond }) => {
+        if (v.conductor_id && driverInfo) {
+          supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: cond }) => {
             if (cond) {
-              if (dName) dName.textContent = cond.nombre;
-              if (dPlate) dPlate.textContent = `${cond.modelo_moto || 'Moto'} · ${cond.placa || ''}`;
-              if (driverInfo) driverInfo.style.display = 'block';
+              const vehiculoInfo = cond.marca_cilindraje_color || cond.modelo_moto || 'Moto Zippy';
+              const telClean = (cond.telefono || '').replace(/\D/g, '');
+              driverInfo.style.display = 'block';
+              driverInfo.innerHTML = `
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:16px; padding:12px; margin-top:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                    <!-- Foto avatar -->
+                    <div style="width:46px; height:46px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
+                      ${cond.foto_url ? `<img src="${cond.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:22px;">👷</div>`}
+                    </div>
+                    <div style="text-align:left;">
+                      <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Conductor Asignado</span>
+                      <span style="color:#fff; font-size:15px; font-weight:800; display:block; line-height:1.2;">${cond.nombre || 'Conductor Zippy'}</span>
+                    </div>
+                  </div>
+                  
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:6px 10px; border-radius:10px; text-align:left;">
+                      <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Moto / Color</span>
+                      <span style="color:#fff; font-size:10.5px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${vehiculoInfo}</span>
+                    </div>
+                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:6px 10px; border-radius:10px; text-align:left;">
+                      <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
+                      <span style="color:#FF6B00; font-size:13px; font-weight:900; display:block; text-transform:uppercase;">${cond.placa || '---'}</span>
+                    </div>
+                  </div>
+
+                  <!-- Botones de Acción (Llamar / WhatsApp) -->
+                  <div style="display:flex; gap:6px;">
+                    ${telClean ? `
+                      <a href="tel:${telClean}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:11.5px; border-radius:10px; padding:9px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 3px 10px rgba(48,209,88,0.3);">
+                        📞 Llamar
+                      </a>
+                      <a href="https://wa.me/57${telClean}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:11.5px; border-radius:10px; padding:9px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">
+                        💬 WhatsApp
+                      </a>
+                    ` : ''}
+                  </div>
+                </div>
+              `;
             }
           });
         }
