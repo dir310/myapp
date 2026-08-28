@@ -375,18 +375,21 @@ window.verRutaAgendadoInMap = function(oLat, oLng, dLat, dLng) {
     }
 
     if (typeof L !== 'undefined') {
-      const map = L.map('agendadoMapContainer').setView([oLat, oLng], 13);
+      const map = L.map('agendadoMapContainer', {
+        maxZoom: 16,
+        minZoom: 9
+      }).setView([oLat, oLng], 13);
       window.agendadoModalMap = map;
 
       // Capa de Satélite HD (ESRI World Imagery)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
+        maxZoom: 17,
         attribution: 'Esri Satellite'
       }).addTo(map);
 
       // Nombres de calles y lugares sobre la vista satelital
       L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19
+        maxZoom: 17
       }).addTo(map);
 
       if (L.Routing && L.Routing.control) {
@@ -399,23 +402,23 @@ window.verRutaAgendadoInMap = function(oLat, oLng, dLat, dLng) {
           lineOptions: { styles: [{ color: '#FF6B00', weight: 7, opacity: 0.95 }] },
           createMarker: function(i, wp) {
             const isA = (i === 0);
+            const emoji = isA ? '📍' : '🏁';
+            const labelText = isA ? 'Punto A (Origen)' : 'Punto B (Destino)';
             const bgColor = isA ? '#30D158' : '#FF3B30';
-            const letter = isA ? 'A' : 'B';
-            const labelText = isA ? '📍 Origen (A)' : '🏁 Destino (B)';
             const icon = L.divIcon({
-              className: 'custom-map-pin',
+              className: 'custom-agendado-pin',
               html: `
                 <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-                  <div style="background:${bgColor};color:#000;font-weight:900;font-size:16px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px ${bgColor}, 0 4px 12px rgba(0,0,0,0.6);border:2px solid #fff;">
-                    ${letter}
+                  <div style="font-size:36px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.9));transform:scale(1.1);">
+                    ${emoji}
                   </div>
-                  <div style="background:rgba(0,0,0,0.85);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-top:3px;white-space:nowrap;border:1px solid ${bgColor};box-shadow:0 2px 8px rgba(0,0,0,0.5);">
+                  <div style="background:rgba(0,0,0,0.88);color:#fff;font-size:11px;font-weight:900;padding:3px 9px;border-radius:10px;margin-top:2px;white-space:nowrap;border:1.5px solid ${bgColor};box-shadow:0 3px 12px rgba(0,0,0,0.8);">
                     ${labelText}
                   </div>
                 </div>
               `,
-              iconSize: [40, 55],
-              iconAnchor: [20, 20]
+              iconSize: [60, 65],
+              iconAnchor: [30, 36]
             });
             return L.marker(wp.latLng, { icon: icon });
           },
@@ -427,7 +430,10 @@ window.verRutaAgendadoInMap = function(oLat, oLng, dLat, dLng) {
         L.marker([dLat, dLng]).addTo(map).bindPopup('🏁 Punto B (Destino)');
       }
 
-      map.fitBounds(L.latLngBounds([ [oLat, oLng], [dLat, dLng] ]).pad(0.35));
+      map.fitBounds(L.latLngBounds([ [oLat, oLng], [dLat, dLng] ]), {
+        padding: [60, 60],
+        maxZoom: 15
+      });
     }
   }, 200);
 };
