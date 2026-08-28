@@ -165,6 +165,19 @@ async function loadAgendados() {
       return false;
     });
 
+    // Enrich missing passenger info from clientes table if needed
+    for (let v of filtered) {
+      if ((!v.pasajero_nombre || !v.pasajero_telefono) && v.pasajero_id) {
+        try {
+          const { data: cData } = await supabase.from('clientes').select('nombre, telefono').eq('id', v.pasajero_id).maybeSingle();
+          if (cData) {
+            if (!v.pasajero_nombre && cData.nombre) v.pasajero_nombre = cData.nombre;
+            if (!v.pasajero_telefono && cData.telefono) v.pasajero_telefono = cData.telefono;
+          }
+        } catch (_) {}
+      }
+    }
+
     if (filtered.length === 0) {
       el.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div style="font-size:40px;margin-bottom:12px;opacity:.3;">📅</div><p style="font-size:13px;color:rgba(255,255,255,.5);">No hay viajes agendados próximos.</p></div>`;
       return;
@@ -192,7 +205,7 @@ async function loadAgendados() {
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:900;box-shadow:0 3px 10px rgba(255,107,0,0.3);">👤</div>
           <div>
             <div style="color:#fff;font-weight:800;font-size:13px;">${pasNombre}</div>
-            <div style="color:rgba(255,255,255,0.5);font-size:11px;">📱 ${pasTel || 'Sin teléfono'}</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:11px;">📱 ${pasTel || 'Sin teléfono registrado'}</div>
           </div>
         </div>
         ${cleanTel ? `
@@ -233,6 +246,7 @@ async function loadAgendados() {
             <button onclick="iniciarViajeAgendado('${v.id}')" style="flex:1.3;padding:12px 6px;border-radius:12px;font-weight:900;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);display:flex;align-items:center;justify-content:center;gap:4px;">🚕 Recoger Ya</button>
             <button onclick="cancelarAgendado('${v.id}')" style="flex:1;padding:12px 6px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,59,48,.1);color:#FF3B30;border:1px solid rgba(255,59,48,.4);">❌ Liberar</button>
           </div>
+        ` : ''}
       </div>`;
     }).join('');
   } catch (e) {
@@ -328,45 +342,75 @@ window.cancelarAgendado = async function(id) {
 
 window.verRutaAgendadoInMap = function(oLat, oLng, dLat, dLng) {
   if (!oLat || !oLng || !dLat || !dLng) {
-    zippyAlert('No se encontraron coordenadas exactas de este viaje agendado.', '🗺️');
-    return;
-  }
-  const mapWindow = window.conductorMap || window.map;
-  if (!mapWindow) {
-    zippyAlert('El mapa aún no ha sido cargado.', '🗺️');
+    zippyAlert('No se encontraron las coordenadas exactas para esta ruta agendada.', '🗺️');
     return;
   }
 
-  // Trazar y centrar en el mapa del conductor
-  if (window.agendadoRouteControl) {
-    try { mapWindow.removeControl(window.agendadoRouteControl); } catch (_) {}
-    window.agendadoRouteControl = null;
+  let modal = document.getElementById('agendadoRouteModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'agendadoRouteModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:15px;';
+    modal.innerHTML = `
+      <div style="background:#141418;border:1px solid rgba(255,107,0,0.3);border-radius:24px;width:100%;max-width:500px;height:75vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.8);position:relative;">
+        <div style="padding:14px 18px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:900;color:#FF6B00;font-size:15px;display:flex;align-items:center;gap:6px;">🗺️ Ruta del Viaje Agendado</div>
+          <button onclick="document.getElementById('agendadoRouteModal').style.display='none'" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;font-weight:bold;cursor:pointer;">✕</button>
+        </div>
+        <div id="agendadoMapContainer" style="flex:1;width:100%;position:relative;background:#000;"></div>
+        <div style="padding:12px;background:#141418;border-top:1px solid rgba(255,255,255,0.08);text-align:center;">
+          <button onclick="document.getElementById('agendadoRouteModal').style.display='none'" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:#FF6B00;color:#fff;border:none;">Cerrar Mapa</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
   }
 
-  if (typeof L !== 'undefined' && L.Routing && L.Routing.control) {
-    window.agendadoRouteControl = L.Routing.control({
-      waypoints: [
-        L.latLng(oLat, oLng),
-        L.latLng(dLat, dLng)
-      ],
-      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-      lineOptions: { styles: [{ color: '#FF6B00', weight: 6, opacity: 0.9 }] },
-      createMarker: function(i, wp) {
-        const icon = L.divIcon({
-          className: 'custom-map-pin',
-          html: `<div style="background:${i === 0 ? '#30D158' : '#FF3B30'};width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,0.4);">${i === 0 ? '📍' : '🏁'}</div>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13]
-        });
-        return L.marker(wp.latLng, { icon: icon });
-      },
-      show: false,
-      addWaypoints: false
-    }).addTo(mapWindow);
+  setTimeout(() => {
+    if (window.agendadoModalMap) {
+      try { window.agendadoModalMap.remove(); } catch (_) {}
+      window.agendadoModalMap = null;
+    }
 
-    mapWindow.fitBounds(L.latLngBounds([ [oLat, oLng], [dLat, dLng] ]).pad(0.35));
-    zippyAlert('🗺️ Ruta trazada en el mapa. Puedes arrastrar y acercar el mapa libremente.', '📍');
-  }
+    if (typeof L !== 'undefined') {
+      const map = L.map('agendadoMapContainer').setView([oLat, oLng], 13);
+      window.agendadoModalMap = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      if (L.Routing && L.Routing.control) {
+        L.Routing.control({
+          waypoints: [
+            L.latLng(oLat, oLng),
+            L.latLng(dLat, dLng)
+          ],
+          router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+          lineOptions: { styles: [{ color: '#FF6B00', weight: 6, opacity: 0.9 }] },
+          createMarker: function(i, wp) {
+            const icon = L.divIcon({
+              className: 'custom-map-pin',
+              html: `<div style="background:${i === 0 ? '#30D158' : '#FF3B30'};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.5);">${i === 0 ? '📍' : '🏁'}</div>`,
+              iconSize: [28, 28],
+              iconAnchor: [14, 14]
+            });
+            return L.marker(wp.latLng, { icon: icon });
+          },
+          show: false,
+          addWaypoints: false
+        }).addTo(map);
+      } else {
+        L.marker([oLat, oLng]).addTo(map).bindPopup('📍 Recogida').openPopup();
+        L.marker([dLat, dLng]).addTo(map).bindPopup('🏁 Destino');
+      }
+
+      map.fitBounds(L.latLngBounds([ [oLat, oLng], [dLat, dLng] ]).pad(0.3));
+    }
+  }, 200);
 };
 
 
