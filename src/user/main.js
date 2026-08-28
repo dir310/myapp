@@ -360,21 +360,20 @@ function checkPassengerAuth() {
             }
           });
 
-        // Fetch Total Trips count
-        supabase
-          .from('viajes')
-          .select('id', { count: 'exact', head: true })
-          .eq('cliente_telefono', telefono)
-          .eq('estado', 'finalizado')
-          .then(({ count, error }) => {
-            if (!error && count !== null) {
-              let countEl = document.getElementById('displayClientTrips');
-              if (countEl) {
-                countEl.textContent = count;
-                countEl.style.display = 'block';
-              }
-            }
-          });
+        // Fetch Total Trips count (viajes + viajes_agendados)
+        Promise.all([
+          supabase.from('viajes').select('id', { count: 'exact', head: true }).or(`cliente_telefono.eq.${telefono},pasajero_id.eq.${clienteId || '0'}`).eq('estado', 'finalizado'),
+          supabase.from('viajes_agendados').select('id', { count: 'exact', head: true }).or(`pasajero_id.eq.${clienteId || '0'},pasajero_id.eq.${telefono}`).eq('estado', 'completado')
+        ]).then(([resNormal, resAgendado]) => {
+          const c1 = resNormal.count || 0;
+          const c2 = resAgendado.count || 0;
+          const totalTrips = c1 + c2;
+          let countEl = document.getElementById('displayClientTrips');
+          if (countEl) {
+            countEl.textContent = totalTrips;
+            countEl.style.display = 'block';
+          }
+        }).catch(() => {});
         
         // --- Trigger Safety Modal (Solo una vez por sesión) ---
         if (!localStorage.getItem('zippy_passenger_safety_shown')) {
@@ -1567,9 +1566,12 @@ function showPassengerCompletionModal(v) {
       btn.textContent = 'Enviando...';
       try {
         await supabase.from('viajes_agendados').update({ calificacion: selectedStar }).eq('id', v.id);
+        if (v.codigo_viaje) {
+          await supabase.from('viajes').update({ calificacion: selectedStar }).eq('codigo_viaje', v.codigo_viaje);
+        }
       } catch (_) {}
       zippyToast('¡Gracias por tu calificación! ❤️');
-      setTimeout(() => window.location.reload(), 1000);
+      setTimeout(() => window.location.reload(), 800);
     };
   }
 }
@@ -1579,10 +1581,7 @@ try {
   supabase.channel('pasajero-viajes-agendados')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'viajes_agendados' }, (payload) => {
       if (payload.new && payload.new.estado === 'completado') {
-          const schedBtn = document.getElementById('scheduleTripSidebarBtn');
-          if (sidebarCard) sidebarCard.style.display = 'none';
-          if (schedBtn) schedBtn.style.display = 'flex';
-        }
+        showPassengerCompletionModal(payload.new);
         return;
       }
       loadActiveScheduledRide();
