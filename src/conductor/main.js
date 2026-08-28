@@ -182,6 +182,27 @@ async function loadAgendados() {
         ? '<span style="font-size:11px;font-weight:800;color:#30D158;background:rgba(48,209,88,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(48,209,88,0.3);">💳 Pagado por Wompi</span>'
         : '<span style="font-size:11px;font-weight:800;color:#FF9500;background:rgba(255,149,0,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(255,149,0,0.3);">⏳ Pendiente de Pago (Efectivo)</span>';
 
+      const pasNombre = v.pasajero_nombre || 'Pasajero ZIPPY';
+      const pasTel = v.pasajero_telefono || '';
+      const cleanTel = pasTel.replace(/[^0-9]/g, '');
+
+      const passengerBlock = `
+      <div style="background:rgba(255,255,255,.05);padding:10px 12px;border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B00,#FF9500);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:900;box-shadow:0 3px 10px rgba(255,107,0,0.3);">👤</div>
+          <div>
+            <div style="color:#fff;font-weight:800;font-size:13px;">${pasNombre}</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:11px;">📱 ${pasTel || 'Sin teléfono'}</div>
+          </div>
+        </div>
+        ${cleanTel ? `
+          <div style="display:flex;gap:6px;">
+            <a href="https://wa.me/57${cleanTel}?text=Hola%20${encodeURIComponent(pasNombre)},%20soy%20tu%20conductor%20de%20ZIPPY" target="_blank" style="background:#25D366;color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:4px;">💬 WhatsApp</a>
+            <a href="tel:${pasTel}" style="background:#007AFF;color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:4px;">📞 Llamar</a>
+          </div>
+        ` : ''}
+      </div>`;
+
       return `
       <div style="background:rgba(255,255,255,.04);border:1px solid ${isEnCurso ? 'rgba(48,209,88,0.4)' : 'rgba(255,255,255,.08)'};border-radius:16px;padding:16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -189,10 +210,14 @@ async function loadAgendados() {
           <span style="font-size:20px;font-weight:900;color:#FF6B00;">$${(v.tarifa||0).toLocaleString('es-CO')}</span>
         </div>
         <div style="margin-bottom:10px;">${pagoBadge}</div>
+        ${passengerBlock}
         <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:4px;">📅 ${fechaStr}</div>
         <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:3px;">📍 <strong>Recogida:</strong> ${v.origen}</div>
         <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:12px;">🏁 <strong>Destino:</strong> ${v.destino}</div>
         <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px;">Código: #${v.codigo_viaje} · ${v.distancia_km} km</div>
+        
+        <button onclick="verRutaAgendadoInMap(${v.origen_lat}, ${v.origen_lng}, ${v.destino_lat}, ${v.destino_lng})" style="width:100%;padding:10px;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer;background:rgba(255,107,0,0.15);color:#FF6B00;border:1px solid rgba(255,107,0,0.4);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;">🗺️ Ver Ruta en el Mapa</button>
+
         ${!isAccepted ? `
           <button onclick="aceptarAgendado('${v.id}')" style="width:100%;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(135deg,#30D158,#28b84d);color:#000;border:none;margin-bottom:6px;">✅ Aceptar Viaje</button>
         ` : (isMine && isEnCurso) ? `
@@ -210,6 +235,7 @@ async function loadAgendados() {
           </div>
         ` : ''}
       </div>`;
+    }).join('');
     }).join('');
   } catch (e) {
     console.error('[ZIPPY] Error al cargar agendados conductor:', e);
@@ -292,6 +318,49 @@ window.cancelarAgendado = async function(id) {
   if (!ok) return;
   await supabase.from('viajes_agendados').update({ estado: 'pendiente', conductor_id: null }).eq('id', id);
   loadAgendados();
+};
+
+window.verRutaAgendadoInMap = function(oLat, oLng, dLat, dLng) {
+  if (!oLat || !oLng || !dLat || !dLng) {
+    zippyAlert('No se encontraron coordenadas exactas de este viaje agendado.', '🗺️');
+    return;
+  }
+  const mapWindow = window.conductorMap || window.map;
+  if (!mapWindow) {
+    zippyAlert('El mapa aún no ha sido cargado.', '🗺️');
+    return;
+  }
+
+  // Trazar y centrar en el mapa del conductor
+  if (window.agendadoRouteControl) {
+    try { mapWindow.removeControl(window.agendadoRouteControl); } catch (_) {}
+    window.agendadoRouteControl = null;
+  }
+
+  if (typeof L !== 'undefined' && L.Routing && L.Routing.control) {
+    window.agendadoRouteControl = L.Routing.control({
+      waypoints: [
+        L.latLng(oLat, oLng),
+        L.latLng(dLat, dLng)
+      ],
+      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+      lineOptions: { styles: [{ color: '#FF6B00', weight: 6, opacity: 0.9 }] },
+      createMarker: function(i, wp) {
+        const icon = L.divIcon({
+          className: 'custom-map-pin',
+          html: `<div style="background:${i === 0 ? '#30D158' : '#FF3B30'};width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,0.4);">${i === 0 ? '📍' : '🏁'}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        return L.marker(wp.latLng, { icon: icon });
+      },
+      show: false,
+      addWaypoints: false
+    }).addTo(mapWindow);
+
+    mapWindow.fitBounds(L.latLngBounds([ [oLat, oLng], [dLat, dLng] ]).pad(0.35));
+    zippyAlert('🗺️ Ruta trazada en el mapa. Puedes arrastrar y acercar el mapa libremente.', '📍');
+  }
 };
 
 
