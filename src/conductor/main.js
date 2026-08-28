@@ -330,7 +330,26 @@ window.finalizarAgendado = async function(id) {
 
   await supabase.from('viajes_agendados').update({ estado: 'completado' }).eq('id', id);
   loadAgendados();
-  zippyAlert('🎉 ¡Viaje agendado completado con éxito!', '✅');
+
+  // Desplegar ventana emergente de calificación por estrellas para el conductor
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1c1c1e;border:1px solid rgba(48,209,88,0.4);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8);">
+      <div style="font-size:45px;margin-bottom:10px;">🎉</div>
+      <h3 style="color:#30D158;margin-bottom:8px;font-weight:900;">¡Viaje Agendado Completado!</h3>
+      <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:15px;">¿Cómo calificas la puntualidad y trato del pasajero?</p>
+      <div id="driverRatingStars" style="font-size:36px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:8px;">
+        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+      </div>
+      <button onclick="this.closest('div').parentElement.remove(); loadAgendados(); zippyToast('¡Calificación de viaje agendado guardada! 🏆');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Guardar Calificación</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 };
 
 window.cancelarAgendado = async function(id) {

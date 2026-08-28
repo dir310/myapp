@@ -1355,14 +1355,51 @@ async function loadActiveScheduledRide() {
           badge.style.color = '#30D158';
         }
         if (v.conductor_id) {
-          supabase.from('conductores').select('nombre, placa').eq('id', v.conductor_id).single().then(({ data: cond }) => {
+          supabase.from('conductores').select('nombre, placa, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: cond }) => {
             if (cond) {
               if (dName) dName.textContent = cond.nombre;
-              if (dPlate) dPlate.textContent = cond.placa;
+              if (dPlate) dPlate.textContent = `${cond.modelo_moto || 'Moto'} · ${cond.placa || ''}`;
               if (driverInfo) driverInfo.style.display = 'block';
             }
           });
         }
+
+        // Si el conductor presionó Recoger Ya (en_curso), notificar y abrir seguimiento activo
+        if (v.estado === 'en_curso') {
+          if (!window.zippyEnCursoNotified) {
+            window.zippyEnCursoNotified = true;
+            zippyAlert('🚕 ¡Tu conductor ya va en camino a recogerte! Puedes ver su avance.', '📍');
+          }
+        }
+      } else if (v.estado === 'completado') {
+        localStorage.removeItem('calmovil_ultimo_agendado_id');
+        localStorage.removeItem('calmovil_ultimo_agendado_codigo');
+        if (sidebarCard) sidebarCard.style.display = 'none';
+        if (schedBtn) schedBtn.style.display = 'flex';
+        
+        // Mostrar ventana de calificación por estrellas al pasajero
+        if (!window.zippyRatingShown) {
+          window.zippyRatingShown = true;
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+          overlay.innerHTML = `
+            <div style="background:#1c1c1e;border:1px solid rgba(48,209,88,0.4);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8);">
+              <div style="font-size:45px;margin-bottom:10px;">⭐</div>
+              <h3 style="color:#30D158;margin-bottom:8px;font-weight:900;">¡Viaje Agendado Completado!</h3>
+              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:15px;">¿Cómo calificas la atención de tu conductor?</p>
+              <div id="passengerRatingStars" style="font-size:36px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:8px;">
+                <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+                <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+                <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+                <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+                <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+              </div>
+              <button onclick="this.closest('div').parentElement.remove(); zippyToast('¡Gracias por tu calificación! ❤️');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Enviar Calificación</button>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+        return;
       }
 
       if (cancelBtn) {
