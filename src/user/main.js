@@ -1491,6 +1491,19 @@ async function loadActiveScheduledRide() {
         if (driverInfo) {
           driverInfo.style.display = 'block';
           if (v.conductor_id) {
+            // Mostrar skeleton mientras carga
+            driverInfo.innerHTML = `
+              <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.15); border-radius:16px; padding:12px; margin-top:8px; animation:shimmerSkel 1.5s ease-in-out infinite;">
+                <style>@keyframes shimmerSkel{0%,100%{opacity:0.5}50%{opacity:1}}</style>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.08); flex-shrink:0;"></div>
+                  <div>
+                    <div style="height:9px; width:80px; background:rgba(255,255,255,0.08); border-radius:4px; margin-bottom:6px;"></div>
+                    <div style="height:13px; width:120px; background:rgba(255,255,255,0.12); border-radius:4px;"></div>
+                  </div>
+                </div>
+              </div>
+            `;
             supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: cond }) => {
               if (cond) {
                 const vehiculoInfo = cond.marca_cilindraje_color || cond.modelo_moto || 'Moto Zippy';
