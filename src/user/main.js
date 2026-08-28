@@ -4,7 +4,7 @@
 import '../styles/common.css';
 import '../styles/user.css';
 
-import { createMap, LA_CALERA } from '../utils/map.js';
+import { createMap, LA_CALERA, motoIcon, animateMarker } from '../utils/map.js';
 import { toggleSheet, setMode, showStatus, isSheetMinimized, updateGuidance, initSwipeGestures } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss, useCurrentLocation } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
@@ -1298,47 +1298,96 @@ document.addEventListener('DOMContentLoaded', () => {
 let scheduledDriverMarker = null;
 let scheduledRoutePolyline = null;
 let scheduledRealtimeChannel = null;
+let lastScheduledConductorPos = null;
 
 function listenForScheduledDriver(v) {
   if (!v || !v.id) return;
   const map = window.mainMap;
 
+  // 1. Redireccionar vista al mapa: minimizar sidebar y ocultar top search
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.classList.add('minimized');
+
+  const topSearch = document.getElementById('topSearchArea');
+  if (topSearch) topSearch.style.display = 'none';
+
   const updateDriverOnMap = (lat, lng) => {
     if (!lat || !lng || !map) return;
 
-    // 1. Moto Marker — mismo ícono que viajes normales
-    const icon = L.divIcon({
-      className: 'custom-moto-pin',
-      html: `<div style="font-size:34px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));transform:scale(1.15);">🏍️</div>`,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18]
-    });
+    // Calcular rotación según movimiento hacia el destino
+    let angle = 0;
+    if (lastScheduledConductorPos) {
+      const dLat = lat - lastScheduledConductorPos.lat;
+      const dLng = lng - lastScheduledConductorPos.lng;
+      if (Math.abs(dLat) > 0.00001 || Math.abs(dLng) > 0.00001) {
+        angle = Math.atan2(dLng, dLat) * (180 / Math.PI);
+      }
+    } else if (v.origen_lat && v.origen_lng) {
+      const dLat = v.origen_lat - lat;
+      const dLng = v.origen_lng - lng;
+      angle = Math.atan2(dLng, dLat) * (180 / Math.PI);
+    }
+    lastScheduledConductorPos = { lat, lng };
 
+    // 2. Marcador Moto SVG Realista 2D (igual a viajes normales)
     if (!scheduledDriverMarker) {
-      scheduledDriverMarker = L.marker([lat, lng], { icon: icon, zIndexOffset: 1000 }).addTo(map);
+      scheduledDriverMarker = L.marker([lat, lng], {
+        icon: motoIcon(),
+        zIndexOffset: 1000
+      }).addTo(map);
     } else {
-      scheduledDriverMarker.setLatLng([lat, lng]);
+      if (typeof animateMarker === 'function') {
+        animateMarker(scheduledDriverMarker, [lat, lng], 1800);
+      } else {
+        scheduledDriverMarker.setLatLng([lat, lng]);
+      }
     }
 
-    // 2. Línea de ruta en vivo hacia el punto de recogida
+    // Aplicar rotación a la moto
+    const motoEl = scheduledDriverMarker.getElement()?.querySelector('.moto-rotate');
+    if (motoEl) {
+      motoEl.style.transform = `rotate(${angle}deg)`;
+    }
+
+    // 3. Franja Azul Neón con borde Naranja en tiempo real
     if (v.origen_lat && v.origen_lng) {
       const latlngs = [[lat, lng], [v.origen_lat, v.origen_lng]];
       if (!scheduledRoutePolyline) {
-        scheduledRoutePolyline = L.polyline(latlngs, { color: '#FF6B00', weight: 6, opacity: 0.9, dashArray: '10,6' }).addTo(map);
+        scheduledRoutePolyline = L.polyline(latlngs, {
+          color: '#3498DB',
+          weight: 7,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
       } else {
         scheduledRoutePolyline.setLatLngs(latlngs);
       }
+
       map.fitBounds(L.latLngBounds([[lat, lng], [v.origen_lat, v.origen_lng]]).pad(0.35));
 
-      // 3. ETA en badge de estado
+      // 4. Barra Flotante Inferior de Tiempo Real (routePill)
       const distMeters = map.distance([lat, lng], [v.origen_lat, v.origen_lng]);
+      const distKm = (distMeters / 1000).toFixed(1);
+      const mins = Math.max(1, Math.ceil(distMeters / 350));
+
+      const routePill = document.getElementById('routePill');
+      const routeDist = document.getElementById('routeDistance');
+      const routeTime = document.getElementById('routeTime');
+
+      if (routePill && routeDist && routeTime) {
+        routeDist.textContent = distKm;
+        routeTime.textContent = mins;
+        routePill.style.display = 'flex';
+      }
+
+      // 5. Badge de Estado con ETA
       const etaBadge = document.getElementById('activeSchedStatusBadge');
       if (etaBadge) {
         if (distMeters <= 60) {
           etaBadge.textContent = '🚨 ¡TU CONDUCTOR HA LLEGADO!';
           etaBadge.style.color = '#30D158';
         } else {
-          const mins = Math.max(1, Math.ceil(distMeters / 350));
           etaBadge.textContent = `🚕 Conductor en Camino (${mins} min)`;
           etaBadge.style.color = '#FF9500';
         }
@@ -1353,7 +1402,7 @@ function listenForScheduledDriver(v) {
     }
   });
 
-  // Suscribirse exactamente igual que listenForDriver en ride.js
+  // Suscribirse a cambios en tiempo real
   if (scheduledRealtimeChannel) {
     try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
   }
@@ -1365,7 +1414,6 @@ function listenForScheduledDriver(v) {
       table: 'viajes_agendados',
       filter: `id=eq.${v.id}`
     }, (payload) => {
-      // Mover moto si hay nueva posición GPS
       if (payload.new.conductor_lat && payload.new.conductor_lng) {
         updateDriverOnMap(payload.new.conductor_lat, payload.new.conductor_lng);
       }
