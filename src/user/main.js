@@ -1286,6 +1286,86 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ── Map Tracking for Scheduled Rides (Pasajero) ──
+let scheduledDriverMarker = null;
+let scheduledRoutePolyline = null;
+let scheduledRealtimeChannel = null;
+
+function listenForScheduledDriver(v) {
+  if (!v || !v.id) return;
+  const map = window.mainMap;
+
+  const updateDriverOnMap = (lat, lng) => {
+    if (!lat || !lng || !map) return;
+
+    // 1. Moto Marker
+    const icon = L.divIcon({
+      className: 'custom-moto-pin',
+      html: `<div style="font-size:34px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.8));transform:scale(1.15);">🏍️</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    if (!scheduledDriverMarker) {
+      scheduledDriverMarker = L.marker([lat, lng], { icon: icon, zIndexOffset: 1000 }).addTo(map);
+    } else {
+      scheduledDriverMarker.setLatLng([lat, lng]);
+    }
+
+    // 2. Trazado de ruta en vivo
+    if (v.origen_lat && v.origen_lng) {
+      const latlngs = [
+        [lat, lng],
+        [v.origen_lat, v.origen_lng]
+      ];
+      if (!scheduledRoutePolyline) {
+        scheduledRoutePolyline = L.polyline(latlngs, { color: '#FF6B00', weight: 6, opacity: 0.9 }).addTo(map);
+      } else {
+        scheduledRoutePolyline.setLatLngs(latlngs);
+      }
+
+      map.fitBounds(L.latLngBounds([ [lat, lng], [v.origen_lat, v.origen_lng] ]).pad(0.35));
+
+      // 3. ETA y cálculo de distancia
+      const distMeters = map.distance([lat, lng], [v.origen_lat, v.origen_lng]);
+      const etaBadge = document.getElementById('activeSchedStatusBadge');
+      if (etaBadge) {
+        if (distMeters <= 60) {
+          etaBadge.textContent = '🚨 ¡TU CONDUCTOR HA LLEGADO!';
+          etaBadge.style.color = '#30D158';
+        } else {
+          const mins = Math.max(1, Math.ceil(distMeters / 350));
+          etaBadge.textContent = `🚕 Conductor en Camino (${mins} min)`;
+          etaBadge.style.color = '#FF9500';
+        }
+      }
+    }
+  };
+
+  // Obtener posición inicial del conductor
+  if (v.conductor_id) {
+    supabase.from('conductores').select('lat, lng').eq('id', v.conductor_id).single().then(({ data: cond }) => {
+      if (cond && cond.lat && cond.lng) {
+        updateDriverOnMap(cond.lat, cond.lng);
+      }
+    });
+  }
+
+  // Suscribirse a cambios en tiempo real del GPS del conductor
+  if (scheduledRealtimeChannel) {
+    try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
+  }
+
+  if (v.conductor_id) {
+    scheduledRealtimeChannel = supabase.channel(`sched-driver-watch-${v.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conductores', filter: `id=eq.${v.conductor_id}` }, (payload) => {
+        if (payload.new && payload.new.lat && payload.new.lng) {
+          updateDriverOnMap(payload.new.lat, payload.new.lng);
+        }
+      }).subscribe();
+  }
+}
+
 // ── Viajes Agendados Activos (Pasajero) ──
 async function loadActiveScheduledRide() {
   const sidebarCard = document.getElementById('activeScheduledRideCard');
@@ -1364,12 +1444,14 @@ async function loadActiveScheduledRide() {
           });
         }
 
-        // Si el conductor presionó Recoger Ya (en_curso), notificar y abrir seguimiento activo
+        // Si el conductor presionó Recoger Ya (en_curso), activar rastreo GPS del conductor en vivo en el mapa
         if (v.estado === 'en_curso') {
           if (!window.zippyEnCursoNotified) {
             window.zippyEnCursoNotified = true;
-            zippyAlert('🚕 ¡Tu conductor ya va en camino a recogerte! Puedes ver su avance.', '📍');
+            zippyAlert('🚕 ¡Tu conductor ya va en camino a recogerte! Puedes ver su mapa en vivo.', '📍');
           }
+          // Activar rastreo en vivo de la moto en el mapa del pasajero
+          listenForScheduledDriver(v);
         }
       } else if (v.estado === 'completado') {
         localStorage.removeItem('calmovil_ultimo_agendado_id');
@@ -1377,6 +1459,16 @@ async function loadActiveScheduledRide() {
         if (sidebarCard) sidebarCard.style.display = 'none';
         if (schedBtn) schedBtn.style.display = 'flex';
         
+        // Limpiar marcadores de rastreo del mapa
+        if (scheduledDriverMarker && window.mainMap) {
+          try { window.mainMap.removeLayer(scheduledDriverMarker); } catch (_) {}
+          scheduledDriverMarker = null;
+        }
+        if (scheduledRoutePolyline && window.mainMap) {
+          try { window.mainMap.removeLayer(scheduledRoutePolyline); } catch (_) {}
+          scheduledRoutePolyline = null;
+        }
+
         // Mostrar ventana de calificación por estrellas al pasajero
         if (!window.zippyRatingShown) {
           window.zippyRatingShown = true;
