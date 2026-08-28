@@ -1442,7 +1442,7 @@ async function loadActiveScheduledRide() {
     if (lastCode) orConditions.push(`codigo_viaje.eq.${lastCode}`);
     if (lastId) orConditions.push(`id.eq.${lastId}`);
 
-    let query = supabase.from('viajes_agendados').select('*');
+    let query = supabase.from('viajes_agendados').select('*, conductores(nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url)');
     if (orConditions.length > 0) {
       query = query.or(orConditions.join(','));
     }
@@ -1490,60 +1490,74 @@ async function loadActiveScheduledRide() {
         }
         if (driverInfo) {
           driverInfo.style.display = 'block';
-          if (v.conductor_id) {
-            // Mostrar skeleton mientras carga
+          // Usar datos del conductor ya traídos por JOIN en el select inicial
+          const cond = v.conductores;
+          if (cond) {
+            const vehiculoInfo = cond.marca_cilindraje_color || cond.modelo_moto || 'Moto Zippy';
+            const telClean = (cond.telefono || '').replace(/\D/g, '');
             driverInfo.innerHTML = `
-              <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.15); border-radius:16px; padding:12px; margin-top:8px; animation:shimmerSkel 1.5s ease-in-out infinite;">
-                <style>@keyframes shimmerSkel{0%,100%{opacity:0.5}50%{opacity:1}}</style>
-                <div style="display:flex; align-items:center; gap:12px;">
-                  <div style="width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.08); flex-shrink:0;"></div>
-                  <div>
-                    <div style="height:9px; width:80px; background:rgba(255,255,255,0.08); border-radius:4px; margin-bottom:6px;"></div>
-                    <div style="height:13px; width:120px; background:rgba(255,255,255,0.12); border-radius:4px;"></div>
+              <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:16px; padding:12px; margin-top:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                  <div style="width:50px; height:50px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
+                    ${cond.foto_url ? `<img src="${cond.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px;">👷</div>`}
                   </div>
+                  <div style="text-align:left;">
+                    <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Tu Conductor</span>
+                    <span style="color:#fff; font-size:16px; font-weight:900; display:block; line-height:1.2;">${cond.nombre || 'Conductor Zippy'}</span>
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                  <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
+                    <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Moto / Color</span>
+                    <span style="color:#fff; font-size:10.5px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${vehiculoInfo}</span>
+                  </div>
+                  <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
+                    <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
+                    <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1px;">${cond.placa || '---'}</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  ${telClean ? `
+                    <a href="tel:${telClean}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 3px 10px rgba(48,209,88,0.3);">📞 Llamar</a>
+                    <a href="https://wa.me/57${telClean}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;">💬 WhatsApp</a>
+                  ` : `<div style="color:rgba(255,255,255,0.4); font-size:11px; text-align:center; width:100%;">Sin número de contacto</div>`}
                 </div>
               </div>
             `;
-            supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: cond, error: condErr }) => {
-              if (cond && !condErr) {
-                const vehiculoInfo = cond.marca_cilindraje_color || cond.modelo_moto || 'Moto Zippy';
-                const telClean = (cond.telefono || '').replace(/\D/g, '');
+          } else if (v.conductor_id) {
+            // Plan B: si el JOIN no trajo datos, hacer consulta directa
+            driverInfo.innerHTML = `<div style="padding:10px; text-align:center; color:rgba(255,255,255,0.4); font-size:12px;">⏳ Cargando datos del conductor...</div>`;
+            supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: condB }) => {
+              if (condB) {
+                const vehiculoInfoB = condB.marca_cilindraje_color || condB.modelo_moto || 'Moto Zippy';
+                const telCleanB = (condB.telefono || '').replace(/\D/g, '');
                 driverInfo.innerHTML = `
                   <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:16px; padding:12px; margin-top:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
                     <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-                      <div style="width:46px; height:46px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
-                        ${cond.foto_url ? `<img src="${cond.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:22px;">👷</div>`}
+                      <div style="width:50px; height:50px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
+                        ${condB.foto_url ? `<img src="${condB.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px;">👷</div>`}
                       </div>
                       <div style="text-align:left;">
-                        <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Conductor Asignado</span>
-                        <span style="color:#fff; font-size:15px; font-weight:800; display:block; line-height:1.2;">${cond.nombre || 'Conductor Zippy'}</span>
+                        <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Tu Conductor</span>
+                        <span style="color:#fff; font-size:16px; font-weight:900; display:block; line-height:1.2;">${condB.nombre || 'Conductor Zippy'}</span>
                       </div>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                      <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:6px 10px; border-radius:10px; text-align:left;">
+                      <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
                         <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Moto / Color</span>
-                        <span style="color:#fff; font-size:10.5px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${vehiculoInfo}</span>
+                        <span style="color:#fff; font-size:10.5px; font-weight:700; display:block;">${vehiculoInfoB}</span>
                       </div>
-                      <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:6px 10px; border-radius:10px; text-align:left;">
+                      <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
                         <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
-                        <span style="color:#FF6B00; font-size:13px; font-weight:900; display:block; text-transform:uppercase;">${cond.placa || '---'}</span>
+                        <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1px;">${condB.placa || '---'}</span>
                       </div>
                     </div>
                     <div style="display:flex; gap:6px;">
-                      ${telClean ? `
-                        <a href="tel:${telClean}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:11.5px; border-radius:10px; padding:9px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 3px 10px rgba(48,209,88,0.3);">📞 Llamar</a>
-                        <a href="https://wa.me/57${telClean}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:11.5px; border-radius:10px; padding:9px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;">💬 WhatsApp</a>
+                      ${telCleanB ? `
+                        <a href="tel:${telCleanB}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;">📞 Llamar</a>
+                        <a href="https://wa.me/57${telCleanB}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;">💬 WhatsApp</a>
                       ` : ''}
                     </div>
-                  </div>
-                `;
-              } else {
-                // Fallback si falla la consulta — mostrar card básica sin skeleton
-                driverInfo.innerHTML = `
-                  <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.25); border-radius:16px; padding:12px; margin-top:8px; text-align:center;">
-                    <div style="font-size:28px; margin-bottom:6px;">👷</div>
-                    <div style="color:#30D158; font-weight:800; font-size:13px;">Conductor Asignado</div>
-                    <div style="color:rgba(255,255,255,0.5); font-size:11px; margin-top:4px;">Tu conductor ya está en camino</div>
                   </div>
                 `;
               }
