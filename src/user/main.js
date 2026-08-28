@@ -87,19 +87,27 @@ async function loadPassengerHistory() {
     return;
   }
 
-  const { data, error } = await supabase
-    .from('viajes')
-    .select('id, created_at, codigo_viaje, conductor_id, tarifa, estado')
-    .eq('cliente_telefono', telefono)
-    .order('created_at', { ascending: false })
-    .limit(10);
+  const clientId = localStorage.getItem('calmovil_cliente_id');
 
-  if (error) {
-    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:#FF3B30;">Error al cargar el historial. Intenta más tarde.</div>`;
-    return;
-  }
+  const [resNormal, resAgendados] = await Promise.all([
+    supabase
+      .from('viajes')
+      .select('id, created_at, codigo_viaje, conductor_id, tarifa, estado')
+      .eq('cliente_telefono', telefono)
+      .limit(10),
+    supabase
+      .from('viajes_agendados')
+      .select('id, created_at, codigo_viaje, conductor_id, tarifa, estado, pasajero_id')
+      .or(`pasajero_id.eq.${clientId || '0'},pasajero_id.eq.${telefono}`)
+      .limit(10)
+  ]);
 
-  if (!data || data.length === 0) {
+  const normales = (resNormal.data || []).map(v => ({ ...v, isAgendado: false }));
+  const agendados = (resAgendados.data || []).map(v => ({ ...v, isAgendado: true }));
+
+  const data = [...normales, ...agendados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 15);
+
+  if (data.length === 0) {
     container.innerHTML = `
       <div style="text-align:center;padding:50px 20px;">
         <div style="font-size:50px;margin-bottom:15px;opacity:0.5;">👻</div>
@@ -121,12 +129,12 @@ async function loadPassengerHistory() {
 
   let html = '';
   data.forEach(v => {
-    const isCompleted = v.estado === 'finalizado';
+    const isCompleted = v.estado === 'finalizado' || v.estado === 'completado';
     const isCanceled = v.estado === 'cancelado';
     
-    let icon = '🔄';
-    let iconColor = '#FFB347';
-    let statusText = 'En curso';
+    let icon = v.isAgendado ? '📅' : '🔄';
+    let iconColor = v.isAgendado ? '#FF6B00' : '#FFB347';
+    let statusText = v.isAgendado ? 'Agendado' : 'En curso';
     
     if (isCompleted) {
         icon = '✅'; iconColor = '#30D158'; statusText = 'Completado';
@@ -138,10 +146,10 @@ async function loadPassengerHistory() {
     const dateStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
     const timeStr = dateObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    const dName = driverNames[v.conductor_id] || (v.estado === 'buscando' ? 'Buscando...' : 'Desconocido');
+    const dName = driverNames[v.conductor_id] || (v.estado === 'buscando' || v.estado === 'pendiente' ? 'Buscando...' : 'Desconocido');
 
     html += `
-      <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div style="display:flex; align-items:center; gap:12px;">
               <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:18px; border:1px solid ${iconColor}40;">
                   ${icon}
@@ -149,7 +157,7 @@ async function loadPassengerHistory() {
               <div>
                   <div style="color:#fff; font-weight:800; font-size:14px; margin-bottom:2px;">${dateStr}, ${timeStr}</div>
                   <div style="color:rgba(255,255,255,0.5); font-size:12px; margin-bottom:2px;">🏎️ ${dName}</div>
-                  <div style="color:${iconColor}; font-size:10px; font-weight:700; text-transform:uppercase;">${statusText}</div>
+                  <div style="color:${iconColor}; font-size:10px; font-weight:700; text-transform:uppercase;">${statusText} ${v.isAgendado ? '• Agendado' : ''}</div>
               </div>
           </div>
           <div style="text-align:right;">
@@ -1453,80 +1461,7 @@ async function loadActiveScheduledRide() {
           listenForScheduledDriver(v);
         }
       } else if (v.estado === 'completado') {
-        localStorage.removeItem('calmovil_ultimo_agendado_id');
-        localStorage.removeItem('calmovil_ultimo_agendado_codigo');
-        if (sidebarCard) sidebarCard.style.display = 'none';
-        if (schedBtn) schedBtn.style.display = 'flex';
-
-        // Limpiar marcadores de rastreo del mapa
-        if (scheduledDriverMarker && window.mainMap) {
-          try { window.mainMap.removeLayer(scheduledDriverMarker); } catch (_) {}
-          scheduledDriverMarker = null;
-        }
-        if (scheduledRoutePolyline && window.mainMap) {
-          try { window.mainMap.removeLayer(scheduledRoutePolyline); } catch (_) {}
-          scheduledRoutePolyline = null;
-        }
-        if (scheduledRealtimeChannel) {
-          try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
-          scheduledRealtimeChannel = null;
-        }
-
-        // Evitar mostrar el modal dos veces para el mismo viaje
-        const ratedKey = `zippy_sched_rated_${v.id}`;
-        if (!localStorage.getItem(ratedKey)) {
-          localStorage.setItem(ratedKey, '1');
-
-          const yaPageo = v.pagado === true;
-          const tarifa = v.tarifa || 0;
-          const tarifaStr = `$${tarifa.toLocaleString('es-CO')}`;
-
-          // Aviso de pago llamativo
-          const payNoticeHTML = yaPageo
-            ? `<div style="background:rgba(48,209,88,0.15);border:2px solid #30D158;border-radius:16px;padding:14px;margin-bottom:18px;">
-                <div style="font-size:28px;margin-bottom:4px;">✅</div>
-                <div style="color:#30D158;font-weight:900;font-size:16px;">¡Viaje ya pagado por Wompi!</div>
-                <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px;">Total: ${tarifaStr}</div>
-               </div>`
-            : `<div style="background:rgba(255,107,0,0.18);border:2px solid #FF6B00;border-radius:16px;padding:14px;margin-bottom:18px;animation:pulsePay 1.4s ease-in-out infinite;">
-                <style>@keyframes pulsePay{0%,100%{box-shadow:0 0 0 0 rgba(255,107,0,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,0,0)}}</style>
-                <div style="font-size:28px;margin-bottom:4px;">💵</div>
-                <div style="color:#FF6B00;font-weight:900;font-size:16px;">Recuerda pagar al conductor</div>
-                <div style="color:#fff;font-weight:900;font-size:26px;margin-top:6px;">${tarifaStr}</div>
-                <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;">Pago en efectivo</div>
-               </div>`;
-
-          const overlay = document.createElement('div');
-          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-          overlay.innerHTML = `
-            <div style="background:#1c1c1e;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.9);">
-              <div style="font-size:40px;margin-bottom:8px;">🎉</div>
-              <h3 style="color:#fff;margin-bottom:4px;font-weight:900;font-size:18px;">¡Viaje Agendado Completado!</h3>
-              <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:18px;">Gracias por viajar con ZIPPY</p>
-              ${payNoticeHTML}
-              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:12px;font-weight:700;">¿Cómo calificas a tu conductor?</p>
-              <div id="passengerSchedStars" style="font-size:38px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:10px;">
-                <span data-star="1" onclick="window.setSchedStar(1)" style="transition:transform 0.15s;">⭐</span>
-                <span data-star="2" onclick="window.setSchedStar(2)" style="transition:transform 0.15s;">⭐</span>
-                <span data-star="3" onclick="window.setSchedStar(3)" style="transition:transform 0.15s;">⭐</span>
-                <span data-star="4" onclick="window.setSchedStar(4)" style="transition:transform 0.15s;">⭐</span>
-                <span data-star="5" onclick="window.setSchedStar(5)" style="transition:transform 0.15s;">⭐</span>
-              </div>
-              <button id="sendSchedRatingBtn" onclick="this.closest('div').parentElement.remove(); zippyToast('¡Gracias por tu calificación! ❤️');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Enviar Calificación</button>
-            </div>
-          `;
-          document.body.appendChild(overlay);
-
-          // Lógica de selección de estrellas con animación
-          let selectedStar = 0;
-          window.setSchedStar = (n) => {
-            selectedStar = n;
-            document.querySelectorAll('#passengerSchedStars span').forEach((s, i) => {
-              s.style.transform = i < n ? 'scale(1.25)' : 'scale(1)';
-              s.style.filter = i < n ? 'none' : 'grayscale(0.6)';
-            });
-          };
-        }
+        showPassengerCompletionModal(v);
         return;
       }
 
@@ -1559,62 +1494,91 @@ async function loadActiveScheduledRide() {
   }
 }
 
+function showPassengerCompletionModal(v) {
+  if (!v || !v.id) return;
+  const ratedKey = `zippy_sched_rated_${v.id}`;
+  if (localStorage.getItem(ratedKey)) return;
+  localStorage.setItem(ratedKey, '1');
+
+  localStorage.removeItem('calmovil_ultimo_agendado_id');
+  localStorage.removeItem('calmovil_ultimo_agendado_codigo');
+
+  // Limpiar marcadores de rastreo del mapa
+  if (scheduledDriverMarker && window.mainMap) {
+    try { window.mainMap.removeLayer(scheduledDriverMarker); } catch (_) {}
+    scheduledDriverMarker = null;
+  }
+  if (scheduledRoutePolyline && window.mainMap) {
+    try { window.mainMap.removeLayer(scheduledRoutePolyline); } catch (_) {}
+    scheduledRoutePolyline = null;
+  }
+  if (scheduledRealtimeChannel) {
+    try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
+    scheduledRealtimeChannel = null;
+  }
+
+  const sidebarCard = document.getElementById('activeScheduledRideCard');
+  const schedBtn = document.getElementById('scheduleTripSidebarBtn');
+  if (sidebarCard) sidebarCard.style.display = 'none';
+  if (schedBtn) schedBtn.style.display = 'flex';
+
+  const yaPageo = v.pagado === true;
+  const tarifa = v.tarifa || 0;
+  const tarifaStr = `$${tarifa.toLocaleString('es-CO')}`;
+
+  const payNoticeHTML = yaPageo
+    ? `<div style="background:rgba(48,209,88,0.15);border:2px solid #30D158;border-radius:16px;padding:14px;margin-bottom:18px;"><div style="font-size:28px;margin-bottom:4px;">✅</div><div style="color:#30D158;font-weight:900;font-size:16px;">¡Viaje ya pagado por Wompi!</div><div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px;">Total: ${tarifaStr}</div></div>`
+    : `<div style="background:rgba(255,107,0,0.18);border:2px solid #FF6B00;border-radius:16px;padding:14px;margin-bottom:18px;animation:pulsePay 1.4s ease-in-out infinite;"><style>@keyframes pulsePay{0%,100%{box-shadow:0 0 0 0 rgba(255,107,0,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,0,0)}}</style><div style="font-size:28px;margin-bottom:4px;">💵</div><div style="color:#FF6B00;font-weight:900;font-size:16px;">Recuerda pagar al conductor</div><div style="color:#fff;font-weight:900;font-size:26px;margin-top:6px;">${tarifaStr}</div><div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;">Pago en efectivo</div></div>`;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#1c1c1e;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.9);">
+      <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+      <h3 style="color:#fff;margin-bottom:4px;font-weight:900;font-size:18px;">¡Viaje Agendado Completado!</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:18px;">Gracias por viajar con ZIPPY</p>
+      ${payNoticeHTML}
+      <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:12px;font-weight:700;">¿Cómo calificas a tu conductor?</p>
+      <div id="passengerSchedStars" style="font-size:38px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:10px;">
+        <span onclick="window.setSchedStar(1)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setSchedStar(2)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setSchedStar(3)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setSchedStar(4)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setSchedStar(5)" style="transition:transform 0.15s;">⭐</span>
+      </div>
+      <button id="sendSchedRatingBtn" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Enviar Calificación</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  let selectedStar = 5;
+  window.setSchedStar = (n) => {
+    selectedStar = n;
+    document.querySelectorAll('#passengerSchedStars span').forEach((s, i) => {
+      s.style.transform = i < n ? 'scale(1.25)' : 'scale(1)';
+      s.style.filter = i < n ? 'none' : 'grayscale(0.6)';
+    });
+  };
+
+  const btn = document.getElementById('sendSchedRatingBtn');
+  if (btn) {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      try {
+        await supabase.from('viajes_agendados').update({ calificacion: selectedStar }).eq('id', v.id);
+      } catch (_) {}
+      zippyToast('¡Gracias por tu calificación! ❤️');
+      setTimeout(() => window.location.reload(), 1000);
+    };
+  }
+}
+
 // Suscripción Realtime para refrescar cuando el conductor acepte, mueva o finalice el viaje agendado
 try {
   supabase.channel('pasajero-viajes-agendados')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'viajes_agendados' }, (payload) => {
-      // Interceptar completado directamente del payload antes de que el query lo filtre
       if (payload.new && payload.new.estado === 'completado') {
-        // Disparar modal de calificación con los datos del payload
-        const v = payload.new;
-        const ratedKey = `zippy_sched_rated_${v.id}`;
-        if (!localStorage.getItem(ratedKey)) {
-          localStorage.setItem(ratedKey, '1');
-          localStorage.removeItem('calmovil_ultimo_agendado_id');
-          localStorage.removeItem('calmovil_ultimo_agendado_codigo');
-
-          // Limpiar marcadores del mapa
-          if (scheduledDriverMarker && window.mainMap) { try { window.mainMap.removeLayer(scheduledDriverMarker); } catch(_){} scheduledDriverMarker = null; }
-          if (scheduledRoutePolyline && window.mainMap) { try { window.mainMap.removeLayer(scheduledRoutePolyline); } catch(_){} scheduledRoutePolyline = null; }
-          if (scheduledRealtimeChannel) { try { supabase.removeChannel(scheduledRealtimeChannel); } catch(_){} scheduledRealtimeChannel = null; }
-
-          const yaPageo = v.pagado === true;
-          const tarifa = v.tarifa || 0;
-          const tarifaStr = `$${tarifa.toLocaleString('es-CO')}`;
-
-          const payNoticeHTML = yaPageo
-            ? `<div style="background:rgba(48,209,88,0.15);border:2px solid #30D158;border-radius:16px;padding:14px;margin-bottom:18px;"><div style="font-size:28px;margin-bottom:4px;">✅</div><div style="color:#30D158;font-weight:900;font-size:16px;">¡Viaje ya pagado por Wompi!</div><div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px;">Total: ${tarifaStr}</div></div>`
-            : `<div style="background:rgba(255,107,0,0.18);border:2px solid #FF6B00;border-radius:16px;padding:14px;margin-bottom:18px;animation:pulsePay 1.4s ease-in-out infinite;"><style>@keyframes pulsePay{0%,100%{box-shadow:0 0 0 0 rgba(255,107,0,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,0,0)}}</style><div style="font-size:28px;margin-bottom:4px;">💵</div><div style="color:#FF6B00;font-weight:900;font-size:16px;">Recuerda pagar al conductor</div><div style="color:#fff;font-weight:900;font-size:26px;margin-top:6px;">${tarifaStr}</div><div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;">Pago en efectivo</div></div>`;
-
-          const overlay = document.createElement('div');
-          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-          overlay.innerHTML = `
-            <div style="background:#1c1c1e;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:25px;width:100%;max-width:360px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.9);">
-              <div style="font-size:40px;margin-bottom:8px;">🎉</div>
-              <h3 style="color:#fff;margin-bottom:4px;font-weight:900;font-size:18px;">¡Viaje Agendado Completado!</h3>
-              <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:18px;">Gracias por viajar con ZIPPY</p>
-              ${payNoticeHTML}
-              <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:12px;font-weight:700;">¿Cómo calificas a tu conductor?</p>
-              <div id="passengerSchedStars" style="font-size:38px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:10px;">
-                <span onclick="window.setSchedStar(1)" style="transition:transform 0.15s;">⭐</span>
-                <span onclick="window.setSchedStar(2)" style="transition:transform 0.15s;">⭐</span>
-                <span onclick="window.setSchedStar(3)" style="transition:transform 0.15s;">⭐</span>
-                <span onclick="window.setSchedStar(4)" style="transition:transform 0.15s;">⭐</span>
-                <span onclick="window.setSchedStar(5)" style="transition:transform 0.15s;">⭐</span>
-              </div>
-              <button onclick="this.closest('div').parentElement.remove(); zippyToast('¡Gracias por tu calificación! ❤️');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Enviar Calificación</button>
-            </div>
-          `;
-          document.body.appendChild(overlay);
-
-          window.setSchedStar = (n) => {
-            document.querySelectorAll('#passengerSchedStars span').forEach((s, i) => {
-              s.style.transform = i < n ? 'scale(1.25)' : 'scale(1)';
-              s.style.filter = i < n ? 'none' : 'grayscale(0.6)';
-            });
-          };
-
-          const sidebarCard = document.getElementById('activeScheduledRideCard');
           const schedBtn = document.getElementById('scheduleTripSidebarBtn');
           if (sidebarCard) sidebarCard.style.display = 'none';
           if (schedBtn) schedBtn.style.display = 'flex';

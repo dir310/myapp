@@ -521,44 +521,67 @@ async function openProfile() {
       document.getElementById('profilePicAvatar').style.display = 'none';
     }
 
-    // Cargar estadísticas
-    const { data: viajesTerminados, error } = await supabase
-      .from('viajes')
-      .select('tarifa, destino_nombre, origen_nombre, calificacion')
-      .eq('conductor_id', currentProfile.id)
-      .eq('estado', 'finalizado')
-      .order('created_at', { ascending: false });
+    // Cargar estadísticas de viajes normales y viajes agendados
+    const [resNormal, resAgendados] = await Promise.all([
+      supabase
+        .from('viajes')
+        .select('created_at, tarifa, destino_nombre, origen_nombre, calificacion')
+        .eq('conductor_id', currentProfile.id)
+        .eq('estado', 'finalizado'),
+      supabase
+        .from('viajes_agendados')
+        .select('created_at, tarifa, destino, origen, calificacion')
+        .eq('conductor_id', currentProfile.id)
+        .eq('estado', 'completado')
+    ]);
 
-    if (!error && viajesTerminados) {
-      document.getElementById('statTrips').textContent = viajesTerminados.length;
+    const viajesNormales = (resNormal.data || []).map(v => ({
+      ...v,
+      origen_str: v.origen_nombre,
+      destino_str: v.destino_nombre,
+      isAgendado: false
+    }));
 
-      const ganancias = viajesTerminados.reduce((acc, current) => acc + Math.round((current.tarifa || 0) * 0.9), 0);
-      document.getElementById('statEarnings').textContent = `$${ganancias.toLocaleString('es-CO')}`;
+    const viajesAgendados = (resAgendados.data || []).map(v => ({
+      ...v,
+      origen_str: v.origen,
+      destino_str: v.destino,
+      isAgendado: true
+    }));
 
-      // Promedio de calificación pública
-      const conCalif = viajesTerminados.filter(v => v.calificacion && v.calificacion > 0);
-      const ratingEl = document.getElementById('statRating');
-      if (ratingEl) {
-        if (conCalif.length > 0) {
-          const promedio = (conCalif.reduce((a, v) => a + v.calificacion, 0) / conCalif.length).toFixed(1);
-          ratingEl.textContent = `${promedio} ⭐ (${conCalif.length})`;
-        } else {
-          ratingEl.textContent = 'Sin reseñas aún';
-        }
-      }
+    const todosLosViajes = [...viajesNormales, ...viajesAgendados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      const historyList = document.getElementById('historyList');
-      if (viajesTerminados.length === 0) {
-        historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes finalizados aún.</p>';
+    document.getElementById('statTrips').textContent = todosLosViajes.length;
+
+    const ganancias = todosLosViajes.reduce((acc, current) => acc + Math.round((current.tarifa || 0) * 0.9), 0);
+    document.getElementById('statEarnings').textContent = `$${ganancias.toLocaleString('es-CO')}`;
+
+    // Promedio de calificación pública
+    const conCalif = todosLosViajes.filter(v => v.calificacion && v.calificacion > 0);
+    const ratingEl = document.getElementById('statRating');
+    if (ratingEl) {
+      if (conCalif.length > 0) {
+        const promedio = (conCalif.reduce((a, v) => a + Number(v.calificacion), 0) / conCalif.length).toFixed(1);
+        ratingEl.textContent = `${promedio} ⭐ (${conCalif.length})`;
       } else {
-        const historyHTML = viajesTerminados.slice(0, 5).map(v => `
-          <div style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; font-size:12px;">
-            <div style="color:#30D158; font-weight:bold; margin-bottom:4px;">$${Math.round((v.tarifa || 0) * 0.9).toLocaleString('es-CO')}</div>
-            <div style="color:rgba(255,255,255,.8);">${v.origen_nombre} ➔ ${v.destino_nombre}</div>
-          </div>
-        `).join('');
-        historyList.innerHTML = historyHTML;
+        ratingEl.textContent = 'Sin reseñas aún';
       }
+    }
+
+    const historyList = document.getElementById('historyList');
+    if (todosLosViajes.length === 0) {
+      historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes finalizados aún.</p>';
+    } else {
+      const historyHTML = todosLosViajes.slice(0, 7).map(v => `
+        <div style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; font-size:12px; margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="color:#30D158; font-weight:bold;">$${Math.round((v.tarifa || 0) * 0.9).toLocaleString('es-CO')}</span>
+            ${v.isAgendado ? '<span style="background:rgba(255,107,0,0.2);color:#FF6B00;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;">📅 Agendado</span>' : ''}
+          </div>
+          <div style="color:rgba(255,255,255,.8);">${v.origen_str ? v.origen_str.split(',')[0] : ''} ➔ ${v.destino_str ? v.destino_str.split(',')[0] : ''}</div>
+        </div>
+      `).join('');
+      historyList.innerHTML = historyHTML;
     }
   }
 }

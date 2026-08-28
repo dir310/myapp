@@ -375,16 +375,39 @@ window.finalizarAgendado = async function(id) {
       <h3 style="color:#30D158;margin-bottom:8px;font-weight:900;">¡Viaje Agendado Completado!</h3>
       <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:15px;">¿Cómo calificas la puntualidad y trato del pasajero?</p>
       <div id="driverRatingStars" style="font-size:36px;cursor:pointer;margin-bottom:20px;display:flex;justify-content:center;gap:8px;">
-        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
-        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
-        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
-        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
-        <span onclick="this.style.transform='scale(1.2)'">⭐</span>
+        <span onclick="window.setDriverSchedStar(1)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setDriverSchedStar(2)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setDriverSchedStar(3)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setDriverSchedStar(4)" style="transition:transform 0.15s;">⭐</span>
+        <span onclick="window.setDriverSchedStar(5)" style="transition:transform 0.15s;">⭐</span>
       </div>
-      <button onclick="this.closest('div').parentElement.remove(); loadAgendados(); zippyToast('¡Calificación de viaje agendado guardada! 🏆');" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Guardar Calificación</button>
+      <button id="saveDriverRatingBtn" style="width:100%;padding:14px;border-radius:14px;background:#30D158;color:#000;font-weight:900;font-size:15px;border:none;cursor:pointer;">✅ Guardar Calificación</button>
     </div>
   `;
   document.body.appendChild(overlay);
+
+  let selectedDriverStar = 5;
+  window.setDriverSchedStar = (n) => {
+    selectedDriverStar = n;
+    document.querySelectorAll('#driverRatingStars span').forEach((s, i) => {
+      s.style.transform = i < n ? 'scale(1.25)' : 'scale(1)';
+      s.style.filter = i < n ? 'none' : 'grayscale(0.6)';
+    });
+  };
+
+  const btn = overlay.querySelector('#saveDriverRatingBtn');
+  if (btn) {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+      try {
+        await supabase.from('viajes_agendados').update({ calificacion_conductor: selectedDriverStar }).eq('id', id);
+      } catch (_) {}
+      overlay.remove();
+      loadAgendados();
+      zippyToast('¡Calificación de viaje agendado guardada! 🏆');
+    };
+  }
 };
 
 window.cancelarAgendado = async function(id) {
