@@ -301,6 +301,35 @@ window.iniciarViajeAgendado = async function(id) {
   // Actualizar estado exclusivamente dentro de viajes_agendados
   await supabase.from('viajes_agendados').update({ estado: 'en_curso' }).eq('id', id);
 
+  // ── Iniciar GPS en tiempo real para viaje agendado (igual que viajes normales) ──
+  if (navigator.geolocation) {
+    // Enviar posición inicial inmediatamente
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      await supabase.from('viajes_agendados').update({
+        conductor_lat: pos.coords.latitude,
+        conductor_lng: pos.coords.longitude
+      }).eq('id', id);
+    }, null, { enableHighAccuracy: true, timeout: 5000 });
+
+    // Rastreo continuo cada segundo — igual que startGPS en viajes normales
+    if (window.agendadoGpsWatchId) navigator.geolocation.clearWatch(window.agendadoGpsWatchId);
+    let lastAgendadoGPS = 0;
+    window.agendadoGpsWatchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const now = Date.now();
+        if (now - lastAgendadoGPS < 1000) return;
+        lastAgendadoGPS = now;
+        window.lastConductorLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        await supabase.from('viajes_agendados').update({
+          conductor_lat: pos.coords.latitude,
+          conductor_lng: pos.coords.longitude
+        }).eq('id', id).in('estado', ['en_curso']);
+      },
+      (err) => console.warn('GPS Agendado Error:', err.message),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+  }
+
   // Abrir Waze para ir por el pasajero (Origen)
   if (v.origen_lat && v.origen_lng) {
     window.open(`https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes`, '_blank');
@@ -329,6 +358,12 @@ window.finalizarAgendado = async function(id) {
   if (!ok) return;
 
   await supabase.from('viajes_agendados').update({ estado: 'completado' }).eq('id', id);
+
+  // Detener GPS del viaje agendado
+  if (window.agendadoGpsWatchId) {
+    navigator.geolocation.clearWatch(window.agendadoGpsWatchId);
+    window.agendadoGpsWatchId = null;
+  }
   loadAgendados();
 
   // Desplegar ventana emergente de calificación por estrellas para el conductor
