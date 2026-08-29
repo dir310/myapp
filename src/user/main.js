@@ -1442,7 +1442,7 @@ async function loadActiveScheduledRide() {
     if (lastCode) orConditions.push(`codigo_viaje.eq.${lastCode}`);
     if (lastId) orConditions.push(`id.eq.${lastId}`);
 
-    let query = supabase.from('viajes_agendados').select('*, conductores(nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url)');
+    let query = supabase.from('viajes_agendados').select('*');
     if (orConditions.length > 0) {
       query = query.or(orConditions.join(','));
     }
@@ -1490,42 +1490,8 @@ async function loadActiveScheduledRide() {
         }
         if (driverInfo) {
           driverInfo.style.display = 'block';
-          // Usar datos del conductor ya traídos por JOIN en el select inicial
-          const cond = v.conductores;
-          if (cond) {
-            const vehiculoInfo = cond.marca_cilindraje_color || cond.modelo_moto || 'Moto Zippy';
-            const telClean = (cond.telefono || '').replace(/\D/g, '');
-            driverInfo.innerHTML = `
-              <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:16px; padding:12px; margin-top:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-                  <div style="width:50px; height:50px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
-                    ${cond.foto_url ? `<img src="${cond.foto_url}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px;">👷</div>`}
-                  </div>
-                  <div style="text-align:left;">
-                    <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Tu Conductor</span>
-                    <span style="color:#fff; font-size:16px; font-weight:900; display:block; line-height:1.2;">${cond.nombre || 'Conductor Zippy'}</span>
-                  </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                  <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
-                    <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Moto / Color</span>
-                    <span style="color:#fff; font-size:10.5px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${vehiculoInfo}</span>
-                  </div>
-                  <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
-                    <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
-                    <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1px;">${cond.placa || '---'}</span>
-                  </div>
-                </div>
-                <div style="display:flex; gap:6px;">
-                  ${telClean ? `
-                    <a href="tel:${telClean}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 3px 10px rgba(48,209,88,0.3);">📞 Llamar</a>
-                    <a href="https://wa.me/57${telClean}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;">💬 WhatsApp</a>
-                  ` : `<div style="color:rgba(255,255,255,0.4); font-size:11px; text-align:center; width:100%;">Sin número de contacto</div>`}
-                </div>
-              </div>
-            `;
-          } else if (v.conductor_id) {
-            // Plan B: si el JOIN no trajo datos, hacer consulta directa
+          // Consulta directa al conductor usando conductor_id
+          if (v.conductor_id) {
             driverInfo.innerHTML = `<div style="padding:10px; text-align:center; color:rgba(255,255,255,0.4); font-size:12px;">⏳ Cargando datos del conductor...</div>`;
             supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, modelo_moto, telefono, foto_url').eq('id', v.conductor_id).single().then(({ data: condB }) => {
               if (condB) {
