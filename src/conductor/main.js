@@ -313,7 +313,7 @@ window.iniciarViajeAgendado = async function(id) {
         conductor_lat: pos.coords.latitude,
         conductor_lng: pos.coords.longitude
       }).eq('id', id);
-    }, null, { enableHighAccuracy: true, timeout: 5000 });
+    }, (err) => console.warn('GPS inicial:', err.message), { enableHighAccuracy: true, timeout: 5000 });
 
     // Rastreo continuo cada segundo — igual que startGPS en viajes normales
     if (window.agendadoGpsWatchId) navigator.geolocation.clearWatch(window.agendadoGpsWatchId);
@@ -327,20 +327,22 @@ window.iniciarViajeAgendado = async function(id) {
         await supabase.from('viajes_agendados').update({
           conductor_lat: pos.coords.latitude,
           conductor_lng: pos.coords.longitude
-        }).eq('id', id).in('estado', ['en_curso']);
+        }).eq('id', id);
       },
       (err) => console.warn('GPS Agendado Error:', err.message),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
   }
 
-  // Abrir Waze para ir por el pasajero (Origen)
-  if (v.origen_lat && v.origen_lng) {
-    window.open(`https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes`, '_blank');
-  }
-
   loadAgendados();
-  zippyAlert('¡Viaje en curso! Navegando en Waze hacia el punto de recogida.', '🚕');
+  zippyAlert('¡Viaje en curso! Dirígete hacia el punto de recogida del pasajero.', '🚕');
+
+  // Abrir Waze tras guardar posición inicial
+  if (v.origen_lat && v.origen_lng) {
+    setTimeout(() => {
+      window.open(`https://waze.com/ul?ll=${v.origen_lat},${v.origen_lng}&navigate=yes`, '_blank');
+    }, 600);
+  }
 };
 
 window.abrirWazeAgendado = function(lat, lng) {
