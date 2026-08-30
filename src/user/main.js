@@ -1315,7 +1315,20 @@ function listenForScheduledDriver(v) {
   const topSearch = document.getElementById('topSearchArea');
   if (topSearch) topSearch.style.display = 'none';
 
-  // 2. Colocar marcadores de Origen (A) y Destino (B) del viaje agendado
+  // 2. Encender de inmediato la tarjeta flotante de tiempo de llegada
+  const etaBanner = document.getElementById('scheduledEtaBanner');
+  const etaBigTime = document.getElementById('scheduledEtaBigTime');
+  const etaDist = document.getElementById('scheduledEtaDistance');
+  const etaSub = document.getElementById('scheduledEtaSubtext');
+  if (etaBanner) {
+    etaBanner.style.display = 'block';
+    if (etaBigTime && (etaBigTime.textContent.includes('--') || !etaBigTime.textContent.trim())) {
+      etaBigTime.textContent = 'Calculando...';
+      etaBigTime.style.fontSize = '20px';
+    }
+  }
+
+  // 3. Colocar marcadores de Origen (A) y Destino (B) del viaje agendado
   if (v.origen_lat && v.origen_lng) {
     if (!scheduledOriginMarker) {
       scheduledOriginMarker = L.marker([v.origen_lat, v.origen_lng], {
