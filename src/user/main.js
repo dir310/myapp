@@ -1446,6 +1446,37 @@ function listenForScheduledDriver(v) {
           etaBadge.style.color = '#FF9500';
         }
       }
+
+      // 6. Tarjeta Flotante Superior: Tiempo de Llegada Destacado
+      const etaBanner = document.getElementById('scheduledEtaBanner');
+      const etaBigTime = document.getElementById('scheduledEtaBigTime');
+      const etaDist = document.getElementById('scheduledEtaDistance');
+      const etaSub = document.getElementById('scheduledEtaSubtext');
+
+      if (etaBanner) {
+        etaBanner.style.display = 'block';
+        if (etaDist) etaDist.textContent = `${distKm} km`;
+
+        if (distMeters <= 70) {
+          etaBanner.style.borderColor = '#30D158';
+          etaBanner.style.boxShadow = '0 12px 35px rgba(0,0,0,0.7), 0 0 25px rgba(48,209,88,0.35)';
+          if (etaBigTime) {
+            etaBigTime.textContent = '🚨 ¡LLEGÓ TU CONDUCTOR!';
+            etaBigTime.style.color = '#30D158';
+            etaBigTime.style.fontSize = '20px';
+          }
+          if (etaSub) etaSub.textContent = 'Por favor acércate a tu punto de recogida';
+        } else {
+          etaBanner.style.borderColor = '#FF9500';
+          etaBanner.style.boxShadow = '0 12px 35px rgba(0,0,0,0.7), 0 0 25px rgba(255,149,0,0.2)';
+          if (etaBigTime) {
+            etaBigTime.textContent = `${mins} MIN`;
+            etaBigTime.style.color = '#fff';
+            etaBigTime.style.fontSize = '26px';
+          }
+          if (etaSub) etaSub.textContent = 'Tu conductor va en camino a recogerte';
+        }
+      }
     }
   };
 
@@ -1705,8 +1736,10 @@ function showPassengerCompletionModal(v) {
 
   const sidebarCard = document.getElementById('activeScheduledRideCard');
   const schedBtn = document.getElementById('scheduleTripSidebarBtn');
+  const etaBanner = document.getElementById('scheduledEtaBanner');
   if (sidebarCard) sidebarCard.style.display = 'none';
   if (schedBtn) schedBtn.style.display = 'flex';
+  if (etaBanner) etaBanner.style.display = 'none';
 
   const yaPageo = v.pagado === true;
   const tarifa = v.tarifa || 0;
