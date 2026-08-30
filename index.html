@@ -220,18 +220,23 @@
     </div>
 
     <!-- ── Tarjeta Flotante: Tiempo de Llegada del Conductor (Viaje Agendado) ── -->
-    <div id="scheduledEtaBanner" style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:99999; background:rgba(20,20,24,0.94); border:1.5px solid #FF9500; border-radius:20px; padding:14px 20px; color:#fff; text-align:center; box-shadow:0 12px 35px rgba(0,0,0,0.7), 0 0 25px rgba(255,149,0,0.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); width:88%; max-width:320px; box-sizing:border-box;">
+    <div id="scheduledEtaBanner" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:1000; background:rgba(20,20,24,0.94); border:1.5px solid #FF9500; border-radius:20px; padding:12px 18px; color:#fff; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.7), 0 0 20px rgba(255,149,0,0.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); width:calc(100% - 36px); max-width:320px; box-sizing:border-box;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
             <span style="color:rgba(255,255,255,0.45); font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">⏱️ Tiempo de llegada</span>
             <span id="scheduledEtaDistance" style="color:#FF9500; font-size:11px; font-weight:800;">-- km</span>
         </div>
-        <div id="scheduledEtaBigTime" style="font-size:26px; font-weight:900; color:#fff; line-height:1.1; margin-bottom:3px; letter-spacing:-0.5px;">
+        <div id="scheduledEtaBigTime" style="font-size:24px; font-weight:900; color:#fff; line-height:1.1; margin-bottom:3px; letter-spacing:-0.5px;">
             -- MIN
         </div>
         <div id="scheduledEtaSubtext" style="color:rgba(255,255,255,0.65); font-size:11px; font-weight:600; line-height:1.2;">
             Tu conductor va en camino a recogerte
         </div>
     </div>
+    <style>
+      body:has(#sidebar:not(.minimized)) #scheduledEtaBanner {
+        display: none !important;
+      }
+    </style>
 
     <!-- ── Cuadro Emergente Flotante Guía (Fuera del Sidebar) ── -->
     <div id="mapSelectionPopup" style="display:none; position:fixed; top:185px; left:50%; transform:translateX(-50%); z-index:10001; background:rgba(18,18,22,0.95); border:1.5px solid #FF9500; border-radius:25px; padding:9px 18px; color:#fff; text-align:center; backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px); max-width:90%; width:auto; white-space:nowrap; pointer-events:none; animation:zippyPulseGlow 1.8s infinite ease-in-out;">
