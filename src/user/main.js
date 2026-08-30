@@ -4,7 +4,7 @@
 import '../styles/common.css';
 import '../styles/user.css';
 
-import { createMap, LA_CALERA, motoIcon, animateMarker } from '../utils/map.js';
+import { createMap, LA_CALERA, motoIcon, animateMarker, pinIcon } from '../utils/map.js';
 import { toggleSheet, setMode, showStatus, isSheetMinimized, updateGuidance, initSwipeGestures } from './ui.js';
 import { onInput, showLocationSugg, setupSuggestionDismiss, useCurrentLocation } from './geocoding.js';
 import { placeMarker, clearPoint, checkRoute } from './routing.js';
@@ -1296,11 +1296,15 @@ document.addEventListener('DOMContentLoaded', () => {
 let scheduledDriverMarker = null;
 let scheduledRoutePolyline = null;
 let scheduledRealtimeChannel = null;
+let scheduledTripIdListening = null;
 let lastScheduledConductorPos = null;
+let scheduledOriginMarker = null;
+let scheduledDestMarker = null;
 
 function listenForScheduledDriver(v) {
   if (!v || !v.id) return;
   const map = window.mainMap;
+  if (!map) return;
 
   // 1. Redireccionar vista al mapa: minimizar sidebar y ocultar top search
   const sidebar = document.getElementById('sidebar');
@@ -1309,10 +1313,33 @@ function listenForScheduledDriver(v) {
   const topSearch = document.getElementById('topSearchArea');
   if (topSearch) topSearch.style.display = 'none';
 
+  // 2. Colocar marcadores de Origen (A) y Destino (B) del viaje agendado
+  if (v.origen_lat && v.origen_lng) {
+    if (!scheduledOriginMarker) {
+      scheduledOriginMarker = L.marker([v.origen_lat, v.origen_lng], {
+        icon: pinIcon('#30D158', 'A'),
+        zIndexOffset: 500
+      }).addTo(map);
+    } else {
+      scheduledOriginMarker.setLatLng([v.origen_lat, v.origen_lng]);
+    }
+  }
+
+  if (v.destino_lat && v.destino_lng) {
+    if (!scheduledDestMarker) {
+      scheduledDestMarker = L.marker([v.destino_lat, v.destino_lng], {
+        icon: pinIcon('#FF9500', 'B'),
+        zIndexOffset: 500
+      }).addTo(map);
+    } else {
+      scheduledDestMarker.setLatLng([v.destino_lat, v.destino_lng]);
+    }
+  }
+
   const updateDriverOnMap = (lat, lng) => {
     if (!lat || !lng || !map) return;
 
-    // Calcular rotación según movimiento hacia el destino
+    // Calcular rotación según movimiento hacia el origen
     let angle = 0;
     if (lastScheduledConductorPos) {
       const dLat = lat - lastScheduledConductorPos.lat;
@@ -1327,7 +1354,7 @@ function listenForScheduledDriver(v) {
     }
     lastScheduledConductorPos = { lat, lng };
 
-    // 2. Marcador Moto SVG Realista 2D (igual a viajes normales)
+    // 2. Marcador Moto SVG Realista 2D
     if (!scheduledDriverMarker) {
       scheduledDriverMarker = L.marker([lat, lng], {
         icon: motoIcon(),
@@ -1347,7 +1374,7 @@ function listenForScheduledDriver(v) {
       motoEl.style.transform = `rotate(${angle}deg)`;
     }
 
-    // 3. Franja Azul Neón con borde Naranja en tiempo real
+    // 3. Franja Azul Neón en tiempo real (Conductor -> Origen de recogida)
     if (v.origen_lat && v.origen_lng) {
       const latlngs = [[lat, lng], [v.origen_lat, v.origen_lng]];
       if (!scheduledRoutePolyline) {
@@ -1393,29 +1420,36 @@ function listenForScheduledDriver(v) {
     }
   };
 
-  // Leer posición inicial desde viajes_agendados
-  supabase.from('viajes_agendados').select('conductor_lat, conductor_lng').eq('id', v.id).single().then(({ data }) => {
-    if (data && data.conductor_lat && data.conductor_lng) {
-      updateDriverOnMap(data.conductor_lat, data.conductor_lng);
-    }
-  });
-
-  // Suscribirse a cambios en tiempo real
-  if (scheduledRealtimeChannel) {
-    try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
+  // Cargar posición inicial si ya está en memoria o en base de datos
+  if (v.conductor_lat && v.conductor_lng) {
+    updateDriverOnMap(v.conductor_lat, v.conductor_lng);
+  } else {
+    supabase.from('viajes_agendados').select('conductor_lat, conductor_lng').eq('id', v.id).single().then(({ data }) => {
+      if (data && data.conductor_lat && data.conductor_lng) {
+        updateDriverOnMap(data.conductor_lat, data.conductor_lng);
+      }
+    });
   }
 
-  scheduledRealtimeChannel = supabase.channel('sched-ride-watch-' + v.id)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'viajes_agendados',
-      filter: `id=eq.${v.id}`
-    }, (payload) => {
-      if (payload.new.conductor_lat && payload.new.conductor_lng) {
-        updateDriverOnMap(payload.new.conductor_lat, payload.new.conductor_lng);
-      }
-    }).subscribe();
+  // Suscribirse a cambios en tiempo real una sola vez por viaje
+  if (scheduledTripIdListening !== v.id) {
+    scheduledTripIdListening = v.id;
+    if (scheduledRealtimeChannel) {
+      try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
+    }
+
+    scheduledRealtimeChannel = supabase.channel('sched-ride-watch-' + v.id)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'viajes_agendados',
+        filter: `id=eq.${v.id}`
+      }, (payload) => {
+        if (payload.new && payload.new.conductor_lat && payload.new.conductor_lng) {
+          updateDriverOnMap(payload.new.conductor_lat, payload.new.conductor_lng);
+        }
+      }).subscribe();
+  }
 }
 
 // ── Viajes Agendados Activos (Pasajero) ──
