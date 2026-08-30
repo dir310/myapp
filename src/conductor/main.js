@@ -283,7 +283,11 @@ window.aceptarAgendado = async function(id) {
 
   const ok = await zippyConfirm('¿Confirmas que aceptas este viaje agendado?');
   if (!ok) return;
-  const { error } = await supabase.from('viajes_agendados').update({ estado: 'aceptado', conductor_id: profile.id }).eq('id', id).eq('estado', 'pendiente');
+  const { error } = await supabase.from('viajes_agendados').update({ 
+    estado: 'aceptado', 
+    conductor_id: profile.id,
+    conductor_nombre: profile.nombre || 'Conductor Zippy'
+  }).eq('id', id).eq('estado', 'pendiente');
   if (error) { zippyAlert('No se pudo aceptar. Quizás otro conductor lo tomó.', '❌'); }
   loadAgendados();
 };
@@ -444,7 +448,7 @@ window.finalizarAgendado = async function(id) {
 window.cancelarAgendado = async function(id) {
   const ok = await zippyConfirm('¿Confirmas que deseas liberar este viaje para que otro conductor pueda tomarlo?');
   if (!ok) return;
-  await supabase.from('viajes_agendados').update({ estado: 'pendiente', conductor_id: null }).eq('id', id);
+  await supabase.from('viajes_agendados').update({ estado: 'pendiente', conductor_id: null, conductor_nombre: null }).eq('id', id);
   loadAgendados();
 };
 
