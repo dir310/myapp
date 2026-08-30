@@ -1823,8 +1823,12 @@ try {
 
 window.loadActiveScheduledRide = loadActiveScheduledRide;
 
-// Carga inicial automática al arrancar la página
+// Carga inicial y Poller periódico cada 3 segundos (Respaldo garantizado)
 loadActiveScheduledRide();
+if (window.schedStatePollerInterval) clearInterval(window.schedStatePollerInterval);
+window.schedStatePollerInterval = setInterval(() => {
+  loadActiveScheduledRide();
+}, 3000);
 
 function cancelSchedulingMode() {
   state.isScheduling = false;
