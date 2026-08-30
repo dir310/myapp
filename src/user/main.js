@@ -1444,7 +1444,12 @@ function listenForScheduledDriver(v) {
           });
       }
 
-      map.fitBounds(L.latLngBounds([[lat, lng], [v.origen_lat, v.origen_lng]]).pad(0.35));
+      // 3.5 Ajustar cámara sólo si el menú está cerrado (evita tirones de pantalla con menú abierto)
+      const sidebarEl = document.getElementById('sidebar');
+      const isSidebarOpen = sidebarEl && !sidebarEl.classList.contains('minimized');
+      if (!isSidebarOpen) {
+        map.fitBounds(L.latLngBounds([[lat, lng], [v.origen_lat, v.origen_lng]]).pad(0.35), { animate: true });
+      }
 
       // 4. Barra Flotante Inferior de Tiempo Real (routePill)
       const distMeters = map.distance([lat, lng], [v.origen_lat, v.origen_lng]);
@@ -1632,9 +1637,9 @@ async function loadActiveScheduledRide() {
         }
         if (driverInfo) {
           driverInfo.style.display = 'block';
-          // Consulta directa al conductor usando conductor_id
-          if (v.conductor_id) {
-            driverInfo.innerHTML = `<div style="padding:10px; text-align:center; color:rgba(255,255,255,0.4); font-size:12px;">⏳ Cargando datos del conductor...</div>`;
+          // Consulta directa al conductor usando conductor_id (renderizar una sola vez sin saltos de altura)
+          if (v.conductor_id && window.lastScheduledConductorRenderedId !== v.conductor_id) {
+            window.lastScheduledConductorRenderedId = v.conductor_id;
             supabase.from('conductores').select('nombre, placa, marca_cilindraje_color, telefono, foto_url, foto_rostro_url').eq('id', v.conductor_id).single().then(({ data: condB, error: errCond }) => {
               if (errCond) {
                 console.error('[ZIPPY] Error al cargar conductor:', errCond);
@@ -1759,6 +1764,7 @@ function showPassengerCompletionModal(v) {
     scheduledRealtimeChannel = null;
   }
   scheduledTripIdListening = null;
+  window.lastScheduledConductorRenderedId = null;
 
   const sidebarCard = document.getElementById('activeScheduledRideCard');
   const schedBtn = document.getElementById('scheduleTripSidebarBtn');
