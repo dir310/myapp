@@ -1525,11 +1525,15 @@ async function loadActiveScheduledRide() {
                       <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1px;">${placaConductor}</span>
                     </div>
                   </div>
-                  <div style="display:flex; gap:6px;">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
                     ${telClean ? `
-                      <a href="tel:${telClean}" style="flex:1; background:linear-gradient(135deg,#30D158,#28b84d); color:#000; font-weight:900; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 3px 10px rgba(48,209,88,0.3);">📞 Llamar</a>
-                      <a href="https://wa.me/57${telClean}" target="_blank" style="flex:1; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.4); color:#25D366; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:5px;">💬 WhatsApp</a>
-                    ` : `<div style="color:rgba(255,255,255,0.4); font-size:11px; text-align:center; width:100%;">Sin número de contacto</div>`}
+                      <a href="tel:${telClean}" style="background:linear-gradient(135deg,#30D158,#248a3d); color:#fff; font-weight:800; font-size:13px; border-radius:12px; padding:11px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(48,209,88,0.35); transition:transform 0.15s;">
+                        <span style="font-size:15px;">📞</span> Llamar
+                      </a>
+                      <a href="https://wa.me/57${telClean}?text=Hola%20${encodeURIComponent(nombreConductor)},%20soy%20tu%20pasajero%20de%20ZIPPY" target="_blank" style="background:linear-gradient(135deg,#25D366,#1ebe5d); color:#fff; font-weight:800; font-size:13px; border-radius:12px; padding:11px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(37,211,102,0.35); transition:transform 0.15s;">
+                        <span style="font-size:15px;">💬</span> WhatsApp
+                      </a>
+                    ` : `<div style="color:rgba(255,255,255,0.4); font-size:11px; text-align:center; width:100%; grid-column:1 / -1; padding:6px;">Sin número de contacto</div>`}
                   </div>
                 </div>
               `;
