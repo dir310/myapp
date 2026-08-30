@@ -1516,15 +1516,10 @@ async function loadActiveScheduledRide() {
                     </div>
                   </div>
 
-                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; box-sizing:border-box; width:100%;">
-                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.22); padding:8px 6px; border-radius:10px; text-align:center; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                      <span style="color:rgba(255,107,0,0.8); font-size:8.5px; display:block; text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Moto / Color</span>
-                      <span style="color:#fff; font-size:11px; font-weight:700; display:block; margin-top:3px; text-transform:capitalize; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${vehiculoInfo}</span>
-                    </div>
-                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.22); padding:8px 6px; border-radius:10px; text-align:center; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                      <span style="color:rgba(255,107,0,0.8); font-size:8.5px; display:block; text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Placa</span>
-                      <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">${placaConductor}</span>
-                    </div>
+                  <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.25); border-radius:10px; padding:8px 10px; margin-bottom:10px; text-align:center; box-sizing:border-box; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span style="color:#fff; font-size:12px; font-weight:700; text-transform:capitalize;">${vehiculoInfo}</span>
+                    <span style="color:rgba(255,107,0,0.5); font-size:12px; font-weight:900;">•</span>
+                    <span style="color:#FF6B00; font-size:13px; font-weight:900; letter-spacing:1px; text-transform:uppercase;">${placaConductor}</span>
                   </div>
 
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; box-sizing:border-box; width:100%;">
