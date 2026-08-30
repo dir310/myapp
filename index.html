@@ -335,12 +335,9 @@
 
 
             <!-- Cuadro Emergente Flotante para Marcar Origen y Destino -->
-            <div id="mapSelectionPopup" style="display:none; position:fixed; top:85px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(20,20,25,0.96); border:1.5px solid #FF9500; border-radius:20px; padding:14px 20px; color:#fff; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); backdrop-filter:blur(12px); max-width:90%; width:320px; pointer-events:none;">
-                <div style="font-size:13px; font-weight:900; color:#FF9500; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <span>📍</span> Marca Origen y Destino
-                </div>
-                <div id="mapSelectionPopupStepText" style="font-size:12px; font-weight:700; color:#fff;">
-                    1. Toca en el mapa tu punto de <span style="color:#30D158;">Recogida (Origen)</span>
+            <div id="mapSelectionPopup" style="display:none; position:fixed; top:190px; left:50%; z-index:9999; background:rgba(18,18,22,0.95); border:1.5px solid #FF9500; border-radius:25px; padding:9px 18px; color:#fff; text-align:center; backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px); max-width:90%; width:auto; white-space:nowrap; pointer-events:none; animation:zippyPulseGlow 1.8s infinite ease-in-out;">
+                <div id="mapSelectionPopupStepText" style="font-size:12.5px; font-weight:800; color:#fff; letter-spacing:0.3px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <span>📍</span> Selecciona tu punto de recogida y destino
                 </div>
             </div>
 
@@ -353,6 +350,16 @@
             </div>
 
             <style>
+                @keyframes zippyPulseGlow {
+                    0%, 100% {
+                        box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.5), 0 8px 25px rgba(0,0,0,0.6);
+                        transform: translateX(-50%) scale(1);
+                    }
+                    50% {
+                        box-shadow: 0 0 0 8px rgba(255, 149, 0, 0), 0 8px 30px rgba(255, 107, 0, 0.35);
+                        transform: translateX(-50%) scale(1.03);
+                    }
+                }
                 @keyframes zippy-bounce {
                     0%, 100% { transform: translateY(0); }
                     50% { transform: translateY(5px); }

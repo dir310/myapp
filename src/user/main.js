@@ -1265,17 +1265,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const sidebar = document.getElementById('sidebar');
       if (sidebar) sidebar.classList.add('minimized');
 
-      // Mostrar cuadro emergente flotante con auto-ocultado en 2.5s
+      // Mostrar cuadro emergente flotante fijo con auto-ocultado en 3.5s
       const popup = document.getElementById('mapSelectionPopup');
       const stepText = document.getElementById('mapSelectionPopupStepText');
       if (popup && stepText) {
-        stepText.innerHTML = '1. Toca en el mapa tu punto de <strong style="color:#30D158;">Recogida (Origen)</strong>';
+        stepText.innerHTML = '<span>📍</span> Selecciona tu punto de <strong style="color:#30D158; margin-left:4px;">Recogida</strong>';
         popup.style.display = 'block';
 
         clearTimeout(window.zippyPopupTimer);
         window.zippyPopupTimer = setTimeout(() => {
           popup.style.display = 'none';
-        }, 2500);
+        }, 3500);
       }
 
       // Cambiar texto del botón de pedir viaje
@@ -1283,8 +1283,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pedirBtn) {
         pedirBtn.innerHTML = '💳 Agendar y Pagar';
       }
-
-      zippyToast('📅 Modo Agendado activo. Toca el mapa para marcar tu inicio.');
     });
   }
 
