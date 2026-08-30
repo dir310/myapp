@@ -300,19 +300,19 @@
                         <span style="color:#FF6B00;font-size:15px;font-weight:900;">$4.000</span>
                     </div>
                     <!-- Tarjeta Viaje Agendado Activo -->
-                    <div id="activeScheduledRideCard" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,107,0,0.22); border-radius:18px; padding:14px; margin-bottom:14px; text-align:left;">
+                    <div id="activeScheduledRideCard" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,107,0,0.22); border-radius:18px; padding:14px; margin-bottom:14px; text-align:left; box-sizing:border-box; width:100%; overflow:hidden;">
                         <div style="font-size:11px; font-weight:800; color:#FF9500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>📅 Viaje Programado</span>
-                            <span id="activeSchedStatusBadge" style="font-size:9.5px; padding:2px 8px; border-radius:10px; background:rgba(255,107,0,0.15); font-weight:bold;">Buscando</span>
+                            <span>Viaje Programado</span>
+                            <span id="activeSchedStatusBadge" style="font-size:9.5px; padding:3px 8px; border-radius:10px; background:rgba(255,107,0,0.15); font-weight:bold;">Buscando</span>
                         </div>
-                        <div id="activeSchedDateTime" style="font-size:12.5px; color:#fff; font-weight:bold; margin-bottom:4px;">--/-- --:--</div>
-                        <div style="font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:8px;">
-                            🟢 <span id="activeSchedOrigen">--</span><br>
-                            🟠 <span id="activeSchedDestino">--</span>
+                        <div id="activeSchedDateTime" style="font-size:12.5px; color:#fff; font-weight:bold; margin-bottom:6px;">--/-- --:--</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.7); line-height:1.5; margin-bottom:8px;">
+                            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><span style="color:#30D158; font-weight:bold;">Origen:</span> <span id="activeSchedOrigen">--</span></div>
+                            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><span style="color:#FF9500; font-weight:bold;">Destino:</span> <span id="activeSchedDestino">--</span></div>
                         </div>
-                        <div id="activeSchedDriverInfo" style="display:none; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);"></div>
-                        <button id="cancelActiveSchedBtn" style="width:100%; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.35); color:#FF3B30; font-size:12px; font-weight:800; border-radius:12px; padding:10px 0; margin-top:12px; cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                            ✕ Cancelar Viaje
+                        <div id="activeSchedDriverInfo" style="display:none; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); box-sizing:border-box; width:100%;"></div>
+                        <button id="cancelActiveSchedBtn" style="width:100%; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.35); color:#FF3B30; font-size:12px; font-weight:800; border-radius:10px; padding:10px 0; margin-top:10px; cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; box-sizing:border-box; text-transform:uppercase; letter-spacing:0.5px;">
+                            Cancelar Viaje
                         </button>
                     </div>
 
