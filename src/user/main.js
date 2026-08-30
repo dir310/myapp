@@ -1308,23 +1308,36 @@ function listenForScheduledDriver(v) {
   const map = window.mainMap;
   if (!map) return;
 
-  // 1. Redireccionar vista al mapa: minimizar sidebar y ocultar top search
-  const sidebar = document.getElementById('sidebar');
-  if (sidebar) sidebar.classList.add('minimized');
+  // 1. Redireccionar vista al mapa una sola vez al inicio del viaje en curso (evita cerrar el menú si el usuario lo abre)
+  if (!window.scheduledSidebarInitialized) {
+    window.scheduledSidebarInitialized = true;
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.add('minimized');
+  }
 
   const topSearch = document.getElementById('topSearchArea');
   if (topSearch) topSearch.style.display = 'none';
 
-  // 2. Encender de inmediato la tarjeta flotante de tiempo de llegada
+  // 2. Encender de inmediato la tarjeta flotante con tiempo estimado inicial
   const etaBanner = document.getElementById('scheduledEtaBanner');
   const etaBigTime = document.getElementById('scheduledEtaBigTime');
   const etaDist = document.getElementById('scheduledEtaDistance');
   const etaSub = document.getElementById('scheduledEtaSubtext');
+
   if (etaBanner) {
     etaBanner.style.display = 'block';
-    if (etaBigTime && (etaBigTime.textContent.includes('--') || !etaBigTime.textContent.trim())) {
-      etaBigTime.textContent = 'Calculando...';
-      etaBigTime.style.fontSize = '20px';
+    const initDist = parseFloat(v.distancia_km) || (v.origen_lat && v.conductor_lat ? (map.distance([v.conductor_lat, v.conductor_lng], [v.origen_lat, v.origen_lng]) / 1000) : 2.0);
+    const initMins = Math.max(1, Math.ceil((initDist * 1000) / 350));
+    if (etaDist && (etaDist.textContent.includes('--') || !etaDist.textContent.trim())) {
+      etaDist.textContent = `${initDist.toFixed(1)} km`;
+    }
+    if (etaBigTime && (etaBigTime.textContent.includes('--') || etaBigTime.textContent.includes('Calculando') || !etaBigTime.textContent.trim())) {
+      etaBigTime.textContent = `${initMins} MIN`;
+      etaBigTime.style.fontSize = '24px';
+      etaBigTime.style.color = '#fff';
+    }
+    if (etaSub) {
+      etaSub.textContent = 'Tu conductor va en camino a recogerte';
     }
   }
 
