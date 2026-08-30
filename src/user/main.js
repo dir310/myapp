@@ -1300,6 +1300,8 @@ let scheduledTripIdListening = null;
 let lastScheduledConductorPos = null;
 let scheduledOriginMarker = null;
 let scheduledDestMarker = null;
+let lastScheduledRouteFetch = 0;
+let scheduledGpsPollerInterval = null;
 
 function listenForScheduledDriver(v) {
   if (!v || !v.id) return;
@@ -1374,19 +1376,46 @@ function listenForScheduledDriver(v) {
       motoEl.style.transform = `rotate(${angle}deg)`;
     }
 
-    // 3. Franja Azul Neón en tiempo real (Conductor -> Origen de recogida)
+    // 3. Trazar ruta real por calles hacia el Punto A (OSRM)
     if (v.origen_lat && v.origen_lng) {
-      const latlngs = [[lat, lng], [v.origen_lat, v.origen_lng]];
-      if (!scheduledRoutePolyline) {
-        scheduledRoutePolyline = L.polyline(latlngs, {
-          color: '#3498DB',
-          weight: 7,
-          opacity: 0.95,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-      } else {
-        scheduledRoutePolyline.setLatLngs(latlngs);
+      const pickupLat = v.origen_lat;
+      const pickupLng = v.origen_lng;
+      const now = Date.now();
+
+      if (now - lastScheduledRouteFetch >= 10000 || !scheduledRoutePolyline) {
+        lastScheduledRouteFetch = now;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${pickupLng},${pickupLat}?overview=full&geometries=geojson`;
+
+        fetch(osrmUrl)
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.routes && data.routes.length) {
+              const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+              if (!scheduledRoutePolyline) {
+                scheduledRoutePolyline = L.polyline(coords, {
+                  color: '#30D158',
+                  weight: 6,
+                  opacity: 0.9,
+                  dashArray: '8, 8'
+                }).addTo(map);
+              } else {
+                scheduledRoutePolyline.setLatLngs(coords);
+              }
+            }
+          })
+          .catch(() => {
+            const fallback = [[lat, lng], [pickupLat, pickupLng]];
+            if (!scheduledRoutePolyline) {
+              scheduledRoutePolyline = L.polyline(fallback, {
+                color: '#30D158',
+                weight: 6,
+                opacity: 0.85,
+                dashArray: '8, 8'
+              }).addTo(map);
+            } else {
+              scheduledRoutePolyline.setLatLngs(fallback);
+            }
+          });
       }
 
       map.fitBounds(L.latLngBounds([[lat, lng], [v.origen_lat, v.origen_lng]]).pad(0.35));
@@ -1431,7 +1460,31 @@ function listenForScheduledDriver(v) {
     });
   }
 
-  // Suscribirse a cambios en tiempo real una sola vez por viaje
+  // 6. Poller GPS dedicado cada 2 segundos (Respaldo satelital continuo)
+  if (scheduledGpsPollerInterval) clearInterval(scheduledGpsPollerInterval);
+  scheduledGpsPollerInterval = setInterval(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('viajes_agendados')
+        .select('estado, conductor_lat, conductor_lng')
+        .eq('id', v.id)
+        .single();
+
+      if (error || !data) return;
+
+      if (!['aceptado', 'en_curso'].includes(data.estado)) {
+        clearInterval(scheduledGpsPollerInterval);
+        scheduledGpsPollerInterval = null;
+        return;
+      }
+
+      if (data.conductor_lat && data.conductor_lng) {
+        updateDriverOnMap(data.conductor_lat, data.conductor_lng);
+      }
+    } catch (_) {}
+  }, 2000);
+
+  // 7. Suscribirse a cambios en tiempo real una sola vez por viaje
   if (scheduledTripIdListening !== v.id) {
     scheduledTripIdListening = v.id;
     if (scheduledRealtimeChannel) {
@@ -1624,6 +1677,18 @@ function showPassengerCompletionModal(v) {
   localStorage.removeItem('calmovil_ultimo_agendado_codigo');
 
   // Limpiar marcadores de rastreo del mapa
+  if (scheduledGpsPollerInterval) {
+    clearInterval(scheduledGpsPollerInterval);
+    scheduledGpsPollerInterval = null;
+  }
+  if (scheduledOriginMarker && window.mainMap) {
+    try { window.mainMap.removeLayer(scheduledOriginMarker); } catch (_) {}
+    scheduledOriginMarker = null;
+  }
+  if (scheduledDestMarker && window.mainMap) {
+    try { window.mainMap.removeLayer(scheduledDestMarker); } catch (_) {}
+    scheduledDestMarker = null;
+  }
   if (scheduledDriverMarker && window.mainMap) {
     try { window.mainMap.removeLayer(scheduledDriverMarker); } catch (_) {}
     scheduledDriverMarker = null;
@@ -1636,6 +1701,7 @@ function showPassengerCompletionModal(v) {
     try { supabase.removeChannel(scheduledRealtimeChannel); } catch (_) {}
     scheduledRealtimeChannel = null;
   }
+  scheduledTripIdListening = null;
 
   const sidebarCard = document.getElementById('activeScheduledRideCard');
   const schedBtn = document.getElementById('scheduleTripSidebarBtn');
