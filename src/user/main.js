@@ -1505,33 +1505,35 @@ async function loadActiveScheduledRide() {
               const placaConductor = cond.placa || '---';
 
               driverInfo.innerHTML = `
-                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:16px; padding:12px; margin-top:8px; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-                    <div style="width:50px; height:50px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0;">
-                      ${photo ? `<img src="${photo}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:24px;">👷</div>`}
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(48,209,88,0.3); border-radius:14px; padding:12px; margin-top:10px; box-sizing:border-box; width:100%;">
+                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <div style="width:48px; height:48px; border-radius:50%; background:#222; overflow:hidden; border:2px solid #30D158; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                      ${photo ? `<img src="${photo}" style="width:100%; height:100%; object-fit:cover;">` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`}
                     </div>
-                    <div style="text-align:left;">
-                      <span style="color:rgba(255,255,255,0.4); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Tu Conductor</span>
-                      <span style="color:#fff; font-size:16px; font-weight:900; display:block; line-height:1.2;">${nombreConductor}</span>
-                    </div>
-                  </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
-                      <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Moto / Color</span>
-                      <span style="color:#fff; font-size:10.5px; font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${vehiculoInfo}</span>
-                    </div>
-                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.2); padding:7px 10px; border-radius:10px; text-align:left;">
-                      <span style="color:rgba(255,107,0,0.7); font-size:8px; display:block; text-transform:uppercase; font-weight:800;">Placa</span>
-                      <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1px;">${placaConductor}</span>
+                    <div style="text-align:left; overflow:hidden;">
+                      <span style="color:rgba(255,255,255,0.45); font-size:9px; display:block; text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">Tu Conductor</span>
+                      <span style="color:#fff; font-size:15px; font-weight:800; display:block; line-height:1.2; text-transform:capitalize; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nombreConductor}</span>
                     </div>
                   </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; box-sizing:border-box; width:100%;">
+                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.22); padding:8px 6px; border-radius:10px; text-align:center; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                      <span style="color:rgba(255,107,0,0.8); font-size:8.5px; display:block; text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Moto / Color</span>
+                      <span style="color:#fff; font-size:11px; font-weight:700; display:block; margin-top:3px; text-transform:capitalize; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${vehiculoInfo}</span>
+                    </div>
+                    <div style="background:rgba(255,107,0,0.08); border:1px solid rgba(255,107,0,0.22); padding:8px 6px; border-radius:10px; text-align:center; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                      <span style="color:rgba(255,107,0,0.8); font-size:8.5px; display:block; text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Placa</span>
+                      <span style="color:#FF6B00; font-size:14px; font-weight:900; display:block; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">${placaConductor}</span>
+                    </div>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; box-sizing:border-box; width:100%;">
                     ${telClean ? `
-                      <a href="tel:${telClean}" style="background:linear-gradient(135deg,#30D158,#248a3d); color:#fff; font-weight:800; font-size:13px; border-radius:12px; padding:11px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(48,209,88,0.35); transition:transform 0.15s;">
-                        <span style="font-size:15px;">📞</span> Llamar
+                      <a href="tel:${telClean}" style="background:linear-gradient(135deg,#30D158,#248a3d); color:#fff; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(48,209,88,0.3); text-transform:uppercase; letter-spacing:0.5px; box-sizing:border-box;">
+                        Llamar
                       </a>
-                      <a href="https://wa.me/57${telClean}?text=Hola%20${encodeURIComponent(nombreConductor)},%20soy%20tu%20pasajero%20de%20ZIPPY" target="_blank" style="background:linear-gradient(135deg,#25D366,#1ebe5d); color:#fff; font-weight:800; font-size:13px; border-radius:12px; padding:11px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(37,211,102,0.35); transition:transform 0.15s;">
-                        <span style="font-size:15px;">💬</span> WhatsApp
+                      <a href="https://wa.me/57${telClean}?text=Hola%20${encodeURIComponent(nombreConductor)},%20soy%20tu%20pasajero%20de%20ZIPPY" target="_blank" style="background:linear-gradient(135deg,#25D366,#1ebe5d); color:#fff; font-weight:800; font-size:12px; border-radius:10px; padding:10px 0; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(37,211,102,0.3); text-transform:uppercase; letter-spacing:0.5px; box-sizing:border-box;">
+                        WhatsApp
                       </a>
                     ` : `<div style="color:rgba(255,255,255,0.4); font-size:11px; text-align:center; width:100%; grid-column:1 / -1; padding:6px;">Sin número de contacto</div>`}
                   </div>
