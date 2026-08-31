@@ -150,28 +150,27 @@ async function loadClientes() {
     labelSpan.textContent = 'Saldo Actual';
 
     const giftBtn = document.createElement('button');
-    giftBtn.textContent = '🎁 Bono';
+    giftBtn.textContent = '✏️ Saldo';
     giftBtn.style.cssText = 'margin-top:8px; background:#3498DB; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; width:100%;';
     
     giftBtn.onclick = async () => {
-        const val = await zippyPrompt(`¿Cuánto saldo quieres regalarle a ${c.nombre}?`, 'Ej: 5000', '🎁', 'Regalar Bono', 'number');
+        const val = await zippyPrompt(`Saldo actual de ${c.nombre}: $${saldo.toLocaleString('es-CO')}.\nEscribe el nuevo saldo total (ej: 0 para dejar en $0):`, saldo.toString(), '💰', 'Ajustar Saldo Bono', 'number');
         if (val !== null && val !== '') {
-            const extra = parseInt(val, 10);
-            if (isNaN(extra)) return;
+            const nuevoSaldo = Math.max(0, parseInt(val, 10));
+            if (isNaN(nuevoSaldo)) return;
 
-            const finalSaldo = saldo + extra;
             giftBtn.textContent = 'Cargando...';
             giftBtn.disabled = true;
 
-            const { error: bonoErr } = await supabase.from('clientes').update({ saldo_bono: finalSaldo }).eq('id', c.id);
+            const { error: bonoErr } = await supabase.from('clientes').update({ saldo_bono: nuevoSaldo }).eq('id', c.id);
             if (!bonoErr) {
-                saldo = finalSaldo;
+                saldo = nuevoSaldo;
                 saldoSpan.textContent = `$${saldo.toLocaleString('es-CO')}`;
-                zippyToast(`¡Se cargaron $${extra.toLocaleString('es-CO')} a ${c.nombre}!`);
+                zippyToast(`¡Saldo de ${c.nombre} actualizado a $${nuevoSaldo.toLocaleString('es-CO')}!`);
             } else {
-                zippyAlert('Error al cargar bono: ' + bonoErr.message, '❌');
+                zippyAlert('Error al actualizar saldo: ' + bonoErr.message, '❌');
             }
-            giftBtn.textContent = '🎁 Bono';
+            giftBtn.textContent = '✏️ Saldo';
             giftBtn.disabled = false;
         }
     };
