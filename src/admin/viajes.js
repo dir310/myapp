@@ -11,62 +11,132 @@ async function loadViajes() {
         conductores.forEach(c => conductorMap[c.id] = c.nombre);
     }
 
-    // 2. Consultamos los viajes ordenados por fecha descendente
-    const { data: viajes, error } = await supabase
-        .from('viajes')
-        .select('*')
-        .order('created_at', { ascending: false });
+    // 2. Consultamos tanto viajes normales en vivo como viajes agendados
+    const [resNormales, resAgendados] = await Promise.all([
+        supabase.from('viajes').select('*').order('created_at', { ascending: false }),
+        supabase.from('viajes_agendados').select('*').order('created_at', { ascending: false })
+    ]);
 
-    if (error) {
-        console.error('Error fetching rides:', error);
-        listEl.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:#ff4545;">Error cargando viajes: ${error.message}</td></tr>`;
+    if (resNormales.error && resAgendados.error) {
+        console.error('Error fetching rides:', resNormales.error || resAgendados.error);
+        listEl.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:#ff4545;">Error cargando viajes: ${(resNormales.error || resAgendados.error).message}</td></tr>`;
         return;
     }
 
-    if (!viajes || viajes.length === 0) {
-        listEl.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:50px; opacity:0.5;">No se han registrado viajes aún.</td></tr>`;
+    const normales = (resNormales.data || []).map(v => ({
+        id: v.id,
+        tipo: 'EN VIVO',
+        created_at: v.created_at,
+        codigo_viaje: v.codigo_viaje || 'ZIPPY',
+        estado: v.estado || 'buscando',
+        cliente_nombre: v.cliente_nombre || 'Pasajero',
+        cliente_telefono: v.cliente_telefono || '-',
+        conductor_id: v.conductor_id,
+        origen: v.origen_nombre || '-',
+        destino: v.destino_nombre || '-',
+        bono_usado: v.bono_usado || 0,
+        tarifa: v.tarifa || 0,
+        calificacion: v.calificacion,
+        fecha_servicio: null
+    }));
+
+    const agendados = (resAgendados.data || []).map(v => ({
+        id: v.id,
+        tipo: 'AGENDADO',
+        created_at: v.created_at,
+        codigo_viaje: v.codigo_viaje || 'AGENDADO',
+        estado: v.estado || 'pendiente',
+        cliente_nombre: v.pasajero_nombre || 'Pasajero',
+        cliente_telefono: v.pasajero_telefono || '-',
+        conductor_id: v.conductor_id,
+        origen: v.origen || '-',
+        destino: v.destino || '-',
+        bono_usado: 0,
+        tarifa: v.tarifa || 0,
+        calificacion: v.calificacion,
+        fecha_servicio: v.fecha_hora_programada || v.fecha_servicio || null
+    }));
+
+    // 3. Unificar y ordenar por fecha de creación descendente (el más reciente arriba)
+    const todosLosViajes = [...normales, ...agendados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (todosLosViajes.length === 0) {
+        listEl.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:50px; opacity:0.5;">No se han registrado viajes aún.</td></tr>`;
         return;
     }
 
     listEl.innerHTML = '';
-    viajes.forEach(v => {
+    todosLosViajes.forEach(v => {
         const date = new Date(v.created_at).toLocaleString('es-CO', {
             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
         });
 
         const tr = document.createElement('tr');
 
-        // 1. Estado
+        // 1. Tipo & Estado
         const tdEstado = document.createElement('td');
-        tdEstado.innerHTML = `<span class="status-pill status-${v.estado}">${v.estado.replace('_', ' ')}</span>`;
+        let estadoLabel = v.estado.replace('_', ' ');
+        let estadoClass = `status-${v.estado}`;
+
+        if (v.tipo === 'AGENDADO') {
+            if (v.estado === 'pendiente') { estadoLabel = '⏳ Pendiente'; estadoClass = 'status-buscando'; }
+            else if (v.estado === 'aceptado') { estadoLabel = '✅ Asignado'; estadoClass = 'status-aceptado'; }
+            else if (v.estado === 'en_curso') { estadoLabel = '🚕 En Curso'; estadoClass = 'status-en_progreso'; }
+            else if (v.estado === 'completado') { estadoLabel = '✅ Completado'; estadoClass = 'status-finalizado'; }
+            else if (v.estado === 'cancelado') { estadoLabel = '❌ Cancelado'; estadoClass = 'status-cancelado'; }
+        } else {
+            if (v.estado === 'buscando') { estadoLabel = '⏳ Buscando'; estadoClass = 'status-buscando'; }
+            else if (v.estado === 'aceptado') { estadoLabel = '🚕 Asignado'; estadoClass = 'status-aceptado'; }
+            else if (v.estado === 'en_progreso') { estadoLabel = '🚀 En Progreso'; estadoClass = 'status-en_progreso'; }
+            else if (v.estado === 'finalizado') { estadoLabel = '✅ Finalizado'; estadoClass = 'status-finalizado'; }
+            else if (v.estado === 'cancelado') { estadoLabel = '❌ Cancelado'; estadoClass = 'status-cancelado'; }
+        }
+
+        const tipoBadge = v.tipo === 'AGENDADO'
+            ? `<span style="background:rgba(52,152,219,0.15); color:#3498DB; border:1px solid rgba(52,152,219,0.4); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:800; display:inline-block; margin-bottom:4px;">📅 AGENDADO</span>`
+            : `<span style="background:rgba(48,209,88,0.12); color:#30D158; border:1px solid rgba(48,209,88,0.3); padding:2px 6px; border-radius:4px; font-size:9px; font-weight:800; display:inline-block; margin-bottom:4px;">🟢 EN VIVO</span>`;
+
+        tdEstado.innerHTML = `
+            ${tipoBadge}
+            <div><span class="status-pill ${estadoClass}">${estadoLabel}</span></div>
+        `;
         tr.appendChild(tdEstado);
 
         // 2. Código
         const tdCodigo = document.createElement('td');
-        tdCodigo.innerHTML = `<span class="code-badge">#${v.codigo_viaje || 'ZIPPY'}</span>`;
+        tdCodigo.innerHTML = `<span class="code-badge">#${v.codigo_viaje}</span>`;
         tr.appendChild(tdCodigo);
 
-        // 3. Fecha
+        // 3. Fecha / Hora
         const tdFecha = document.createElement('td');
-        tdFecha.style.color = 'rgba(255,255,255,0.4)';
-        tdFecha.textContent = date;
+        tdFecha.style.color = 'rgba(255,255,255,0.7)';
+        tdFecha.style.fontSize = '12px';
+        if (v.tipo === 'AGENDADO' && v.fecha_servicio) {
+            const fechaServ = new Date(v.fecha_servicio).toLocaleString('es-CO', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+            tdFecha.innerHTML = `<div>${date}</div><div style="font-size:10px; color:#3498DB; font-weight:700; margin-top:2px;">📅 Prog: ${fechaServ}</div>`;
+        } else {
+            tdFecha.textContent = date;
+        }
         tr.appendChild(tdFecha);
 
         // 4. Pasajero
         const tdPasajero = document.createElement('td');
         tdPasajero.innerHTML = `
-            <div style="font-weight:800;">${v.cliente_nombre || 'Anónimo'}</div>
-            <div style="font-size:11px; opacity:0.5; margin-top:2px;">📞 ${v.cliente_telefono || '-'}</div>
+            <div style="font-weight:800; text-transform:capitalize;">${v.cliente_nombre}</div>
+            <div style="font-size:11px; opacity:0.6; margin-top:2px;">📞 ${v.cliente_telefono}</div>
         `;
         tr.appendChild(tdPasajero);
 
         // 5. Conductor
         const tdConductor = document.createElement('td');
         const nombreConductor = conductorMap[v.conductor_id];
-        const statusConductor = nombreConductor ? nombreConductor : (v.conductor_id ? 'Asignado' : '-');
+        const statusConductor = nombreConductor ? nombreConductor : (v.conductor_id ? 'Asignado' : 'Sin Asignar');
         
-        tdConductor.style.color = nombreConductor ? '#30D158' : 'rgba(255,255,255,0.3)';
+        tdConductor.style.color = nombreConductor ? '#30D158' : 'rgba(255,255,255,0.4)';
         tdConductor.style.fontWeight = nombreConductor ? '700' : '400';
+        tdConductor.style.textTransform = 'capitalize';
         tdConductor.textContent = statusConductor;
         tr.appendChild(tdConductor);
 
@@ -74,8 +144,8 @@ async function loadViajes() {
         const tdRuta = document.createElement('td');
         tdRuta.className = 'route-path';
         tdRuta.innerHTML = `
-            <div><b>A:</b> ${v.origen_nombre}</div>
-            <div style="margin-top:3px;"><b>B:</b> ${v.destino_nombre}</div>
+            <div><b>A:</b> ${v.origen}</div>
+            <div style="margin-top:3px;"><b>B:</b> ${v.destino}</div>
         `;
         tr.appendChild(tdRuta);
 
@@ -96,7 +166,7 @@ async function loadViajes() {
         // 9. Rating
         const tdRating = document.createElement('td');
         tdRating.style.textAlign = 'center';
-        tdRating.innerHTML = v.calificacion ? `<span style="color:#FFD700; font-weight:900;">${v.calificacion}</span>` : '-';
+        tdRating.innerHTML = v.calificacion ? `<span style="color:#FFD700; font-weight:900;">⭐ ${v.calificacion}</span>` : '<span style="opacity:0.3;">-</span>';
         tr.appendChild(tdRating);
 
         listEl.appendChild(tr);
