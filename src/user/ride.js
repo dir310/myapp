@@ -259,6 +259,7 @@ export async function acceptRide(state, map) {
             const { error } = await supabase.from('viajes_agendados').insert({
               pasajero_id: passengerId,
               pasajero_nombre: cNombre,
+              pasajero_telefono: cTelefono,
               origen: originName,
               destino: destName,
               origen_lat: state.startLatLng.lat,
@@ -306,6 +307,7 @@ export async function acceptRide(state, map) {
         const { error } = await supabase.from('viajes_agendados').insert({
           pasajero_id: passengerId,
           pasajero_nombre: cNombre,
+          pasajero_telefono: cTelefono,
           origen: originName,
           destino: destName,
           origen_lat: state.startLatLng.lat,

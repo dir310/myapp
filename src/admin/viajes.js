@@ -4,11 +4,21 @@ import { isAdminAuthenticated, showAdminPinOverlay, logoutAdmin } from './auth-a
 async function loadViajes() {
     const listEl = document.getElementById('viajesList');
 
-    // 1. Cargamos el mapa de conductores para tener los nombres disponibles
-    const { data: conductores, error: condErr } = await supabase.from('conductores').select('id, nombre');
+    // 1. Cargamos el mapa de conductores y clientes para tener datos siempre disponibles
+    const [ { data: conductores }, { data: clientesList } ] = await Promise.all([
+        supabase.from('conductores').select('id, nombre'),
+        supabase.from('clientes').select('id, nombre, telefono, cedula')
+    ]);
+
     const conductorMap = {};
-    if (!condErr && conductores) {
-        conductores.forEach(c => conductorMap[c.id] = c.nombre);
+    if (conductores) conductores.forEach(c => conductorMap[c.id] = c.nombre);
+
+    const clienteMap = {};
+    if (clientesList) {
+        clientesList.forEach(cl => {
+            if (cl.id) clienteMap[cl.id] = cl;
+            if (cl.telefono) clienteMap[cl.telefono] = cl;
+        });
     }
 
     // 2. Consultamos tanto viajes normales en vivo como viajes agendados
@@ -23,39 +33,45 @@ async function loadViajes() {
         return;
     }
 
-    const normales = (resNormales.data || []).map(v => ({
-        id: v.id,
-        tipo: 'EN VIVO',
-        created_at: v.created_at,
-        codigo_viaje: v.codigo_viaje || 'ZIPPY',
-        estado: v.estado || 'buscando',
-        cliente_nombre: v.cliente_nombre || 'Pasajero',
-        cliente_telefono: v.cliente_telefono || '-',
-        conductor_id: v.conductor_id,
-        origen: v.origen_nombre || '-',
-        destino: v.destino_nombre || '-',
-        bono_usado: v.bono_usado || 0,
-        tarifa: v.tarifa || 0,
-        calificacion: v.calificacion,
-        fecha_servicio: null
-    }));
+    const normales = (resNormales.data || []).map(v => {
+        const cl = clienteMap[v.pasajero_id] || clienteMap[v.cliente_telefono] || {};
+        return {
+            id: v.id,
+            tipo: 'EN VIVO',
+            created_at: v.created_at,
+            codigo_viaje: v.codigo_viaje || 'ZIPPY',
+            estado: v.estado || 'buscando',
+            cliente_nombre: v.cliente_nombre || cl.nombre || 'Pasajero',
+            cliente_telefono: v.cliente_telefono || cl.telefono || '-',
+            conductor_id: v.conductor_id,
+            origen: v.origen_nombre || v.origen || '-',
+            destino: v.destino_nombre || v.destino || '-',
+            bono_usado: v.bono_usado || 0,
+            tarifa: v.tarifa || 0,
+            calificacion: v.calificacion,
+            fecha_servicio: null
+        };
+    });
 
-    const agendados = (resAgendados.data || []).map(v => ({
-        id: v.id,
-        tipo: 'AGENDADO',
-        created_at: v.created_at,
-        codigo_viaje: v.codigo_viaje || 'AGENDADO',
-        estado: v.estado || 'pendiente',
-        cliente_nombre: v.pasajero_nombre || 'Pasajero',
-        cliente_telefono: v.pasajero_telefono || '-',
-        conductor_id: v.conductor_id,
-        origen: v.origen || '-',
-        destino: v.destino || '-',
-        bono_usado: 0,
-        tarifa: v.tarifa || 0,
-        calificacion: v.calificacion,
-        fecha_servicio: v.fecha_hora_programada || v.fecha_servicio || null
-    }));
+    const agendados = (resAgendados.data || []).map(v => {
+        const cl = clienteMap[v.pasajero_id] || clienteMap[v.pasajero_telefono] || {};
+        return {
+            id: v.id,
+            tipo: 'AGENDADO',
+            created_at: v.created_at,
+            codigo_viaje: v.codigo_viaje || 'AGENDADO',
+            estado: v.estado || 'pendiente',
+            cliente_nombre: v.pasajero_nombre || cl.nombre || 'Pasajero',
+            cliente_telefono: v.pasajero_telefono || cl.telefono || '-',
+            conductor_id: v.conductor_id,
+            origen: v.origen || v.origen_nombre || '-',
+            destino: v.destino || v.destino_nombre || '-',
+            bono_usado: 0,
+            tarifa: v.tarifa || 0,
+            calificacion: v.calificacion,
+            fecha_servicio: v.fecha_hora || v.fecha_hora_programada || v.fecha_servicio || null
+        };
+    });
 
     // 3. Unificar y ordenar por fecha de creación descendente (el más reciente arriba)
     const todosLosViajes = [...normales, ...agendados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
