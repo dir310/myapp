@@ -135,59 +135,28 @@ export function toggleRadar(isAutoClick = false) {
 
     const profile = getCurrentProfile();
     if (profile && profile.id) {
-      supabase.from('conductores').update({ 
-        is_online: true,
-        updated_at: new Date().toISOString()
-      }).eq('id', profile.id).then();
+      supabase.from('conductores').update({ is_online: true }).eq('id', profile.id).then();
     }
-
-    // Iniciar pulso silencioso de presencia cada 25 segundos
-    if (window.driverHeartbeatInterval) clearInterval(window.driverHeartbeatInterval);
-    window.driverHeartbeatInterval = setInterval(() => {
-      const p = getCurrentProfile();
-      if (radarEnabled && p && p.id) {
-        supabase.from('conductores').update({ 
-          is_online: true,
-          updated_at: new Date().toISOString()
-        }).eq('id', p.id).then();
-      }
-    }, 25000);
 
   } else {
     btn.className = 'radar-toggle radar-off';
     txt.innerText = 'ACTIVAR RADAR (SONIDO Y GPS)';
     releaseWakeLock();
 
-    // Detener pulso de presencia
-    if (window.driverHeartbeatInterval) {
-      clearInterval(window.driverHeartbeatInterval);
-      window.driverHeartbeatInterval = null;
-    }
-
     // Sonido de apagado solo en interacción manual
     if (isManual) playToggleSound('off');
     
     const profile = getCurrentProfile();
     if (profile && profile.id) {
-      supabase.from('conductores').update({ 
-        is_online: false,
-        updated_at: new Date().toISOString()
-      }).eq('id', profile.id).then();
+      supabase.from('conductores').update({ is_online: false }).eq('id', profile.id).then();
     }
   }
 }
 
 window.addEventListener('beforeunload', () => {
-  if (window.driverHeartbeatInterval) {
-    clearInterval(window.driverHeartbeatInterval);
-    window.driverHeartbeatInterval = null;
-  }
   const profile = getCurrentProfile();
   if (profile && profile.id) {
-    supabase.from('conductores').update({ 
-      is_online: false,
-      updated_at: new Date().toISOString()
-    }).eq('id', profile.id).then();
+    supabase.from('conductores').update({ is_online: false }).eq('id', profile.id).then();
   }
 });
 

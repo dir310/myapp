@@ -39,24 +39,22 @@ async function loadConductores() {
     const tr = document.createElement('tr');
 
     // 0. Estado En Vivo (Puntito)
-    // El conductor se considera en vivo sólo si is_online es true Y mandó señal en los últimos 75 segundos
     const tdEnVivo = document.createElement('td');
     tdEnVivo.style.textAlign = 'center';
     
-    let isReallyOnline = false;
-    if (c.is_online) {
-      const lastSignal = c.updated_at || c.created_at;
-      if (lastSignal) {
-        const diffMs = Date.now() - new Date(lastSignal).getTime();
-        isReallyOnline = diffMs < 75 * 1000; // Máximo 75 segundos de inactividad
-      }
+    if (c.is_online === true) {
+      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:#30D158; border-radius:50%; box-shadow: 0 0 8px rgba(48,209,88,0.8); cursor:pointer;" title="En Servicio (Clic para alternar)"></span>`;
+    } else {
+      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:rgba(255,255,255,0.2); border-radius:50%; cursor:pointer;" title="Desconectado (Clic para alternar)"></span>`;
     }
 
-    if (isReallyOnline) {
-      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:#30D158; border-radius:50%; box-shadow: 0 0 8px rgba(48,209,88,0.8);" title="En Servicio (En Vivo)"></span>`;
-    } else {
-      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:rgba(255,255,255,0.2); border-radius:50%;" title="Desconectado"></span>`;
-    }
+    // Permitir al administrador alternar el estado en vivo con un clic
+    tdEnVivo.onclick = async () => {
+      const newStatus = !c.is_online;
+      await supabase.from('conductores').update({ is_online: newStatus }).eq('id', c.id);
+      loadConductores();
+    };
+
     tr.appendChild(tdEnVivo);
 
     // 1. Estado (Acceso) - Switch Toggle
@@ -209,10 +207,18 @@ async function init() {
   setupLogoutBtn();
   loadConductores();
 
-  // Auto-refresh cada 20 segundos para actualizar estado en vivo de conductores
+  // Suscripción Realtime instantánea para cambios de conductores
+  supabase
+    .channel('admin_conductores_live_channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'conductores' }, () => {
+      loadConductores();
+    })
+    .subscribe();
+
+  // Auto-refresh de respaldo cada 15 segundos
   setInterval(() => {
     if (document.visibilityState === 'visible') loadConductores();
-  }, 20000);
+  }, 15000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
