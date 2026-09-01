@@ -39,10 +39,21 @@ async function loadConductores() {
     const tr = document.createElement('tr');
 
     // 0. Estado En Vivo (Puntito)
+    // El conductor se considera en vivo sólo si is_online es true Y mandó señal en los últimos 75 segundos
     const tdEnVivo = document.createElement('td');
     tdEnVivo.style.textAlign = 'center';
+    
+    let isReallyOnline = false;
     if (c.is_online) {
-      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:#30D158; border-radius:50%; box-shadow: 0 0 8px rgba(48,209,88,0.6);" title="En Servicio"></span>`;
+      const lastSignal = c.updated_at || c.created_at;
+      if (lastSignal) {
+        const diffMs = Date.now() - new Date(lastSignal).getTime();
+        isReallyOnline = diffMs < 75 * 1000; // Máximo 75 segundos de inactividad
+      }
+    }
+
+    if (isReallyOnline) {
+      tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:#30D158; border-radius:50%; box-shadow: 0 0 8px rgba(48,209,88,0.8);" title="En Servicio (En Vivo)"></span>`;
     } else {
       tdEnVivo.innerHTML = `<span style="display:inline-block; width:12px; height:12px; background-color:rgba(255,255,255,0.2); border-radius:50%;" title="Desconectado"></span>`;
     }
@@ -197,6 +208,11 @@ async function init() {
   }
   setupLogoutBtn();
   loadConductores();
+
+  // Auto-refresh cada 20 segundos para actualizar estado en vivo de conductores
+  setInterval(() => {
+    if (document.visibilityState === 'visible') loadConductores();
+  }, 20000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
