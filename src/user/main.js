@@ -1907,6 +1907,47 @@ if (bonoCheckbox) {
         let finalPrice = price - bonoToUse;
         const el = document.getElementById('priceValue');
         if (el) el.textContent = '$' + finalPrice.toLocaleString('es-CO');
+
+        const pedirBtn = document.getElementById('pedirViajeBtn');
+        const btnW = document.getElementById('payWompiBtn');
+        const btnE = document.getElementById('payEfectivoBtn');
+        const bookingActionsTitle = document.querySelector('#bookingActions > div:first-child');
+        const changeRow = document.getElementById('changePaymentRow');
+
+        if (bonoCheckbox.checked && bonoToUse >= price && price > 0) {
+            // El bono cubre el 100% del viaje ($0 a pagar)
+            state.selectedPaymentMethod = 'bono';
+            if (btnW && btnW.parentElement) btnW.parentElement.style.display = 'none';
+            if (bookingActionsTitle) bookingActionsTitle.style.display = 'none';
+            if (changeRow) changeRow.style.display = 'none';
+
+            if (pedirBtn) {
+                pedirBtn.disabled = false;
+                pedirBtn.style.opacity = '1';
+                pedirBtn.style.cursor = 'pointer';
+                pedirBtn.style.background = 'linear-gradient(135deg, #3498DB, #2980B9)';
+                pedirBtn.style.color = '#fff';
+                pedirBtn.innerHTML = state.isScheduling ? '📅 Agendar con Bono ($0 a pagar)' : '🎁 Pedir con Bono ($0 a pagar)';
+            }
+        } else {
+            // No cubre el 100% o bono desmarcado
+            if (btnW && btnW.parentElement) btnW.parentElement.style.display = 'flex';
+            if (bookingActionsTitle) bookingActionsTitle.style.display = 'block';
+
+            if (state.selectedPaymentMethod === 'bono') {
+                state.selectedPaymentMethod = null;
+                if (pedirBtn) {
+                    pedirBtn.disabled = true;
+                    pedirBtn.style.opacity = '0.35';
+                    pedirBtn.style.cursor = 'not-allowed';
+                    pedirBtn.style.background = '';
+                    pedirBtn.style.color = '';
+                    pedirBtn.innerHTML = state.isScheduling ? '📅 Agendar Viaje' : '🏍️ Pedir Viaje';
+                }
+                if (btnW) { btnW.style.opacity='1'; btnW.style.transform='scale(1)'; btnW.style.boxShadow='none'; btnW.innerHTML='💳 Wompi'; }
+                if (btnE) { btnE.style.opacity='1'; btnE.style.transform='scale(1)'; btnE.style.boxShadow='none'; btnE.innerHTML='💵 Efectivo'; }
+            }
+        }
     });
 }
 

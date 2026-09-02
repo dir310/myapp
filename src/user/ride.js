@@ -213,9 +213,13 @@ export async function acceptRide(state, map) {
 
   const btnW = document.getElementById('payWompiBtn');
   const btnE = document.getElementById('payEfectivoBtn');
+  const pedirBtn = document.getElementById('pedirViajeBtn');
   if (btnW) btnW.disabled = true;
   if (btnE) btnE.disabled = true;
-  const activeBtn = state.selectedPaymentMethod === 'wompi' ? btnW : btnE;
+  if (pedirBtn) pedirBtn.disabled = true;
+
+  const isBonoFull = state.selectedPaymentMethod === 'bono' || (bonoCb && bonoCb.checked && bonoUsado >= basePrice);
+  const activeBtn = isBonoFull ? pedirBtn : (state.selectedPaymentMethod === 'wompi' ? btnW : btnE);
   if (activeBtn) {
     activeBtn.innerHTML = `<span class="spinner" style="border-width:2px; height:14px; width:14px; margin-right:6px"></span> ${state.isScheduling ? 'Agendando...' : 'Pidiendo...'}`;
   }
@@ -230,15 +234,65 @@ export async function acceptRide(state, map) {
         localStorage.setItem('calmovil_cliente_id', passengerId);
       }
       const cNombre = sanitizeHTML(localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Anónimo', 60);
-      const cTelefono = sanitizeHTML(localStorage.getItem('calmovil_cliente_telefono') || '', 10);
 
-      // Si paga con Wompi
+      // CASO A: Pago 100% con Bono
+      if (isBonoFull) {
+        const { error } = await supabase.from('viajes_agendados').insert({
+          pasajero_id: passengerId,
+          pasajero_nombre: cNombre,
+          origen: originName,
+          destino: destName,
+          origen_lat: state.startLatLng.lat,
+          origen_lng: state.startLatLng.lng,
+          destino_lat: state.endLatLng.lat,
+          destino_lng: state.endLatLng.lng,
+          tarifa: basePrice,
+          fecha_hora: state.scheduledDateTime,
+          estado: 'pendiente',
+          pagado: true,
+          codigo_viaje: rideCode,
+          distancia_km: distText
+        });
+
+        if (error) throw error;
+
+        // Descontar saldo de bono
+        if (passengerId && bonoUsado > 0) {
+          window.zippyCurrentBono = Math.max(0, (window.zippyCurrentBono || 0) - bonoUsado);
+          supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
+          const bonoEl = document.getElementById('displayClientBono');
+          const bonoTextEl = document.getElementById('availableBonoText');
+          if (bonoEl) bonoEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+          if (bonoTextEl) bonoTextEl.textContent = '$' + window.zippyCurrentBono.toLocaleString('es-CO');
+        }
+
+        localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
+        sendPushToDrivers(basePrice, distText);
+        await zippyAlert(`¡Tu viaje agendado ha sido registrado y pagado con tu Bono ($0 a pagar)! Código: #${rideCode}`, '✅');
+        
+        // Limpieza y restauración impecable del UI
+        document.getElementById('priceSection').style.display = 'none';
+        const confirmBtn = document.getElementById('confirmRouteBtn');
+        if (confirmBtn) confirmBtn.style.display = 'none';
+        if (pedirBtn) { pedirBtn.style.display = 'block'; pedirBtn.innerHTML = '🏍️ Pedir Viaje'; pedirBtn.disabled = false; }
+        const cancelBtn = document.getElementById('cancelActiveSchedBtn');
+        if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = '✕ Cancelar Viaje'; }
+
+        if (window.cancelSchedulingMode) window.cancelSchedulingMode();
+        if (window.loadActiveScheduledRide) window.loadActiveScheduledRide();
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('minimized');
+        return;
+      }
+
+      // CASO B: Si paga con Wompi
       if (state.selectedPaymentMethod === 'wompi') {
         if (typeof WidgetCheckout !== 'function') {
           throw new Error('El sistema de pagos no ha cargado aún. Intenta de nuevo.');
         }
         
-        const cents = basePrice * 100;
+        const remainingPrice = Math.max(0, basePrice - bonoUsado);
+        const cents = remainingPrice * 100;
         const reference = `ZIPPY_SCHED_${rideCode}_${Date.now()}`;
         const secret = 'prod_integrity_lImL3CgFSTzGzBcs661J1WF9UFJdHuZC';
         const msg = reference + cents + 'COP' + secret;
@@ -259,7 +313,6 @@ export async function acceptRide(state, map) {
             const { error } = await supabase.from('viajes_agendados').insert({
               pasajero_id: passengerId,
               pasajero_nombre: cNombre,
-              pasajero_telefono: cTelefono,
               origen: originName,
               destino: destName,
               origen_lat: state.startLatLng.lat,
@@ -277,6 +330,10 @@ export async function acceptRide(state, map) {
             if (error) {
               zippyAlert('Pago aprobado, pero hubo un error al registrar el viaje agendado. Por favor contáctanos.', '⚠️');
             } else {
+              if (passengerId && bonoUsado > 0) {
+                window.zippyCurrentBono = Math.max(0, (window.zippyCurrentBono || 0) - bonoUsado);
+                supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
+              }
               localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
               sendPushToDrivers(basePrice, distText);
               await zippyAlert(`¡Viaje Agendado y Pagado con éxito! Código: #${rideCode}`, '✅');
@@ -285,7 +342,6 @@ export async function acceptRide(state, map) {
               document.getElementById('priceSection').style.display = 'none';
               const confirmBtn = document.getElementById('confirmRouteBtn');
               if (confirmBtn) confirmBtn.style.display = 'none';
-              const pedirBtn = document.getElementById('pedirViajeBtn');
               if (pedirBtn) { pedirBtn.style.display = 'block'; pedirBtn.innerHTML = '🏍️ Pedir Viaje'; pedirBtn.disabled = false; }
               const cancelBtn = document.getElementById('cancelActiveSchedBtn');
               if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = '✕ Cancelar Viaje'; }
@@ -299,15 +355,15 @@ export async function acceptRide(state, map) {
             zippyAlert('Pago no aprobado o cancelado. Intenta de nuevo.', '❌');
             if (btnW) btnW.disabled = false;
             if (btnE) btnE.disabled = false;
-            if (activeBtn) activeBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo';
+            if (pedirBtn) pedirBtn.disabled = false;
+            if (activeBtn) activeBtn.innerHTML = '💳 Wompi';
           }
         });
       } else {
-        // Pago en efectivo / presencial
+        // CASO C: Pago en efectivo / presencial
         const { error } = await supabase.from('viajes_agendados').insert({
           pasajero_id: passengerId,
           pasajero_nombre: cNombre,
-          pasajero_telefono: cTelefono,
           origen: originName,
           destino: destName,
           origen_lat: state.startLatLng.lat,
@@ -324,6 +380,11 @@ export async function acceptRide(state, map) {
 
         if (error) throw error;
 
+        if (passengerId && bonoUsado > 0) {
+          window.zippyCurrentBono = Math.max(0, (window.zippyCurrentBono || 0) - bonoUsado);
+          supabase.from('clientes').update({ saldo_bono: window.zippyCurrentBono }).eq('id', passengerId).then();
+        }
+
         localStorage.setItem('calmovil_ultimo_agendado_codigo', rideCode);
         sendPushToDrivers(basePrice, distText);
         await zippyAlert(`¡Tu viaje agendado ha sido registrado! Código: #${rideCode}. Pagarás en efectivo al conductor al finalizar el viaje.`, '✅');
@@ -332,7 +393,6 @@ export async function acceptRide(state, map) {
         document.getElementById('priceSection').style.display = 'none';
         const confirmBtn = document.getElementById('confirmRouteBtn');
         if (confirmBtn) confirmBtn.style.display = 'none';
-        const pedirBtn = document.getElementById('pedirViajeBtn');
         if (pedirBtn) { pedirBtn.style.display = 'block'; pedirBtn.innerHTML = '🏍️ Pedir Viaje'; pedirBtn.disabled = false; }
         const cancelBtn = document.getElementById('cancelActiveSchedBtn');
         if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = '✕ Cancelar Viaje'; }
@@ -346,7 +406,8 @@ export async function acceptRide(state, map) {
       zippyAlert('Error al agendar el viaje: ' + err.message, '❌');
       if (btnW) btnW.disabled = false;
       if (btnE) btnE.disabled = false;
-      if (activeBtn) activeBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : '💵 Efectivo';
+      if (pedirBtn) pedirBtn.disabled = false;
+      if (activeBtn) activeBtn.innerHTML = state.selectedPaymentMethod === 'wompi' ? '💳 Wompi' : (isBonoFull ? '🎁 Pedir con Bono' : '💵 Efectivo');
     }
     return;
   }
