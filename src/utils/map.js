@@ -207,17 +207,17 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
 
 /**
  * Puntos del polígono de cobertura de ZIPPY.
- * Puntos: Sopó, Cra 7 con 245, Cra 7 con 100, Calle 72 hasta Cra 15 (Paradero Buses y Zona Financiera), Rural Sur, Rural Este.
+ * Puntos: Sopó, Cra 7 con 245, Cra 7 con 100, Corredor Calle 70 a 76 hasta la Autopista Norte / Av. Caracas, Rural Sur, Rural Este.
  */
 export const COVERAGE_POLYGON = [
-  [4.91, -73.94], // Sopó Norte
-  [4.85, -73.90], // Noreste (Veredas Sopó)
-  [4.72, -73.87], // Este (Rural Calera +10km)
-  [4.62, -74.00], // Sur (Veredas Sur)
-  [4.648, -74.065], // Sur-occidente: Calle 68 a Calle 72 con Cra 15 / Cra 13 (Paradero Buses Calera/Guasca)
-  [4.665, -74.063], // Nor-occidente: Calle 74 a Calle 85 con Cra 15
-  [4.68, -74.04],  // Occidente (Cra 7 con Calle 100)
-  [4.82, -74.03]   // Noroccidente (Cra 7 con Calle 245 / Torca)
+  [4.91, -73.94],   // Sopó Norte
+  [4.85, -73.90],   // Noreste (Veredas Sopó)
+  [4.72, -73.87],   // Este (Rural Calera +10km)
+  [4.62, -74.00],   // Sur (Veredas Sur)
+  [4.640, -74.078], // Sur-occidente: Calle 68 a 72 cruzando Cra 15 hasta Autopista Norte / Av. Caracas / NQS
+  [4.675, -74.078], // Nor-occidente: Calle 73 a 80 cruzando Cra 15 hasta Autopista Norte / Héroes
+  [4.690, -74.060], // Occidente (Calle 85 / Calle 100 con Cra 15)
+  [4.82, -74.03]    // Noroccidente (Cra 7 con Calle 245 / Torca)
 ];
 
 /**
