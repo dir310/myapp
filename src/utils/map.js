@@ -207,16 +207,17 @@ export function animateMarker(marker, newLatLng, durationMs = 2000) {
 
 /**
  * Puntos del polígono de cobertura de ZIPPY.
- * Puntos: Sopó, Cra 7 con 245, Cra 7 con 85, Rural Sur, Rural Este.
+ * Puntos: Sopó, Cra 7 con 245, Cra 7 con 100, Calle 72 hasta Cra 15 (Paradero Buses y Zona Financiera), Rural Sur, Rural Este.
  */
 export const COVERAGE_POLYGON = [
   [4.91, -73.94], // Sopó Norte
   [4.85, -73.90], // Noreste (Veredas Sopó)
   [4.72, -73.87], // Este (Rural Calera +10km)
   [4.62, -74.00], // Sur (Veredas Sur)
-  [4.66, -74.05], // Suroccidente (Cra 7 con Calle 85)
-  [4.68, -74.04], // Occidente (Cra 7 con Calle 100)
-  [4.82, -74.03]  // Noroccidente (Cra 7 con Calle 245 / Torca)
+  [4.648, -74.065], // Sur-occidente: Calle 68 a Calle 72 con Cra 15 / Cra 13 (Paradero Buses Calera/Guasca)
+  [4.665, -74.063], // Nor-occidente: Calle 74 a Calle 85 con Cra 15
+  [4.68, -74.04],  // Occidente (Cra 7 con Calle 100)
+  [4.82, -74.03]   // Noroccidente (Cra 7 con Calle 245 / Torca)
 ];
 
 /**
