@@ -1,0 +1,181 @@
+/* ==========================================================================
+   ZIPPY HALLOWEEN SPOOKY THEME (PURE CSS DECORATION)
+   Zero logic changes - Pure visual atmosphere: Telarañas, Fantasmas, Calabazas, Luces
+   ========================================================================== */
+
+/* ── 1. Resplandor Espectral en Botones Principales ── */
+#pedirViajeBtn,
+.btn-primary,
+#authSubmitBtn,
+#loginBtn {
+  position: relative;
+  box-shadow: 0 0 16px rgba(255, 107, 0, 0.5), 0 0 30px rgba(142, 68, 173, 0.25) !important;
+  animation: spookyPulseGlow 3s infinite alternate ease-in-out !important;
+}
+
+@keyframes spookyPulseGlow {
+  0% {
+    box-shadow: 0 0 12px rgba(255, 107, 0, 0.4), 0 0 20px rgba(142, 68, 173, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 117, 24, 0.75), 0 0 35px rgba(155, 89, 182, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 107, 0, 0.5), 0 0 25px rgba(142, 68, 173, 0.3);
+  }
+}
+
+/* ── 2. Calabacita Neón en el Logo Superior ── */
+.topbar-brand::after,
+#sidebarHeader .brand-name::after {
+  content: " 🎃";
+  font-size: 16px;
+  display: inline-block;
+  animation: floatPumpkin 2.5s infinite ease-in-out alternate;
+  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.8));
+  vertical-align: middle;
+}
+
+@keyframes floatPumpkin {
+  0% { transform: translateY(0px) rotate(-4deg); }
+  100% { transform: translateY(-4px) rotate(6deg); }
+}
+
+/* ── 3. Telarañas en las Esquinas de Modales y Menús ── */
+#sidebar,
+#passengerAuthOverlay > div,
+#loginOverlay > div {
+  position: relative;
+}
+
+#sidebar::before,
+#passengerAuthOverlay > div::before,
+#loginOverlay > div::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 75px;
+  height: 75px;
+  background-image: radial-gradient(circle at 100% 0%, transparent 20%, rgba(255, 255, 255, 0.08) 21%, transparent 22%),
+                    radial-gradient(circle at 100% 0%, transparent 40%, rgba(255, 255, 255, 0.08) 41%, transparent 42%),
+                    radial-gradient(circle at 100% 0%, transparent 60%, rgba(255, 255, 255, 0.08) 61%, transparent 62%),
+                    linear-gradient(to bottom left, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.85;
+}
+
+#sidebar::after,
+#passengerAuthOverlay > div::after,
+#loginOverlay > div::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 75px;
+  height: 75px;
+  background-image: radial-gradient(circle at 0% 0%, transparent 20%, rgba(255, 255, 255, 0.08) 21%, transparent 22%),
+                    radial-gradient(circle at 0% 0%, transparent 40%, rgba(255, 255, 255, 0.08) 41%, transparent 42%),
+                    radial-gradient(circle at 0% 0%, transparent 60%, rgba(255, 255, 255, 0.08) 61%, transparent 62%),
+                    linear-gradient(to bottom right, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.85;
+}
+
+/* ── 4. Fantasmitas Flotantes en el Fondo (Atmósfera de Terror) ── */
+.spooky-ghost-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+  overflow: hidden;
+}
+
+.spooky-ghost {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0;
+  filter: drop-shadow(0 0 12px rgba(160, 210, 255, 0.7));
+  animation: ghostRise 14s infinite linear;
+}
+
+.spooky-ghost:nth-child(1) {
+  left: 12%;
+  animation-duration: 16s;
+  animation-delay: 1s;
+}
+
+.spooky-ghost:nth-child(2) {
+  right: 18%;
+  font-size: 20px;
+  animation-duration: 20s;
+  animation-delay: 5s;
+}
+
+.spooky-ghost:nth-child(3) {
+  left: 45%;
+  font-size: 28px;
+  animation-duration: 18s;
+  animation-delay: 9s;
+}
+
+@keyframes ghostRise {
+  0% {
+    bottom: -50px;
+    opacity: 0;
+    transform: translateX(0) scale(0.8) rotate(0deg);
+  }
+  15% {
+    opacity: 0.55;
+    transform: translateX(15px) scale(1) rotate(5deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(-20px) scale(1.05) rotate(-6deg);
+  }
+  85% {
+    opacity: 0.5;
+    transform: translateX(15px) scale(0.95) rotate(4deg);
+  }
+  100% {
+    bottom: 105vh;
+    opacity: 0;
+    transform: translateX(0) scale(0.8) rotate(0deg);
+  }
+}
+
+/* ── 5. Murciélagos Aleteando en la Esquina Superior ── */
+.spooky-bat {
+  position: fixed;
+  top: 18px;
+  left: 60px;
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 998;
+  animation: batFlutter 4s infinite alternate ease-in-out;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.8));
+}
+
+@keyframes batFlutter {
+  0% { transform: translateY(0px) rotate(-10deg) scale(0.9); }
+  50% { transform: translateY(8px) translateX(12px) rotate(8deg) scale(1.1); }
+  100% { transform: translateY(-4px) translateX(4px) rotate(-5deg) scale(1); }
+}
+
+/* ── 6. Ojos Brillantes Misteriosos en el Login / Registro ── */
+.spooky-eyes {
+  position: absolute;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  animation: blinkEyes 8s infinite ease-in-out;
+  filter: drop-shadow(0 0 8px #FFD700);
+}
+
+@keyframes blinkEyes {
+  0%, 70%, 100% { opacity: 0; transform: scale(0.8); }
+  75%, 90% { opacity: 0.85; transform: scale(1); }
+}
