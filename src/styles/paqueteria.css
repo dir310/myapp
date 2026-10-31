@@ -1,0 +1,386 @@
+/* ═══════════════════════════════════════════════
+   📦 PAQUETERÍA ZIPPY — Estilos
+   ═══════════════════════════════════════════════ */
+
+/* ── Modal panel base ── */
+#paqueteriaModal,
+#paqueteFormModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 99999;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ── Panel interior ── */
+.paqueteria-panel {
+  background: #1c1c1e;
+  width: 100%;
+  height: 88vh;
+  border-radius: 24px 24px 0 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+/* ── Header del panel ── */
+.paqueteria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.paqueteria-title {
+  color: #fff;
+  margin: 0;
+  font-weight: 900;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paqueteria-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.paqueteria-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Botón nuevo paquete ── */
+.nuevo-paquete-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #FF6B00, #FF9500);
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 14px;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.35);
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.nuevo-paquete-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(255, 107, 0, 0.25);
+}
+
+/* ── Lista de paquetes ── */
+#paquetesListContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Card de paquete ── */
+.paquete-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.paquete-card:hover {
+  border-color: rgba(255, 107, 0, 0.3);
+}
+
+.paquete-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.paquete-codigo {
+  color: #FF9500;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.paquete-fecha {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.paquete-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ── Ruta origen/destino ── */
+.paquete-ruta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.paquete-ruta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paquete-ruta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.paquete-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+}
+
+.paquete-tarifa {
+  font-size: 13px;
+  font-weight: 900;
+  color: #30D158;
+  text-align: right;
+}
+
+/* ═══ FORMULARIO DE NUEVO PAQUETE ═══ */
+
+.paquete-form-panel {
+  background: #1c1c1e;
+  width: 100%;
+  max-height: 92vh;
+  border-radius: 24px 24px 0 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  border-top: 1px solid rgba(255, 107, 0, 0.3);
+  animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  overflow-y: auto;
+}
+
+.paquete-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.paquete-form-title {
+  color: #fff;
+  margin: 0;
+  font-weight: 900;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Secciones del formulario ── */
+.pk-section {
+  margin-bottom: 20px;
+}
+
+.pk-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #FF9500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pk-field {
+  margin-bottom: 12px;
+}
+
+.pk-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+}
+
+.pk-field input,
+.pk-field select,
+.pk-field textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+
+.pk-field input:focus,
+.pk-field select:focus,
+.pk-field textarea:focus {
+  border-color: rgba(255, 107, 0, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pk-field select option {
+  background: #2c2c2e;
+  color: #fff;
+}
+
+.pk-field textarea {
+  resize: none;
+  height: 80px;
+}
+
+/* ── Foto upload ── */
+.pk-foto-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.pk-foto-label:hover {
+  border-color: rgba(255, 107, 0, 0.5);
+  background: rgba(255, 107, 0, 0.05);
+  color: #FF9500;
+}
+
+#pkFotoInput {
+  display: none;
+}
+
+#pkFotoPreview {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 10px;
+  display: none;
+  max-height: 180px;
+  object-fit: cover;
+}
+
+/* ── Botón submit ── */
+.pk-submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #FF6B00, #FF9500);
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.35);
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.pk-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pk-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ── Estado vacío ── */
+.paquetes-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.paquetes-empty-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+}
+
+.paquetes-empty-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.paquetes-empty-sub {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ── Divider entre campos ── */
+.pk-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 4px 0 16px;
+}
