@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="src/styles/common.css">
     <link rel="stylesheet" href="src/styles/user.css">
     <link rel="stylesheet" href="src/styles/halloween.css">
+    <link rel="stylesheet" href="src/styles/paqueteria.css">
     
     <!-- Driver.js para el Tour -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
@@ -358,6 +359,12 @@
                     <button id="historyPassengerBtn"
                         style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;">
                         ⏱️ Mi Historial de Viajes
+                    </button>
+
+                    <!-- Botón Paquetería -->
+                    <button id="paqueteriaBtn"
+                        style="width:100%;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.25);border-radius:14px;color:#FF9500;font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;transition:all 0.2s;">
+                        📦 Paquetería
                     </button>
                 </div>
             </div>
@@ -974,6 +981,109 @@
                     Cargando tus viajes...
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ══ Modal Paquetería — Lista de envíos ══ -->
+    <div id="paqueteriaModal">
+        <div class="paqueteria-panel">
+            <div class="paqueteria-header">
+                <h2 class="paqueteria-title">📦 Mis Paquetes</h2>
+                <button class="paqueteria-close-btn" id="closePaqueteriaBtn">✕</button>
+            </div>
+            <button class="nuevo-paquete-btn" id="nuevoPaqueteBtn">
+                ＋ Nuevo Envío
+            </button>
+            <div id="paquetesListContainer"></div>
+        </div>
+    </div>
+
+    <!-- ══ Modal Formulario — Nuevo paquete ══ -->
+    <div id="paqueteFormModal">
+        <div class="paquete-form-panel">
+            <div class="paquete-form-header">
+                <h2 class="paquete-form-title">📦 Nuevo Envío</h2>
+                <button class="paqueteria-close-btn" id="closePaqueteFormBtn">✕</button>
+            </div>
+
+            <form id="paqueteFormEl" autocomplete="off">
+
+                <!-- ── RUTA ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">📍 Ruta del paquete</div>
+                    <div class="pk-field">
+                        <label>Dirección de recogida *</label>
+                        <input id="pkOrigen" type="text" placeholder="Ej: Calle 10 #5-20, La Calera" required>
+                    </div>
+                    <div class="pk-field">
+                        <label>Dirección de entrega *</label>
+                        <input id="pkDestino" type="text" placeholder="Ej: Carrera 7 #100-30, Bogotá" required>
+                    </div>
+                </div>
+
+                <div class="pk-divider"></div>
+
+                <!-- ── REMITENTE ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">👤 Quien envía</div>
+                    <div class="pk-field">
+                        <label>Nombre *</label>
+                        <input id="pkRemitenteNombre" type="text" placeholder="Tu nombre completo" required>
+                    </div>
+                    <div class="pk-field">
+                        <label>Teléfono *</label>
+                        <input id="pkRemitenteTelefono" type="tel" placeholder="300 000 0000" required>
+                    </div>
+                </div>
+
+                <div class="pk-divider"></div>
+
+                <!-- ── DESTINATARIO ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">📬 Quien recibe</div>
+                    <div class="pk-field">
+                        <label>Nombre *</label>
+                        <input id="pkDestinatarioNombre" type="text" placeholder="Nombre del destinatario" required>
+                    </div>
+                    <div class="pk-field">
+                        <label>Teléfono *</label>
+                        <input id="pkDestinatarioTelefono" type="tel" placeholder="300 000 0000" required>
+                    </div>
+                </div>
+
+                <div class="pk-divider"></div>
+
+                <!-- ── DETALLES ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">📋 Detalles del paquete</div>
+                    <div class="pk-field">
+                        <label>Tamaño *</label>
+                        <select id="pkTamano" required>
+                            <option value="" disabled selected>Selecciona el tamaño</option>
+                            <option value="pequeno">📦 Pequeño — cabe en una mochila</option>
+                            <option value="mediano">📫 Mediano — caja de zapatos</option>
+                            <option value="grande">🗃️ Grande — caja grande</option>
+                        </select>
+                    </div>
+                    <div class="pk-field">
+                        <label>Descripción (opcional)</label>
+                        <textarea id="pkDescripcion" placeholder="¿Qué contiene el paquete? Ej: ropa, documentos, electrónicos..."></textarea>
+                    </div>
+                    <div class="pk-field">
+                        <label>Foto del paquete (opcional)</label>
+                        <label class="pk-foto-label" for="pkFotoInput">
+                            <span id="pkFotoLabel">📷 Toca para agregar foto</span>
+                        </label>
+                        <input type="file" id="pkFotoInput" accept="image/jpeg,image/png,image/webp">
+                        <img id="pkFotoPreview" alt="Preview del paquete">
+                    </div>
+                </div>
+
+                <button type="submit" class="pk-submit-btn" id="submitPaqueteBtn">
+                    📦 Crear Envío
+                </button>
+
+            </form>
         </div>
     </div>
 

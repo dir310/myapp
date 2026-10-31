@@ -13,6 +13,7 @@ import { supabase } from '../config/supabase.js';
 import { sanitizeHTML } from '../utils/security.js';
 import { zippyAlert, zippyConfirm, zippyToast, zippyDanger } from '../utils/ui-global.js';
 import { compressImage } from '../utils/image.js';
+import { initPaqueteria } from './paqueteria.js';
 
 let passengerCaptchaAnswer = 0;
 const PASSENGER_MAX_ATTEMPTS = 3;
@@ -176,6 +177,7 @@ setTimeout(() => {
     document.getElementById('closeHistoryBtn')?.addEventListener('click', () => {
         document.getElementById('passengerHistoryModal').style.display = 'none';
     });
+    initPaqueteria();
 }, 1000);
 
 // ── Passenger Auth Logic ──
