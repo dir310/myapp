@@ -749,3 +749,59 @@
   background: rgba(255, 59, 48, 0.2);
   color: #FF3B30;
 }
+
+
+/* ── Opciones de foto: Cámara y Galería ── */
+.pk-photo-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pk-photo-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.pk-photo-btn:hover {
+  background: rgba(255, 107, 0, 0.12);
+  border-color: #FF6B00;
+}
+
+.pk-photo-btn:active {
+  transform: scale(0.97);
+}
+
+.pk-photo-btn span {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.pk-photo-btn strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pk-photo-btn small {
+  display: block;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 1px;
+}
+
+.pk-photo-btn.camera:hover {
+  border-color: #30D158;
+  background: rgba(48, 209, 88, 0.12);
+}

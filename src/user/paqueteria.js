@@ -14,6 +14,7 @@ let _currentDurationMin = 0;
 let _currentTarifa = 0;
 let _selectedPaga = 'remitente';     // 'remitente' | 'destinatario'
 let _selectedMetodo = 'efectivo';   // 'efectivo' | 'wompi'
+let _selectedPhotoFile = null;      // File de cámara o galería
 let _suggTimers = {};
 
 const WOMPI_PUB_KEY = 'pub_prod_SxZqnd7Fi3WqOdXDFGrDg0qNP0rMFtE4';
@@ -47,8 +48,10 @@ export function initPaqueteria(userId) {
   // Submit del formulario
   document.getElementById('paqueteFormEl')?.addEventListener('submit', handlePaqueteSubmit);
 
-  // Preview foto
-  document.getElementById('pkFotoInput')?.addEventListener('change', handleFotoPreview);
+  // Cámara y Galería para fotos de paquete
+  document.getElementById('pkFotoCamara')?.addEventListener('change', (e) => handleFotoInput(e.target.files[0]));
+  document.getElementById('pkFotoGaleria')?.addEventListener('change', (e) => handleFotoInput(e.target.files[0]));
+  document.getElementById('pkRemoveFotoBtn')?.addEventListener('click', limpiarFotoSeleccionada);
 
   // Botones directos para marcar en el mapa satelital
   document.getElementById('pkMapOrigenBtn')?.addEventListener('click', () => {
@@ -140,8 +143,7 @@ function openPaqueteForm() {
   if (formModal) formModal.style.display = 'flex';
 
   document.getElementById('paqueteFormEl')?.reset();
-  const preview = document.getElementById('pkFotoPreview');
-  if (preview) preview.style.display = 'none';
+  limpiarFotoSeleccionada();
 
   _origenCoords = null;
   _destinoCoords = null;
@@ -182,8 +184,7 @@ function closePaqueteForm() {
   const formModal = document.getElementById('paqueteFormModal');
   if (formModal) formModal.style.display = 'none';
   document.getElementById('paqueteFormEl')?.reset();
-  const preview = document.getElementById('pkFotoPreview');
-  if (preview) preview.style.display = 'none';
+  limpiarFotoSeleccionada();
   openPaqueteriaPanel();
 }
 
@@ -622,22 +623,35 @@ function updateSubmitButtonText() {
 }
 
 /* ══════════════════════════════════════
-   PREVIEW FOTO
+   MANEJO DE FOTO (Cámara y Galería)
    ══════════════════════════════════════ */
-function handleFotoPreview(e) {
-  const file = e.target.files[0];
+function handleFotoInput(file) {
   if (!file) return;
+  _selectedPhotoFile = file;
+
   const preview = document.getElementById('pkFotoPreview');
-  if (!preview) return;
+  const container = document.getElementById('pkFotoPreviewContainer');
+  const label = document.getElementById('pkFotoLabel');
+
   const reader = new FileReader();
   reader.onload = (ev) => {
-    preview.src = ev.target.result;
-    preview.style.display = 'block';
+    if (preview) preview.src = ev.target.result;
+    if (container) container.style.display = 'block';
+    if (label) label.textContent = `📷 ${file.name ? file.name.slice(0, 24) : 'Foto'} (${(file.size / 1024).toFixed(0)} KB)`;
   };
   reader.readAsDataURL(file);
+}
 
-  const label = document.getElementById('pkFotoLabel');
-  if (label) label.textContent = `📷 ${file.name.slice(0, 24)}...`;
+function limpiarFotoSeleccionada() {
+  _selectedPhotoFile = null;
+  const container = document.getElementById('pkFotoPreviewContainer');
+  if (container) container.style.display = 'none';
+  const preview = document.getElementById('pkFotoPreview');
+  if (preview) preview.src = '';
+  const camInput = document.getElementById('pkFotoCamara');
+  if (camInput) camInput.value = '';
+  const galInput = document.getElementById('pkFotoGaleria');
+  if (galInput) galInput.value = '';
 }
 
 /* ══════════════════════════════════════
@@ -681,13 +695,12 @@ async function handlePaqueteSubmit(e) {
   const tamano = document.querySelector('input[name="pkTamano"]:checked')?.value || 'pequeno';
   const descripcion = document.getElementById('pkDescripcion')?.value.trim() || '';
 
-  // Subir foto opcional comprimida
+  // Subir foto opcional comprimida (Cámara o Galería)
   let fotoUrl = null;
-  const fotoFile = document.getElementById('pkFotoInput')?.files[0];
-  if (fotoFile) {
+  if (_selectedPhotoFile) {
     try {
       submitBtn.innerHTML = '📷 Subiendo foto...';
-      const compressed = await compressImage(fotoFile);
+      const compressed = await compressImage(_selectedPhotoFile);
       const fileName = `pkg_${userId}_${Date.now()}.jpg`;
 
       // 1) Intentar en bucket paquetes-fotos

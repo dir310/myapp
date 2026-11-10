@@ -1110,11 +1110,30 @@
                     </div>
                     <div class="pk-field">
                         <label>Foto del paquete (opcional)</label>
-                        <label class="pk-foto-label" for="pkFotoInput">
-                            <span id="pkFotoLabel">📷 Toca para agregar foto</span>
-                        </label>
-                        <input type="file" id="pkFotoInput" accept="image/jpeg,image/png,image/webp">
-                        <img id="pkFotoPreview" alt="Preview del paquete">
+                        <div class="pk-photo-options">
+                            <label class="pk-photo-btn camera" for="pkFotoCamara">
+                                <span>📸</span>
+                                <div>
+                                    <strong>Tomar Foto</strong>
+                                    <small>Cámara en vivo</small>
+                                </div>
+                            </label>
+                            <label class="pk-photo-btn gallery" for="pkFotoGaleria">
+                                <span>🖼️</span>
+                                <div>
+                                    <strong>Galería</strong>
+                                    <small>Elegir guardada</small>
+                                </div>
+                            </label>
+                        </div>
+                        <input type="file" id="pkFotoCamara" accept="image/*" capture="environment" style="display:none;">
+                        <input type="file" id="pkFotoGaleria" accept="image/*" style="display:none;">
+
+                        <div id="pkFotoPreviewContainer" style="display:none;position:relative;margin-top:10px;">
+                            <img id="pkFotoPreview" alt="Preview del paquete" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid rgba(255,255,255,0.15);">
+                            <button type="button" id="pkRemoveFotoBtn" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:13px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+                            <div id="pkFotoLabel" style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;text-align:center;"></div>
+                        </div>
                     </div>
                 </div>
 
