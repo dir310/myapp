@@ -529,8 +529,8 @@ async function openProfile() {
       document.getElementById('profilePicAvatar').style.display = 'none';
     }
 
-    // Cargar estadísticas de viajes normales y viajes agendados
-    const [resNormal, resAgendados] = await Promise.all([
+    // Cargar estadísticas de viajes normales, agendados y paquetes entregados
+    const [resNormal, resAgendados, resPaquetes] = await Promise.all([
       supabase
         .from('viajes')
         .select('created_at, tarifa, destino_nombre, origen_nombre, calificacion')
@@ -540,24 +540,39 @@ async function openProfile() {
         .from('viajes_agendados')
         .select('created_at, tarifa, destino, origen, calificacion')
         .eq('conductor_id', currentProfile.id)
-        .eq('estado', 'completado')
+        .eq('estado', 'completado'),
+      supabase
+        .from('paquetes')
+        .select('created_at, tarifa, destino, origen, codigo_paquete')
+        .eq('conductor_id', currentProfile.id)
+        .eq('estado', 'entregado')
     ]);
 
     const viajesNormales = (resNormal.data || []).map(v => ({
       ...v,
       origen_str: v.origen_nombre,
       destino_str: v.destino_nombre,
-      isAgendado: false
+      isAgendado: false,
+      isPaquete: false
     }));
 
     const viajesAgendados = (resAgendados.data || []).map(v => ({
       ...v,
       origen_str: v.origen,
       destino_str: v.destino,
-      isAgendado: true
+      isAgendado: true,
+      isPaquete: false
     }));
 
-    const todosLosViajes = [...viajesNormales, ...viajesAgendados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const paquetesEntregados = (resPaquetes.data || []).map(p => ({
+      ...p,
+      origen_str: p.origen,
+      destino_str: p.destino,
+      isAgendado: false,
+      isPaquete: true
+    }));
+
+    const todosLosViajes = [...viajesNormales, ...viajesAgendados, ...paquetesEntregados].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     document.getElementById('statTrips').textContent = todosLosViajes.length;
 
@@ -578,13 +593,13 @@ async function openProfile() {
 
     const historyList = document.getElementById('historyList');
     if (todosLosViajes.length === 0) {
-      historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes finalizados aún.</p>';
+      historyList.innerHTML = '<p style="color:rgba(255,255,255,.4); font-size:12px; text-align:center;">No hay viajes ni entregas finalizadas aún.</p>';
     } else {
       const historyHTML = todosLosViajes.slice(0, 7).map(v => `
         <div style="background:rgba(255,255,255,.05); border-radius:8px; padding:10px; font-size:12px; margin-bottom:6px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <span style="color:#30D158; font-weight:bold;">$${Math.round((v.tarifa || 0) * 0.9).toLocaleString('es-CO')}</span>
-            ${v.isAgendado ? '<span style="background:rgba(255,107,0,0.2);color:#FF6B00;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;">📅 Agendado</span>' : ''}
+            ${v.isPaquete ? '<span style="background:rgba(255,149,0,0.2);color:#FF9500;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;">📦 Paquete</span>' : (v.isAgendado ? '<span style="background:rgba(255,107,0,0.2);color:#FF6B00;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;">📅 Agendado</span>' : '<span style="background:rgba(52,152,219,0.15);color:#3498DB;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;">🏍️ Viaje</span>')}
           </div>
           <div style="color:rgba(255,255,255,.8);">${v.origen_str ? v.origen_str.split(',')[0] : ''} ➔ ${v.destino_str ? v.destino_str.split(',')[0] : ''}</div>
         </div>
