@@ -4,6 +4,7 @@
  */
 import { supabase } from '../config/supabase.js';
 import { generateRideCode } from '../utils/id.js';
+import { compressImage } from '../utils/image.js';
 
 let _currentUser = null;
 let _origenCoords = null;   // { lat, lng, name }
@@ -680,22 +681,36 @@ async function handlePaqueteSubmit(e) {
   const tamano = document.querySelector('input[name="pkTamano"]:checked')?.value || 'pequeno';
   const descripcion = document.getElementById('pkDescripcion')?.value.trim() || '';
 
-  // Subir foto opcional
+  // Subir foto opcional comprimida
   let fotoUrl = null;
   const fotoFile = document.getElementById('pkFotoInput')?.files[0];
   if (fotoFile) {
     try {
-      const ext = fotoFile.name.split('.').pop();
-      const path = `paquetes/${userId}/${Date.now()}.${ext}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      submitBtn.innerHTML = '📷 Subiendo foto...';
+      const compressed = await compressImage(fotoFile);
+      const fileName = `pkg_${userId}_${Date.now()}.jpg`;
+
+      // 1) Intentar en bucket paquetes-fotos
+      let uploadRes = await supabase.storage
         .from('paquetes-fotos')
-        .upload(path, fotoFile, { upsert: true });
-      if (!uploadError && uploadData) {
-        const { data: urlData } = supabase.storage.from('paquetes-fotos').getPublicUrl(path);
+        .upload(`packages/${fileName}`, compressed, { upsert: true });
+
+      if (!uploadRes.error) {
+        const { data: urlData } = supabase.storage.from('paquetes-fotos').getPublicUrl(`packages/${fileName}`);
         fotoUrl = urlData?.publicUrl || null;
+      } else {
+        // 2) Fallback al bucket avatars (si paquetes-fotos no estuviera creado aún)
+        console.warn('[Paquetería] Bucket paquetes-fotos no disponible, usando avatars:', uploadRes.error.message);
+        const fallbackRes = await supabase.storage
+          .from('avatars')
+          .upload(`packages/${fileName}`, compressed, { upsert: true });
+        if (!fallbackRes.error) {
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(`packages/${fileName}`);
+          fotoUrl = urlData?.publicUrl || null;
+        }
       }
     } catch (err) {
-      console.warn('[Paquetería] Error subiendo foto:', err);
+      console.warn('[Paquetería] Error procesando foto:', err);
     }
   }
 
