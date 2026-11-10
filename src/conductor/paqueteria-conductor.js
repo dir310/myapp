@@ -211,7 +211,29 @@ function renderPaqueteCard(p) {
       <!-- Detalles paquete -->
       <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">
         ${getTamanoLabel(p.tamano)}
+        ${p.distancia_km ? ` · <strong>${p.distancia_km} km</strong>` : ''}
         ${p.descripcion ? ` · <em>"${p.descripcion}"</em>` : ''}
+      </div>
+
+      <!-- Tarifa e Instrucción de Cobro -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px 12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:800;text-transform:uppercase;letter-spacing:0.5px;">💰 Tarifa del Envío</span>
+          <span style="font-size:18px;color:#30D158;font-weight:900;">$${Number(p.tarifa || 0).toLocaleString('es-CO')}</span>
+        </div>
+        ${
+          p.metodo_pago === 'wompi' && p.pagado
+            ? `<div style="background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.3);color:#30D158;padding:6px 10px;border-radius:8px;font-size:11.5px;font-weight:800;margin-top:8px;text-align:center;">
+                 💳 PAGADO DIGITALMENTE · No cobrar dinero al cliente
+               </div>`
+            : p.paga === 'destinatario'
+              ? `<div style="background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);color:#FF9500;padding:6px 10px;border-radius:8px;font-size:11.5px;font-weight:800;margin-top:8px;text-align:center;">
+                   💵 COBRAR $${Number(p.tarifa || 0).toLocaleString('es-CO')} AL DESTINATARIO (al entregar)
+                 </div>`
+              : `<div style="background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);color:#FF9500;padding:6px 10px;border-radius:8px;font-size:11.5px;font-weight:800;margin-top:8px;text-align:center;">
+                   💵 COBRAR $${Number(p.tarifa || 0).toLocaleString('es-CO')} AL REMITENTE (al recoger)
+                 </div>`
+        }
       </div>
 
       <!-- Contactos -->
