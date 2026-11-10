@@ -841,6 +841,132 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── Botón de Emergencia S.O.S (WhatsApp Policía La Calera 3214429893) ──
+  const POLICIA_WHATSAPP = '573214429893';
+
+  async function activarEmergenciaSOS(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const nombre = localStorage.getItem('calmovil_cliente_nombre') || 'Pasajero Zippy';
+    const telefono = localStorage.getItem('calmovil_cliente_telefono') || 'No registrado';
+    const cedula = localStorage.getItem('calmovil_cliente_cedula') || '';
+
+    // Feedback visual inmediato en los botones
+    const btns = document.querySelectorAll('.btn-emergency');
+    btns.forEach(b => {
+      b.dataset.origHtml = b.innerHTML;
+      b.innerHTML = '<span class="emergency-icon">🚨</span> Conectando con Policía...';
+      b.style.pointerEvents = 'none';
+    });
+
+    // 1. Obtener ubicación GPS actual en tiempo real
+    let lat = null;
+    let lng = null;
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject();
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 3500,
+          maximumAge: 10000
+        });
+      });
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } catch (err) {
+      if (state?.startLatLng) {
+        lat = state.startLatLng.lat;
+        lng = state.startLatLng.lng;
+      }
+    }
+
+    // 2. Obtener datos del conductor y la moto si hay viaje activo
+    let conductor = window.lastAssignedDriver || null;
+
+    if (!conductor && state?.currentRideId) {
+      try {
+        const { data: v } = await supabase
+          .from('viajes')
+          .select('conductor_id, conductor:conductores(nombre, placa, telefono, marca_cilindraje_color)')
+          .eq('id', state.currentRideId)
+          .single();
+        if (v?.conductor) {
+          conductor = {
+            nombre: v.conductor.nombre || 'Conductor asignado',
+            placa: v.conductor.placa || '---',
+            vehiculo: v.conductor.marca_cilindraje_color || 'Moto Zippy',
+            telefono: v.conductor.telefono || ''
+          };
+        }
+      } catch (err) {}
+    }
+
+    if (!conductor && window.lastScheduledConductorRenderedId) {
+      try {
+        const { data: c } = await supabase
+          .from('conductores')
+          .select('nombre, placa, telefono, marca_cilindraje_color')
+          .eq('id', window.lastScheduledConductorRenderedId)
+          .single();
+        if (c) {
+          conductor = {
+            nombre: c.nombre || 'Conductor asignado',
+            placa: c.placa || '---',
+            vehiculo: c.marca_cilindraje_color || 'Moto Zippy',
+            telefono: c.telefono || ''
+          };
+        }
+      } catch (err) {}
+    }
+
+    // 3. Formatear mensaje para WhatsApp
+    const fechaHora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+    const ubicacionMaps = (lat && lng)
+      ? `https://maps.google.com/?q=${lat.toFixed(6)},${lng.toFixed(6)}`
+      : 'Ubicación GPS no disponible';
+
+    let msg = `🚨 *¡ALERTA DE EMERGENCIA - S.O.S ZIPPY!* 🚨\n`;
+    msg += `*¡ESTOY EN PELIGRO!* Solicito auxilio y presencia policial inmediata en mi ubicación.\n\n`;
+
+    msg += `👤 *DATOS DEL PASAJERO:*\n`;
+    msg += `• *Nombre:* ${nombre}\n`;
+    msg += `• *Celular:* ${telefono}\n`;
+    if (cedula) msg += `• *Cédula:* ${cedula}\n`;
+    msg += `• *Fecha y Hora:* ${fechaHora}\n\n`;
+
+    msg += `📍 *MI UBICACIÓN EN TIEMPO REAL:*\n`;
+    msg += `${ubicacionMaps}\n\n`;
+
+    if (conductor) {
+      msg += `🏍️ *DATOS DE LA MOTO Y CONDUCTOR:*\n`;
+      msg += `• *Conductor:* ${conductor.nombre}\n`;
+      msg += `• *Placa:* ${conductor.placa}\n`;
+      if (conductor.vehiculo) msg += `• *Vehículo:* ${conductor.vehiculo}\n`;
+      if (conductor.telefono) msg += `• *Celular Conductor:* ${conductor.telefono}\n\n`;
+    } else {
+      msg += `ℹ️ *Estado:* Alerta emitida desde la app Zippy (sin viaje activo en curso).\n\n`;
+    }
+
+    msg += `⚠️ _Reporte generado automáticamente desde el Botón de Emergencia de la app ZIPPY La Calera._`;
+
+    // Restaurar botones después de unos segundos
+    setTimeout(() => {
+      btns.forEach(b => {
+        b.innerHTML = b.dataset.origHtml || '<span class="emergency-icon">🚨</span> EMERGENCIA (Ayuda S.O.S)';
+        b.style.pointerEvents = 'auto';
+      });
+    }, 2500);
+
+    // 4. Redirigir a WhatsApp de la Estación
+    const waUrl = `https://wa.me/${POLICIA_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+    window.location.href = waUrl;
+  }
+
+  // Vincular eventos a todos los botones de emergencia
+  document.querySelectorAll('.btn-emergency').forEach(btn => {
+    btn.addEventListener('click', activarEmergenciaSOS);
+  });
+
   // --- Botón cerrar Protocolo de Seguridad (Pasajero) ---
   const closePassengerSafetyBtn = document.getElementById('closePassengerSafetyBtn');
   if (closePassengerSafetyBtn) {

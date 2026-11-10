@@ -827,6 +827,12 @@ async function showDriverAssigned(driverId, state) {
     vehiculo: driver?.marca_cilindraje_color || 'Moto',
     telefono: driver?.telefono || ''
   };
+  window.lastAssignedDriver = {
+    nombre: driverName,
+    placa: driverDetails.placa,
+    vehiculo: driverDetails.vehiculo,
+    telefono: driverDetails.telefono
+  };
 
   // Frases de Seguridad y Motivación
   const phrases = [

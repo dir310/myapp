@@ -377,6 +377,13 @@
                         style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;color:rgba(255,255,255,0.9);font-size:13px;font-weight:800;cursor:pointer;padding:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;transition:all 0.2s;">
                         📖 Guía de la App
                     </button>
+
+                    <!-- Botón Emergencia S.O.S -->
+                    <button id="sidebarEmergencyBtn" class="btn-emergency" type="button"
+                        style="width:100%;margin-top:14px;padding:13px;font-size:13px;border-radius:14px;box-sizing:border-box;">
+                        <span class="emergency-icon">🚨</span>
+                        EMERGENCIA S.O.S
+                    </button>
                 </div>
             </div>
 
@@ -445,11 +452,11 @@
 
             <div class="status-bar" id="statusBar"></div>
 
-            <!-- Emergencia -->
-            <a href="tel:3223482399" class="btn-emergency">
+            <!-- Emergencia S.O.S -->
+            <button type="button" id="emergencyBtn" class="btn-emergency">
                 <span class="emergency-icon">🚨</span>
-                EMERGENCIA (Ayuda)
-            </a>
+                EMERGENCIA (Ayuda S.O.S)
+            </button>
 
             <!-- Acerca de ZIPPY Btn -->
             <button class="btn" style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; color:rgba(255,255,255,.6); font-size:12px; padding:12px; width:100%; margin-top:10px; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;" id="openAboutBtn">
