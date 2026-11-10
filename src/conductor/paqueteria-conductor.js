@@ -114,11 +114,19 @@ export async function loadPaquetesPendientes() {
     const rejectBtn = document.getElementById(`rejectPkg-${p.id}`);
     const fotoImg   = document.getElementById(`fotoThumb-${p.id}`);
 
-    acceptBtn?.addEventListener('click', () => acceptarPaquete(p.id));
-    recogeBtn?.addEventListener('click', () => marcarRecogido(p.id));
+    const wazeRecogeBtn = document.getElementById(`wazeRecogidaPkg-${p.id}`);
+    const wazeDestinoPreviewBtn = document.getElementById(`wazeDestinoPreviewPkg-${p.id}`);
+    const wazeDestinoBtn = document.getElementById(`wazeDestinoPkg-${p.id}`);
+
+    acceptBtn?.addEventListener('click', () => acceptarPaquete(p.id, p.origen_lat, p.origen_lng, p.origen));
+    recogeBtn?.addEventListener('click', () => marcarRecogido(p.id, p.destino_lat, p.destino_lng, p.destino));
     entregaBtn?.addEventListener('click', () => marcarEntregado(p.id));
     rejectBtn?.addEventListener('click', () => rechazarPaquete(p.id));
     fotoImg?.addEventListener('click', () => verFotoFullscreen(p.foto_url));
+
+    wazeRecogeBtn?.addEventListener('click', () => abrirWaze(p.origen_lat, p.origen_lng, p.origen));
+    wazeDestinoPreviewBtn?.addEventListener('click', () => abrirWaze(p.destino_lat, p.destino_lng, p.destino));
+    wazeDestinoBtn?.addEventListener('click', () => abrirWaze(p.destino_lat, p.destino_lng, p.destino));
   });
 }
 
@@ -157,26 +165,41 @@ function renderPaqueteCard(p) {
   let botonesHtml = '';
   if (isPendiente) {
     botonesHtml = `
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="acceptPkg-${p.id}" style="flex:1;background:rgba(48,209,88,0.2);border:1px solid rgba(48,209,88,0.5);color:#30D158;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">
-          ✅ Aceptar
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="acceptPkg-${p.id}" style="flex:1.2;background:linear-gradient(135deg,#30D158,#28b84d);border:none;color:#000;border-radius:12px;padding:13px;font-weight:900;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 15px rgba(48,209,88,0.3);">
+          ✅ Aceptar Envío
         </button>
-        <button id="rejectPkg-${p.id}" style="flex:1;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);color:#FF3B30;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">
+        <button id="rejectPkg-${p.id}" style="flex:0.8;background:rgba(255,59,48,0.12);border:1px solid rgba(255,59,48,0.3);color:#FF3B30;border-radius:12px;padding:13px;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">
           ❌ Rechazar
         </button>
       </div>
     `;
   } else if (isAceptado) {
     botonesHtml = `
-      <button id="recogePkg-${p.id}" style="width:100%;background:rgba(88,86,214,0.2);border:1px solid rgba(88,86,214,0.5);color:#5856D6;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif;">
-        🚗 Marcar como Recogido
-      </button>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <button id="wazeRecogidaPkg-${p.id}" style="width:100%;padding:13px;border-radius:12px;font-weight:900;font-size:13.5px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 15px rgba(51,204,255,0.35);font-family:'Inter',sans-serif;">
+          📍 Navegar a Recoger (Waze)
+        </button>
+        <div style="display:flex;gap:8px;">
+          <button id="wazeDestinoPreviewPkg-${p.id}" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);border-radius:10px;padding:10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px;">
+            🏁 Ver Destino (Waze)
+          </button>
+          <button id="recogePkg-${p.id}" style="flex:1.4;background:rgba(88,86,214,0.25);border:1px solid rgba(88,86,214,0.6);color:#fff;border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;">
+            🚗 Ya lo Recogí
+          </button>
+        </div>
+      </div>
     `;
   } else if (isRecogido) {
     botonesHtml = `
-      <button id="entregaPkg-${p.id}" style="width:100%;background:rgba(48,209,88,0.2);border:1px solid rgba(48,209,88,0.5);color:#30D158;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif;">
-        ✅ Marcar como Entregado
-      </button>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <button id="wazeDestinoPkg-${p.id}" style="width:100%;padding:13px;border-radius:12px;font-weight:900;font-size:13.5px;cursor:pointer;background:#33CCFF;color:#000;border:none;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 15px rgba(51,204,255,0.35);font-family:'Inter',sans-serif;">
+          🏁 Navegar a Entrega (Waze)
+        </button>
+        <button id="entregaPkg-${p.id}" style="width:100%;background:linear-gradient(135deg,#30D158,#28b84d);border:none;color:#000;border-radius:12px;padding:13px;font-weight:900;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 15px rgba(48,209,88,0.3);">
+          ✅ Marcar como Entregado
+        </button>
+      </div>
     `;
   }
 
@@ -261,9 +284,19 @@ function renderPaqueteCard(p) {
 }
 
 /* ═══════════════════════════════════════════
-   ACCIONES
+   ACCIONES CON NAVEGACIÓN WAZE
    ═══════════════════════════════════════════ */
-async function acceptarPaquete(paqueteId) {
+function abrirWaze(lat, lng, fallbackAddress = '') {
+  if (lat && lng) {
+    window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank');
+  } else if (fallbackAddress) {
+    window.open(`https://waze.com/ul?q=${encodeURIComponent(fallbackAddress)}&navigate=yes`, '_blank');
+  } else {
+    alert('No se encontraron coordenadas para esta ubicación.');
+  }
+}
+
+async function acceptarPaquete(paqueteId, origenLat, origenLng, origenTxt) {
   const btn = document.getElementById(`acceptPkg-${paqueteId}`);
   if (btn) { btn.textContent = '⏳ Aceptando...'; btn.disabled = true; }
 
@@ -274,16 +307,21 @@ async function acceptarPaquete(paqueteId) {
     .eq('estado', 'pendiente'); // Evita race condition
 
   if (error) {
-    if (btn) { btn.textContent = '✅ Aceptar'; btn.disabled = false; }
+    if (btn) { btn.textContent = '✅ Aceptar Envío'; btn.disabled = false; }
     showToast('❌ Error al aceptar. Intenta de nuevo.', '#FF3B30');
     return;
   }
-  showToast('✅ ¡Paquete aceptado! Recoge en la dirección de origen.', '#30D158');
+  showToast('✅ ¡Paquete aceptado! Abriendo Waze a recogida...', '#30D158');
   loadPaquetesPendientes();
   updatePendingBadge();
+
+  // Abrir Waze directo a la recogida
+  setTimeout(() => {
+    abrirWaze(origenLat, origenLng, origenTxt);
+  }, 400);
 }
 
-async function marcarRecogido(paqueteId) {
+async function marcarRecogido(paqueteId, destinoLat, destinoLng, destinoTxt) {
   const { error } = await supabase
     .from('paquetes')
     .update({ estado: 'recogido' })
@@ -291,8 +329,13 @@ async function marcarRecogido(paqueteId) {
     .eq('conductor_id', _conductorId);
 
   if (error) { showToast('❌ Error actualizando estado.', '#FF3B30'); return; }
-  showToast('🚗 ¡Paquete recogido! Ve a la dirección de entrega.', '#5856D6');
+  showToast('🚗 ¡Paquete recogido! Abriendo Waze a entrega...', '#5856D6');
   loadPaquetesPendientes();
+
+  // Abrir Waze directo a la entrega
+  setTimeout(() => {
+    abrirWaze(destinoLat, destinoLng, destinoTxt);
+  }, 400);
 }
 
 async function marcarEntregado(paqueteId) {
