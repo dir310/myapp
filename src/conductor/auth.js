@@ -3,6 +3,7 @@ import { zippyAlert, zippyDanger } from '../utils/ui-global.js';
 import { loadViajes, setupRealtimeChannel } from './realtime.js';
 import { initRadar, resetRenderCache } from './ui.js';
 import { compressImage } from '../utils/image.js';
+import { initPaqueteriaConductor, loadPaquetesPendientes } from './paqueteria-conductor.js';
 
 let currentUser = null;
 let currentProfile = null;
@@ -296,6 +297,13 @@ function proceedToApp() {
   loadViajes();
   setupRealtimeChannel();
   initRadar();
+
+  // ── Módulo de Paquetería para el conductor ──
+  if (currentProfile && currentProfile.id) {
+    initPaqueteriaConductor(currentProfile.id);
+    // Exponer función globalmente para switchTab
+    window.loadPaquetesConductor = loadPaquetesPendientes;
+  }
 
   // Registrar en OneSignal para recibir Push Notifications
   if (window.OneSignalDeferred && currentProfile && currentProfile.id) {
