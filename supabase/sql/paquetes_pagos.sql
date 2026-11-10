@@ -124,3 +124,25 @@ drop trigger if exists paquetes_proteger_pagos on public.paquetes;
 create trigger paquetes_proteger_pagos
   before insert or update on public.paquetes
   for each row execute function public.paquetes_proteger_pagos();
+
+
+-- 4) Bucket de Storage para fotos de paquetes ───────────────────────────────
+insert into storage.buckets (id, name, public)
+values ('paquetes-fotos', 'paquetes-fotos', true)
+on conflict (id) do update set public = true;
+
+-- Políticas de acceso para que pasajeros y conductores puedan ver y subir fotos
+drop policy if exists "Fotos paquetes acceso publico" on storage.objects;
+create policy "Fotos paquetes acceso publico"
+  on storage.objects for select
+  using (bucket_id = 'paquetes-fotos');
+
+drop policy if exists "Fotos paquetes subida publica" on storage.objects;
+create policy "Fotos paquetes subida publica"
+  on storage.objects for insert
+  with check (bucket_id = 'paquetes-fotos');
+
+drop policy if exists "Fotos paquetes actualizacion publica" on storage.objects;
+create policy "Fotos paquetes actualizacion publica"
+  on storage.objects for update
+  using (bucket_id = 'paquetes-fotos');
