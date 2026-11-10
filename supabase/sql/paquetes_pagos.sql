@@ -14,6 +14,7 @@ alter table public.paquetes add column if not exists duracion_min         intege
 alter table public.paquetes add column if not exists metodo_pago          text default 'efectivo';
 alter table public.paquetes add column if not exists paga                 text default 'remitente';
 alter table public.paquetes add column if not exists pagado               boolean not null default false;
+alter table public.paquetes add column if not exists liquidado            boolean default false;
 alter table public.paquetes add column if not exists wompi_referencia     text;
 alter table public.paquetes add column if not exists wompi_transaccion_id text;
 alter table public.paquetes add column if not exists wompi_estado         text;
