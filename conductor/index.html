@@ -373,9 +373,13 @@
     <div id="mainAppContent" style="display:none;">
 
         <!-- Tabs -->
-        <div style="display:flex;gap:8px;margin-bottom:14px;">
-            <button id="tabEnCurso" onclick="switchTab('enCurso')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,107,0,.2);color:#FF6B00;border:1px solid rgba(255,107,0,.4);">📡 En Curso</button>
-            <button id="tabAgendados" onclick="switchTab('agendados')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);">📅 Agendados</button>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+            <button id="tabEnCurso" onclick="switchTab('enCurso')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;background:rgba(255,107,0,.2);color:#FF6B00;border:1px solid rgba(255,107,0,.4);">📡 En Curso</button>
+            <button id="tabAgendados" onclick="switchTab('agendados')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);">📅 Agendados</button>
+            <button id="tabPaquetes" onclick="switchTab('paquetes')" style="flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);position:relative;">
+                📦 Paquetes
+                <span id="paquetesBadge" style="display:none;position:absolute;top:-6px;right:-4px;background:#FF3B30;color:#fff;font-size:10px;font-weight:900;border-radius:50%;width:18px;height:18px;align-items:center;justify-content:center;border:2px solid #1c1c1e;"></span>
+            </button>
         </div>
 
         <!-- Panel En Curso -->
@@ -401,23 +405,53 @@
             </div>
         </div>
 
+        <!-- Panel Paquetes -->
+        <div id="panelPaquetes" style="display:none;">
+            <div id="paquetesList">
+                <div style="text-align:center;padding:50px 20px;">
+                    <div style="font-size:48px;margin-bottom:14px;opacity:0.3;">📦</div>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.4);">Cargando paquetes...</p>
+                </div>
+            </div>
+        </div>
+
     </div> <!-- End mainAppContent -->
 
     <script>
     function switchTab(tab) {
-        const enCurso = document.getElementById('panelEnCurso');
+        const enCurso   = document.getElementById('panelEnCurso');
         const agendados = document.getElementById('panelAgendados');
+        const paquetes  = document.getElementById('panelPaquetes');
         const tabEC = document.getElementById('tabEnCurso');
         const tabAG = document.getElementById('tabAgendados');
+        const tabPK = document.getElementById('tabPaquetes');
+
+        // Resetear todos
+        [enCurso, agendados, paquetes].forEach(p => p && (p.style.display = 'none'));
+        [tabEC, tabAG, tabPK].forEach(t => {
+            if (!t) return;
+            t.style.background  = 'rgba(255,255,255,.05)';
+            t.style.color       = 'rgba(255,255,255,.5)';
+            t.style.borderColor = 'rgba(255,255,255,.1)';
+        });
+
         if (tab === 'enCurso') {
-            enCurso.style.display = 'block'; agendados.style.display = 'none';
-            tabEC.style.background = 'rgba(255,107,0,.2)'; tabEC.style.color = '#FF6B00'; tabEC.style.borderColor = 'rgba(255,107,0,.4)';
-            tabAG.style.background = 'rgba(255,255,255,.05)'; tabAG.style.color = 'rgba(255,255,255,.5)'; tabAG.style.borderColor = 'rgba(255,255,255,.1)';
-        } else {
-            enCurso.style.display = 'none'; agendados.style.display = 'block';
-            tabAG.style.background = 'rgba(255,107,0,.2)'; tabAG.style.color = '#FF6B00'; tabAG.style.borderColor = 'rgba(255,107,0,.4)';
-            tabEC.style.background = 'rgba(255,255,255,.05)'; tabEC.style.color = 'rgba(255,255,255,.5)'; tabEC.style.borderColor = 'rgba(255,255,255,.1)';
+            enCurso.style.display = 'block';
+            tabEC.style.background  = 'rgba(255,107,0,.2)';
+            tabEC.style.color       = '#FF6B00';
+            tabEC.style.borderColor = 'rgba(255,107,0,.4)';
+        } else if (tab === 'agendados') {
+            agendados.style.display = 'block';
+            tabAG.style.background  = 'rgba(255,107,0,.2)';
+            tabAG.style.color       = '#FF6B00';
+            tabAG.style.borderColor = 'rgba(255,107,0,.4)';
             if (window.loadAgendados) window.loadAgendados();
+        } else if (tab === 'paquetes') {
+            paquetes.style.display = 'block';
+            tabPK.style.background  = 'rgba(255,107,0,.2)';
+            tabPK.style.color       = '#FF6B00';
+            tabPK.style.borderColor = 'rgba(255,107,0,.4)';
+            if (window.loadPaquetesConductor) window.loadPaquetesConductor();
         }
     }
     </script>
