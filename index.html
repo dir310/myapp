@@ -1010,14 +1010,57 @@
                 <!-- ── RUTA ── -->
                 <div class="pk-section">
                     <div class="pk-section-label">📍 Ruta del paquete</div>
-                    <div class="pk-field">
-                        <label>Dirección de recogida *</label>
-                        <input id="pkOrigen" type="text" placeholder="Ej: Calle 10 #5-20, La Calera" required>
+                    <div class="pk-field pk-addr-wrap">
+                        <label>¿Dónde recogemos? *</label>
+                        <div class="pk-addr-input">
+                            <span class="pk-addr-dot" style="background:#30D158;"></span>
+                            <input id="pkOrigen" type="text" placeholder="Busca barrio, lugar o dirección" required>
+                        </div>
+                        <div class="pk-sugg" id="pkOrigenSugg"></div>
+                        <input id="pkOrigenDetalle" class="pk-addr-detail" type="text" placeholder="Detalles: casa, apto, portería... (opcional)">
                     </div>
-                    <div class="pk-field">
-                        <label>Dirección de entrega *</label>
-                        <input id="pkDestino" type="text" placeholder="Ej: Carrera 7 #100-30, Bogotá" required>
+                    <div class="pk-field pk-addr-wrap">
+                        <label>¿Dónde entregamos? *</label>
+                        <div class="pk-addr-input">
+                            <span class="pk-addr-dot" style="background:#FF6B00;"></span>
+                            <input id="pkDestino" type="text" placeholder="Busca barrio, lugar o dirección" required>
+                        </div>
+                        <div class="pk-sugg" id="pkDestinoSugg"></div>
+                        <input id="pkDestinoDetalle" class="pk-addr-detail" type="text" placeholder="Detalles: casa, apto, portería... (opcional)">
                     </div>
+                </div>
+
+                <!-- ── TAMAÑO ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">📏 Tamaño del paquete</div>
+                    <div class="pk-size-grid">
+                        <label class="pk-size-card">
+                            <input type="radio" name="pkTamano" value="pequeno">
+                            <span class="pk-size-emoji">✉️</span>
+                            <span class="pk-size-name">Pequeño</span>
+                            <span class="pk-size-desc">Sobre o mochila</span>
+                            <span class="pk-size-extra">Sin recargo</span>
+                        </label>
+                        <label class="pk-size-card">
+                            <input type="radio" name="pkTamano" value="mediano">
+                            <span class="pk-size-emoji">📦</span>
+                            <span class="pk-size-name">Mediano</span>
+                            <span class="pk-size-desc">Caja de zapatos</span>
+                            <span class="pk-size-extra">+$1.500</span>
+                        </label>
+                        <label class="pk-size-card">
+                            <input type="radio" name="pkTamano" value="grande">
+                            <span class="pk-size-emoji">🗃️</span>
+                            <span class="pk-size-name">Grande</span>
+                            <span class="pk-size-desc">Cabe en la parrilla</span>
+                            <span class="pk-size-extra">+$3.000</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ── TARIFA (se llena sola) ── -->
+                <div class="pk-price-card" id="pkPriceCard">
+                    <div class="pk-price-placeholder">💰 Elige origen, destino y tamaño para ver la tarifa</div>
                 </div>
 
                 <div class="pk-divider"></div>
@@ -1056,15 +1099,6 @@
                 <div class="pk-section">
                     <div class="pk-section-label">📋 Detalles del paquete</div>
                     <div class="pk-field">
-                        <label>Tamaño *</label>
-                        <select id="pkTamano" required>
-                            <option value="" disabled selected>Selecciona el tamaño</option>
-                            <option value="pequeno">📦 Pequeño — cabe en una mochila</option>
-                            <option value="mediano">📫 Mediano — caja de zapatos</option>
-                            <option value="grande">🗃️ Grande — caja grande</option>
-                        </select>
-                    </div>
-                    <div class="pk-field">
                         <label>Descripción (opcional)</label>
                         <textarea id="pkDescripcion" placeholder="¿Qué contiene el paquete? Ej: ropa, documentos, electrónicos..."></textarea>
                     </div>
@@ -1076,6 +1110,42 @@
                         <input type="file" id="pkFotoInput" accept="image/jpeg,image/png,image/webp">
                         <img id="pkFotoPreview" alt="Preview del paquete">
                     </div>
+                </div>
+
+                <div class="pk-divider"></div>
+
+                <!-- ── PAGO ── -->
+                <div class="pk-section">
+                    <div class="pk-section-label">💳 Pago</div>
+
+                    <div class="pk-pay-subtitle">¿Quién paga el envío?</div>
+                    <div class="pk-choice-grid" id="pkPagaGrid">
+                        <button type="button" class="pk-choice active" data-paga="remitente">
+                            <span class="pk-choice-emoji">📤</span>
+                            <span class="pk-choice-name">Yo pago</span>
+                            <span class="pk-choice-desc">Quien envía</span>
+                        </button>
+                        <button type="button" class="pk-choice" data-paga="destinatario">
+                            <span class="pk-choice-emoji">📥</span>
+                            <span class="pk-choice-name">Paga quien recibe</span>
+                            <span class="pk-choice-desc">En efectivo al entregar</span>
+                        </button>
+                    </div>
+
+                    <div class="pk-pay-subtitle">Método de pago</div>
+                    <div class="pk-choice-grid" id="pkMetodoGrid">
+                        <button type="button" class="pk-choice active" data-metodo="efectivo">
+                            <span class="pk-choice-emoji">💵</span>
+                            <span class="pk-choice-name">Efectivo</span>
+                            <span class="pk-choice-desc">Al conductor</span>
+                        </button>
+                        <button type="button" class="pk-choice" data-metodo="wompi">
+                            <span class="pk-choice-emoji">💳</span>
+                            <span class="pk-choice-name">Wompi</span>
+                            <span class="pk-choice-desc">Tarjeta, PSE, Nequi</span>
+                        </button>
+                    </div>
+                    <div class="pk-pay-note" id="pkPayNote">💵 Pagas en efectivo al conductor cuando recoja el paquete.</div>
                 </div>
 
                 <button type="submit" class="pk-submit-btn" id="submitPaqueteBtn">
