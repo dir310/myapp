@@ -49,13 +49,28 @@ export function initPaqueteria(userId) {
   // Preview foto
   document.getElementById('pkFotoInput')?.addEventListener('change', handleFotoPreview);
 
+  // Botones directos para marcar en el mapa satelital
+  document.getElementById('pkMapOrigenBtn')?.addEventListener('click', () => {
+    activarSeleccionPuntoEnMapa('origen', (coords) => {
+      _origenCoords = coords;
+      recalcularTarifaPaquete();
+    });
+  });
+
+  document.getElementById('pkMapDestinoBtn')?.addEventListener('click', () => {
+    activarSeleccionPuntoEnMapa('destino', (coords) => {
+      _destinoCoords = coords;
+      recalcularTarifaPaquete();
+    });
+  });
+
   // Listeners de autocompletado de origen y destino
-  setupAddressAutocomplete('pkOrigen', 'pkOrigenSugg', (coords) => {
+  setupAddressAutocomplete('pkOrigen', 'pkOrigenSugg', 'origen', (coords) => {
     _origenCoords = coords;
     recalcularTarifaPaquete();
   });
 
-  setupAddressAutocomplete('pkDestino', 'pkDestinoSugg', (coords) => {
+  setupAddressAutocomplete('pkDestino', 'pkDestinoSugg', 'destino', (coords) => {
     _destinoCoords = coords;
     recalcularTarifaPaquete();
   });
@@ -172,16 +187,16 @@ function closePaqueteForm() {
 }
 
 /* ══════════════════════════════════════
-   AUTOCOMPLETADO DE DIRECCIONES (Nominatim)
+   AUTOCOMPLETADO Y SELECCIÓN EN MAPA
    ══════════════════════════════════════ */
-function setupAddressAutocomplete(inputId, suggId, onSelectCoords) {
+function setupAddressAutocomplete(inputId, suggId, targetType, onSelectCoords) {
   const input = document.getElementById(inputId);
   const sugg = document.getElementById(suggId);
   if (!input || !sugg) return;
 
   input.addEventListener('focus', () => {
     if (!input.value.trim()) {
-      showEmptyAddressSugg(sugg, input, onSelectCoords);
+      showEmptyAddressSugg(sugg, input, targetType, onSelectCoords);
     }
   });
 
@@ -192,7 +207,7 @@ function setupAddressAutocomplete(inputId, suggId, onSelectCoords) {
 
     if (q.length < 3) {
       if (q.length === 0) {
-        showEmptyAddressSugg(sugg, input, onSelectCoords);
+        showEmptyAddressSugg(sugg, input, targetType, onSelectCoords);
       } else {
         sugg.style.display = 'none';
       }
@@ -205,9 +220,16 @@ function setupAddressAutocomplete(inputId, suggId, onSelectCoords) {
   });
 }
 
-function showEmptyAddressSugg(sugg, input, onSelectCoords) {
+function showEmptyAddressSugg(sugg, input, targetType, onSelectCoords) {
   sugg.innerHTML = `
-    <div class="pk-sugg-item" id="pkUseGpsBtn">
+    <div class="pk-sugg-item" id="pkPickOnMapSuggBtn-${targetType}">
+      <span>🗺️</span>
+      <div>
+        <span class="pk-sugg-main">Tocar en el mapa satelital</span>
+        <span class="pk-sugg-sub">Marca el lugar exacto sin dirección escrita</span>
+      </div>
+    </div>
+    <div class="pk-sugg-item" id="pkUseGpsBtn-${targetType}">
       <span>🎯</span>
       <div>
         <span class="pk-sugg-main">Usar mi ubicación actual</span>
@@ -217,7 +239,14 @@ function showEmptyAddressSugg(sugg, input, onSelectCoords) {
   `;
   sugg.style.display = 'block';
 
-  sugg.querySelector('#pkUseGpsBtn')?.addEventListener('click', () => {
+  // Opción 1: Tocar en mapa satelital
+  sugg.querySelector(`#pkPickOnMapSuggBtn-${targetType}`)?.addEventListener('click', () => {
+    sugg.style.display = 'none';
+    activarSeleccionPuntoEnMapa(targetType, onSelectCoords);
+  });
+
+  // Opción 2: GPS
+  sugg.querySelector(`#pkUseGpsBtn-${targetType}`)?.addEventListener('click', () => {
     if (!navigator.geolocation) {
       alert('Tu navegador no soporta geolocalización');
       return;
@@ -251,6 +280,109 @@ function showEmptyAddressSugg(sugg, input, onSelectCoords) {
       { enableHighAccuracy: true, timeout: 9000 }
     );
   });
+}
+
+/**
+ * Abre el mapa satelital a pantalla completa para marcar un punto,
+ * y luego se cierra automáticamente reabriendo el formulario y recalculando la tarifa.
+ */
+function activarSeleccionPuntoEnMapa(targetType, onSelectCoords) {
+  const map = window.mainMap;
+  if (!map) {
+    alert('El mapa aún se está inicializando. Por favor intenta de nuevo en un segundo.');
+    return;
+  }
+
+  // 1. Ocultar temporalmente el modal de paquete y cerrar sidebar
+  const formModal = document.getElementById('paqueteFormModal');
+  if (formModal) formModal.style.display = 'none';
+  document.getElementById('sidebar')?.classList.add('minimized');
+
+  // Asegurar que el mapa recalcule su tamaño si estaba oculto
+  setTimeout(() => map.invalidateSize(), 150);
+
+  // 2. Crear banner flotante superior
+  document.getElementById('pkMapSelectorBar')?.remove();
+  const bar = document.createElement('div');
+  bar.id = 'pkMapSelectorBar';
+  bar.className = 'pk-map-selector-bar';
+
+  const isDestino = targetType === 'destino';
+  const labelTipo = isDestino ? 'de entrega' : 'de recogida';
+  const iconEmoji = isDestino ? '🟠' : '🟢';
+
+  bar.innerHTML = `
+    <span class="icon">${iconEmoji}</span>
+    <div class="text">
+      <div class="title">Toca el punto ${labelTipo} en el mapa</div>
+      <div class="sub">Toca la finca, casa o sector satelital exacto</div>
+    </div>
+    <button type="button" class="cancel-btn" id="pkCancelMapPickBtn">✕ Cancelar</button>
+  `;
+  document.body.appendChild(bar);
+
+  // Botón cancelar
+  bar.querySelector('#pkCancelMapPickBtn')?.addEventListener('click', () => {
+    map.off('click', onMapClickListener);
+    bar.remove();
+    if (formModal) formModal.style.display = 'flex';
+  });
+
+  // 3. Listener one-time de clic en el mapa
+  const onMapClickListener = async (e) => {
+    map.off('click', onMapClickListener);
+    bar.remove();
+
+    const { lat, lng } = e.latlng;
+    showToast('📍 Obteniendo punto satelital...', '#3498DB');
+
+    let lugarNombre = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const data = await res.json();
+      if (data && data.address) {
+        const a = data.address;
+        const road = a.road || a.pedestrian || a.footway || '';
+        const house = a.house_number || '';
+        const sector = a.neighbourhood || a.suburb || a.village || a.hamlet || a.isolated_dwelling || '';
+        const mun = a.town || a.municipality || a.city || 'La Calera';
+
+        if (road) {
+          lugarNombre = house ? `${road} #${house}` : road;
+          if (sector) lugarNombre += `, ${sector}`;
+        } else if (sector) {
+          lugarNombre = `${sector}, ${mun}`;
+        } else if (data.display_name) {
+          lugarNombre = data.display_name.split(',').slice(0, 2).join(',').trim();
+        }
+      }
+    } catch (err) {
+      console.warn('[Paquetería] Error geocodificando reverso:', err);
+    }
+
+    // 4. Reabrir automáticamente el formulario
+    if (formModal) formModal.style.display = 'flex';
+
+    // 5. Rellenar el input correspondiente
+    const inputId = isDestino ? 'pkDestino' : 'pkOrigen';
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+      inputEl.value = lugarNombre;
+      inputEl.classList.add('pk-addr-ok');
+    }
+
+    // 6. Asignar coordenadas y recalcular tarifa de una
+    onSelectCoords({
+      lat,
+      lng,
+      name: lugarNombre,
+    });
+
+    showToast(`✅ Punto fijado: ${lugarNombre.slice(0, 30)}...`, '#30D158');
+  };
+
+  // Registrar clic en el mapa
+  map.on('click', onMapClickListener);
 }
 
 async function fetchAddressSuggestions(q, sugg, input, onSelectCoords) {

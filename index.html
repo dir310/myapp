@@ -1011,22 +1011,28 @@
                 <div class="pk-section">
                     <div class="pk-section-label">📍 Ruta del paquete</div>
                     <div class="pk-field pk-addr-wrap">
-                        <label>¿Dónde recogemos? *</label>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <label style="margin:0;">¿Dónde recogemos? *</label>
+                            <button type="button" class="pk-map-btn" id="pkMapOrigenBtn">🗺️ Tocar en Mapa</button>
+                        </div>
                         <div class="pk-addr-input">
                             <span class="pk-addr-dot" style="background:#30D158;"></span>
-                            <input id="pkOrigen" type="text" placeholder="Busca barrio, lugar o dirección" required>
+                            <input id="pkOrigen" type="text" placeholder="Busca barrio, vereda o dirección" required>
                         </div>
                         <div class="pk-sugg" id="pkOrigenSugg"></div>
                         <input id="pkOrigenDetalle" class="pk-addr-detail" type="text" placeholder="Detalles: casa, apto, portería... (opcional)">
                     </div>
                     <div class="pk-field pk-addr-wrap">
-                        <label>¿Dónde entregamos? *</label>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <label style="margin:0;">¿Dónde entregamos? *</label>
+                            <button type="button" class="pk-map-btn" id="pkMapDestinoBtn">🗺️ Tocar en Mapa</button>
+                        </div>
                         <div class="pk-addr-input">
                             <span class="pk-addr-dot" style="background:#FF6B00;"></span>
-                            <input id="pkDestino" type="text" placeholder="Busca barrio, lugar o dirección" required>
+                            <input id="pkDestino" type="text" placeholder="Busca barrio, vereda o dirección" required>
                         </div>
                         <div class="pk-sugg" id="pkDestinoSugg"></div>
-                        <input id="pkDestinoDetalle" class="pk-addr-detail" type="text" placeholder="Detalles: casa, apto, portería... (opcional)">
+                        <input id="pkDestinoDetalle" class="pk-addr-detail" type="text" placeholder="Detalles: finca, casa, portón... (opcional)">
                     </div>
                 </div>
 
