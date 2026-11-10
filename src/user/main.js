@@ -354,7 +354,7 @@ function checkPassengerAuth() {
                 const safetyModal = document.getElementById('passengerSafetyModal');
                 const isSafetyModalOpen = safetyModal && safetyModal.style.display !== 'none';
                 
-                const tourVisto = localStorage.getItem('zippy_tour_completed');
+                const tourVisto = localStorage.getItem('zippy_tour_completed_v2');
                 if (tourVisto !== 'true' && !isSafetyModalOpen) {
                     setTimeout(iniciarTourPasajero, 1000); // Esperar a que cargue la UI
                 }
@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('zippy_passenger_status', data.estado_validacion || 'activo');
             
             // Olvidar el tour para que se muestre en cada inicio de sesión
-            localStorage.removeItem('zippy_tour_completed');
+            localStorage.removeItem('zippy_tour_completed_v2');
 
             await zippyAlert(`¡Hola, ${data.nombre}! Qué bueno verte.\nEstamos listos para llevarte rápido y seguro por La Calera. ¿A dónde vamos hoy?`, '🚗✨');
             location.reload();
@@ -732,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('zippy_passenger_status', 'pendiente');
             
             // Olvidar el tour para que se muestre en este nuevo registro
-            localStorage.removeItem('zippy_tour_completed');
+            localStorage.removeItem('zippy_tour_completed_v2');
 
             await zippyAlert('¡Registro exitoso! Por seguridad, un administrador validará tus datos en unos minutos. Te avisaremos pronto.', '✅');
             location.reload();
@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('zippy_passenger_safety_shown', 'true');
       
       const status = localStorage.getItem('zippy_passenger_status');
-      const tourVisto = localStorage.getItem('zippy_tour_completed');
+      const tourVisto = localStorage.getItem('zippy_tour_completed_v2');
       if (tourVisto !== 'true' && status !== 'pendiente') {
           setTimeout(iniciarTourPasajero, 500); 
       }
@@ -1954,33 +1954,123 @@ if (bonoCheckbox) {
 }
 
 
-// ── Tour de Bienvenida (Driver.js) ──
+// ── Tour de Bienvenida Interactivo y Completo (Driver.js) ──
 function iniciarTourPasajero() {
-  if (!window.driver) return;
+  if (!window.driver || !window.driver.js) return;
+
+  // Si los paneles de paquetería están abiertos, no iniciar
+  const pkModal = document.getElementById('paqueteriaModal');
+  const pkForm = document.getElementById('paqueteFormModal');
+  if ((pkModal && pkModal.style.display === 'flex') || (pkForm && pkForm.style.display === 'flex')) return;
+
+  // Minimizar el menú lateral si está abierto para visualizar el mapa y controles
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && !sidebar.classList.contains('minimized')) {
+    sidebar.classList.add('minimized');
+  }
+
   const driverObj = window.driver.js.driver({
     showProgress: true,
+    progressText: 'Paso {{current}} de {{total}}',
     nextBtnText: 'Siguiente ▶',
     prevBtnText: '◀ Atrás',
-    doneBtnText: '¡Entendido! ✅',
+    doneBtnText: '¡Comenzar a Usar ZIPPY! 🚀',
     popoverClass: 'zippy-driver-theme',
+    overlayColor: 'rgba(5, 5, 10, 0.82)',
+    stagePadding: 8,
+    stageRadius: 18,
     steps: [
-      { element: '#topSearchArea', popover: { title: 'Buscador Inteligente', description: 'Aquí puedes escribir el lugar donde estás y hacia dónde vas.', side: "bottom", align: 'start' }},
-      { element: '#map', popover: { title: 'Toca el Mapa', description: 'También puedes arrastrar el mapa y tocar cualquier calle directamente para seleccionar tu destino al instante.', side: "top", align: 'start' }},
-      { element: '#resetPointsBtn', popover: { title: 'Reiniciar Búsqueda', description: 'Si te equivocas, usa este botón para limpiar las direcciones y empezar de cero.', side: "bottom", align: 'start' }},
-      { element: '#sidebarHeader', popover: { title: 'Tu Perfil y Viajes', description: 'Abre este menú para ver cuántos viajes llevas, tu información y para cerrar sesión.', side: "bottom", align: 'start' }}
+      {
+        popover: {
+          title: '👋 ¡Bienvenido a ZIPPY La Calera!',
+          description: 'Tu plataforma oficial para moverte rápido, seguro y enviar paquetes por todo el municipio.<br><br>💡 Te damos un <b>recorrido guiado de 1 minuto</b> para que conozcas todas las funciones y le saques el máximo provecho.',
+          side: 'bottom',
+          align: 'center'
+        }
+      },
+      {
+        element: '#quickPaqueteriaBtn',
+        popover: {
+          title: '📦 ¡Nuevo: Envíos y Paquetería!',
+          description: '¿Olvidaste las llaves, necesitas enviar compras o documentos? Toca este botón para pedir un mensajero.<br><br>📸 <b>Toma fotos en vivo</b> con tu cámara y marca los puntos exactos de recogida y entrega en el mapa satelital.',
+          side: 'bottom',
+          align: 'end'
+        }
+      },
+      {
+        element: '#topSearchArea',
+        popover: {
+          title: '🔍 Buscador Inteligente de Rutas',
+          description: 'Escribe tu punto de partida y hacia dónde te diriges. ZIPPY autocompleta los barrios, veredas y sitios conocidos de La Calera y Bogotá.',
+          side: 'bottom',
+          align: 'start'
+        }
+      },
+      {
+        element: '#favCasaBtn',
+        popover: {
+          title: '⭐ Accesos Rápidos: Casa y Trabajo',
+          description: 'Guarda tu Casa y tu Trabajo con un solo clic. La próxima vez pedirás tu viaje en 1 segundo sin tener que escribir nada.',
+          side: 'bottom',
+          align: 'center'
+        }
+      },
+      {
+        element: '#map',
+        popover: {
+          title: '🗺️ Toca el Mapa para Marcar Puntos',
+          description: '¿No sabes la dirección exacta o estás en una vereda? <b>Arrastra el mapa y toca directamente cualquier calle o entrada</b> para fijar tu ubicación y destino con total precisión.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '#resetPointsBtn',
+        popover: {
+          title: '🔄 Reiniciar Búsqueda',
+          description: 'Si te equivocas o quieres cambiar de planes, presiona aquí para borrar la ruta y comenzar de nuevo al instante.',
+          side: 'bottom',
+          align: 'center'
+        }
+      },
+      {
+        element: '#sidebarHeader',
+        popover: {
+          title: '👤 Menú Principal y Perfil',
+          description: 'Toca las tres líneas (☰) para abrir tu perfil, revisar tu historial de viajes y paquetes, consultar tus bonos y programar viajes agendados.',
+          side: 'bottom',
+          align: 'start'
+        }
+      },
+      {
+        popover: {
+          title: '🛡️ Viajes Monitoreados y Seguros',
+          description: 'Todos los servicios cuentan con <b>rastreo GPS en tiempo real</b> y botón de emergencia directo para tu total tranquilidad.<br><br>¡Listo! Ya eres un experto en ZIPPY. <b>¿A dónde vamos hoy?</b> 🏍️✨',
+          side: 'bottom',
+          align: 'center'
+        }
+      }
     ],
     onDestroyStarted: () => {
-      if (!driverObj.hasNextStep() || confirm("¿Seguro que quieres cerrar el tutorial?")) {
-        driverObj.destroy();
-        localStorage.setItem('zippy_tour_completed', 'true');
-      }
+      driverObj.destroy();
+      localStorage.setItem('zippy_tour_completed_v2', 'true');
     },
     onCloseClick: () => {
-        driverObj.destroy();
-        localStorage.setItem('zippy_tour_completed', 'true');
+      driverObj.destroy();
+      localStorage.setItem('zippy_tour_completed_v2', 'true');
     }
   });
+
   driverObj.drive();
 }
+
+// Botón en sidebar para volver a ver la guía cuando el usuario lo desee
+document.getElementById('openAppTourBtn')?.addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && !sidebar.classList.contains('minimized')) {
+    sidebar.classList.add('minimized');
+  }
+  setTimeout(iniciarTourPasajero, 350);
+});
 
 

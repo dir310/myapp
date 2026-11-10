@@ -27,8 +27,9 @@ const VIEWBOX = '-74.20,5.05,-73.75,4.55'; // Cobertura ZIPPY (La Calera, Sopó,
 export function initPaqueteria(userId) {
   _currentUser = userId;
 
-  // Botón "📦 Paquetería" en sidebar
+  // Botón "📦 Paquetería" en sidebar y botón flotante en mapa
   document.getElementById('paqueteriaBtn')?.addEventListener('click', openPaqueteriaPanel);
+  document.getElementById('quickPaqueteriaBtn')?.addEventListener('click', openPaqueteriaPanel);
 
   // Cerrar panel principal
   document.getElementById('closePaqueteriaBtn')?.addEventListener('click', closePaqueteriaPanel);

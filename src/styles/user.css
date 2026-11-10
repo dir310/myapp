@@ -908,18 +908,173 @@ body {
     background: #1a1a1a;
 }
 
-/* ── Driver.js Custom Theme (Tour de Bienvenida) ── */
+/* ── Botón Flotante Acceso Rápido a Paquetería en Mapa ── */
+.quick-paqueteria-btn {
+  position: fixed;
+  top: 185px;
+  right: 14px;
+  z-index: 995;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.95), rgba(255, 149, 0, 0.95));
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 30px;
+  padding: 8px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4), 0 2px 6px rgba(0,0,0,0.4);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.3px;
+}
+
+.quick-paqueteria-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 25px rgba(255, 107, 0, 0.55);
+}
+
+.quick-paqueteria-btn:active {
+  transform: scale(0.96);
+}
+
+.pk-quick-icon {
+  font-size: 16px;
+  display: inline-block;
+  animation: zippyBounce 2s infinite ease-in-out;
+}
+
+@keyframes zippyBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+body:has(#sidebar:not(.minimized)) .quick-paqueteria-btn {
+  display: none !important;
+}
+
+/* ── Driver.js Custom Theme (Tour de Bienvenida Premium) ── */
 .driver-popover.zippy-driver-theme {
-  --driver-popover-bg: #1c1c1e;
+  --driver-popover-bg: rgba(22, 22, 26, 0.96);
   --driver-popover-text: #ffffff;
   --driver-popover-title-color: #FF6B00;
   --driver-popover-btn-bg: #FF6B00;
   --driver-popover-btn-color: #ffffff;
   --driver-popover-btn-hover-bg: #FF9500;
   --driver-popover-btn-border-color: #FF6B00;
-  --driver-popover-border-radius: 16px;
-  border: 1px solid rgba(255,107,0,0.3);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  --driver-popover-border-radius: 20px;
+  background: rgba(22, 22, 26, 0.96) !important;
+  color: #fff !important;
+  border: 1.5px solid rgba(255, 107, 0, 0.45) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 107, 0, 0.25) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 18px 20px !important;
+  max-width: 340px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-title {
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  color: #FF6B00 !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-description {
+  font-size: 13.5px !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  line-height: 1.55 !important;
+  margin-bottom: 16px !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-description b,
+.driver-popover.zippy-driver-theme .driver-popover-description strong {
+  color: #FF9500 !important;
+  font-weight: 700 !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-top: 14px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-progress-text {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #FF9500 !important;
+  letter-spacing: 0.6px !important;
+  text-transform: uppercase !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-navigation-btns {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-prev-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding: 8px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-prev-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-next-btn {
+  background: linear-gradient(135deg, #FF6B00, #FF9500) !important;
+  color: #ffffff !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  border: none !important;
+  padding: 8px 16px !important;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  letter-spacing: 0.3px !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-next-btn:hover {
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-close-btn {
+  color: rgba(255, 255, 255, 0.45) !important;
+  font-size: 16px !important;
+  transition: color 0.2s !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-close-btn:hover {
+  color: #FF3B30 !important;
+}
+
+.driver-popover.zippy-driver-theme .driver-popover-arrow {
+  border-color: rgba(22, 22, 26, 0.96) !important;
 }
 
 /* --- ANIMACION RUTA CONDUCTOR --- */
